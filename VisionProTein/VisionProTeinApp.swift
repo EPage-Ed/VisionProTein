@@ -6,16 +6,25 @@
 //
 
 import SwiftUI
+import RealityKitContent
 
 @main
 struct VisionProTeinApp: App {
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
+  @StateObject var model = ARModel()
 
-        ImmersiveSpace(id: "ImmersiveSpace") {
-            ImmersiveView()
-        }
+  init() {
+    MoleculeComponent.registerComponent()
+    ProteinComponent.registerComponent()
+    RealityKitContent.GestureComponent.registerComponent()
+  }
+
+  var body: some Scene {
+    WindowGroup {
+      ContentView(model: model)
     }
+    
+    ImmersiveSpace(id: "ImmersiveSpace") {
+      ImmersiveView(model: model)
+    }
+  }
 }

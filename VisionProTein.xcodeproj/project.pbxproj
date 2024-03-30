@@ -13,6 +13,11 @@
 		D8AA59EE2BB7AEF000340803 /* ImmersiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8AA59ED2BB7AEF000340803 /* ImmersiveView.swift */; };
 		D8AA59F02BB7AEF100340803 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D8AA59EF2BB7AEF100340803 /* Assets.xcassets */; };
 		D8AA59F32BB7AEF100340803 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D8AA59F22BB7AEF100340803 /* Preview Assets.xcassets */; };
+		D8AA59FC2BB7B0C500340803 /* ARModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8AA59FB2BB7B0C500340803 /* ARModel.swift */; };
+		D8AA59FF2BB7B84600340803 /* PDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8AA59FE2BB7B84600340803 /* PDB.swift */; };
+		D8AA5A012BB7C63100340803 /* protein.usdz in Resources */ = {isa = PBXBuildFile; fileRef = D8AA5A002BB7C63100340803 /* protein.usdz */; };
+		D8AA5A062BB7F49000340803 /* Molecule.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8AA5A052BB7F49000340803 /* Molecule.swift */; };
+		D8AA5A082BB7F8B300340803 /* Biotin.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D8AA5A072BB7F8B300340803 /* Biotin.pdb */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +29,11 @@
 		D8AA59EF2BB7AEF100340803 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D8AA59F22BB7AEF100340803 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		D8AA59F42BB7AEF100340803 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D8AA59FB2BB7B0C500340803 /* ARModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARModel.swift; sourceTree = "<group>"; };
+		D8AA59FE2BB7B84600340803 /* PDB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDB.swift; sourceTree = "<group>"; };
+		D8AA5A002BB7C63100340803 /* protein.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = protein.usdz; sourceTree = "<group>"; };
+		D8AA5A052BB7F49000340803 /* Molecule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Molecule.swift; sourceTree = "<group>"; };
+		D8AA5A072BB7F8B300340803 /* Biotin.pdb */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Biotin.pdb; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,6 +71,8 @@
 				D8AA59E92BB7AEF000340803 /* VisionProTeinApp.swift */,
 				D8AA59EB2BB7AEF000340803 /* ContentView.swift */,
 				D8AA59ED2BB7AEF000340803 /* ImmersiveView.swift */,
+				D8AA59FA2BB7AFB300340803 /* Models */,
+				D8AA59FD2BB7B6A900340803 /* PDB */,
 				D8AA59EF2BB7AEF100340803 /* Assets.xcassets */,
 				D8AA59F42BB7AEF100340803 /* Info.plist */,
 				D8AA59F12BB7AEF100340803 /* Preview Content */,
@@ -82,6 +94,25 @@
 				D8AA59F22BB7AEF100340803 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		D8AA59FA2BB7AFB300340803 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				D8AA59FB2BB7B0C500340803 /* ARModel.swift */,
+				D8AA5A052BB7F49000340803 /* Molecule.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		D8AA59FD2BB7B6A900340803 /* PDB */ = {
+			isa = PBXGroup;
+			children = (
+				D8AA59FE2BB7B84600340803 /* PDB.swift */,
+				D8AA5A002BB7C63100340803 /* protein.usdz */,
+				D8AA5A072BB7F8B300340803 /* Biotin.pdb */,
+			);
+			path = PDB;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -131,6 +162,8 @@
 				Base,
 			);
 			mainGroup = D8AA59D92BB7AEF000340803;
+			packageReferences = (
+			);
 			productRefGroup = D8AA59E32BB7AEF000340803 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -147,6 +180,8 @@
 			files = (
 				D8AA59F32BB7AEF100340803 /* Preview Assets.xcassets in Resources */,
 				D8AA59F02BB7AEF100340803 /* Assets.xcassets in Resources */,
+				D8AA5A012BB7C63100340803 /* protein.usdz in Resources */,
+				D8AA5A082BB7F8B300340803 /* Biotin.pdb in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -157,6 +192,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D8AA59FC2BB7B0C500340803 /* ARModel.swift in Sources */,
+				D8AA5A062BB7F49000340803 /* Molecule.swift in Sources */,
+				D8AA59FF2BB7B84600340803 /* PDB.swift in Sources */,
 				D8AA59EC2BB7AEF000340803 /* ContentView.swift in Sources */,
 				D8AA59EA2BB7AEF000340803 /* VisionProTeinApp.swift in Sources */,
 				D8AA59EE2BB7AEF000340803 /* ImmersiveView.swift in Sources */,
@@ -297,6 +335,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "$(TARGET_NAME)/Info.plist";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Connect with local Vision ProTein users";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -323,6 +362,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "$(TARGET_NAME)/Info.plist";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Connect with local Vision ProTein users";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
