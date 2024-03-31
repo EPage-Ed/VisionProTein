@@ -87,9 +87,9 @@ struct ContentView: View {
               me.transform.translation = pos
                           
               me.name = r.resName
-              me.components.set(HoverEffectComponent())
-              me.components.set(InputTargetComponent())
-              me.generateCollisionShapes(recursive: true, static: true)
+//              me.components.set(HoverEffectComponent())
+//              me.components.set(InputTargetComponent())
+//              me.generateCollisionShapes(recursive: true, static: true)
               me.components.set(mc)
               
   //            print(me.name, r.resName)
@@ -107,15 +107,17 @@ struct ContentView: View {
           
           pe.components.set(InputTargetComponent())
           pe.generateCollisionShapes(recursive: true, static: true)
-          pe.components.set(GestureComponent(canDrag: true, pivotOnDrag: true, preserveOrientationOnPivotDrag: true, canScale: true, canRotate: true))
+          pe.components.set(GestureComponent(canDrag: false, pivotOnDrag: false, preserveOrientationOnPivotDrag: false, canScale: true, canRotate: true))
 
         } else {
 
-          if let p = Molecule.protein(atoms: atoms, saveCloud: true) {
+          if let p = Molecule.protein(atoms: atoms, saveCloud: false) {
+//            print(p.name)
+            p.components.set(HoverEffectComponent())
+            p.components.set(InputTargetComponent())
+            p.generateCollisionShapes(recursive: true, static: true)
+            p.components.set(GestureComponent(canDrag: false, pivotOnDrag: false, preserveOrientationOnPivotDrag: false, canScale: true, canRotate: true))
             pe.addChild(p)
-            pe.components.set(InputTargetComponent())
-            pe.generateCollisionShapes(recursive: true, static: true)
-            pe.components.set(GestureComponent(canDrag: true, pivotOnDrag: true, preserveOrientationOnPivotDrag: true, canScale: true, canRotate: true))
           }
 
         }
@@ -125,6 +127,11 @@ struct ContentView: View {
         pe.components.set(pc)
         model.protein = pe
         model.rootEntity.addChild(pe)
+
+//        model.rootEntity.components.set(HoverEffectComponent()) 
+//        model.rootEntity.components.set(InputTargetComponent())
+//        model.rootEntity.generateCollisionShapes(recursive: true, static: true)
+//        model.rootEntity.components.set(GestureComponent(canDrag: true, pivotOnDrag: true, preserveOrientationOnPivotDrag: true, canScale: true, canRotate: true))
 
       }
 

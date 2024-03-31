@@ -60,7 +60,7 @@ public struct GestureComponent: Component { //, Codable {
     self.canScale = canScale
     self.canRotate = canRotate
   }
-    
+  
     /// A Boolean value that indicates whether a gesture can drag the entity.
     public var canDrag: Bool = true
     

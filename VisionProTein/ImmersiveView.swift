@@ -21,10 +21,13 @@ struct ImmersiveView: View {
     } update: { content in
     }
     .installGestures()
+
     .gesture(
       TapGesture(count: 1)
-        .targetedToEntity(where: .has(MoleculeComponent.self))
+        .targetedToAnyEntity()
+//        .targetedToEntity(where: .has(MoleculeComponent.self))
         .onEnded { value in
+          print("Tap !!!")
           guard let res = value.entity as? ModelEntity else { return }
           Task {
 //            print(res.name, res.parent?.parent)
@@ -67,6 +70,7 @@ struct ImmersiveView: View {
           }
         }
     )
+
     .task {
       await model.run()
     }

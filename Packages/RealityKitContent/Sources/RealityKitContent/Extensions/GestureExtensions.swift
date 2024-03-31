@@ -17,6 +17,7 @@ public extension Gesture where Value == EntityTargetValue<RotateGesture3D.Value>
     /// Connects the gesture input to the `GestureComponent` code.
     func useGestureComponent() -> some Gesture {
         onChanged { value in
+          print(value.entity.name)
             guard var gestureComponent = value.entity.gestureComponent else { return }
             
             gestureComponent.onChanged(value: value)
@@ -41,6 +42,7 @@ public extension Gesture where Value == EntityTargetValue<DragGesture.Value> {
     /// Connects the gesture input to the `GestureComponent` code.
     func useGestureComponent() -> some Gesture {
         onChanged { value in
+          print(value.entity.name)
             guard var gestureComponent = value.entity.gestureComponent else { return }
             
             gestureComponent.onChanged(value: value)
@@ -65,6 +67,7 @@ public extension Gesture where Value == EntityTargetValue<MagnifyGesture.Value> 
     /// Connects the gesture input to the `GestureComponent` code.
     func useGestureComponent() -> some Gesture {
         onChanged { value in
+          print(value.entity.name)
             guard var gestureComponent = value.entity.gestureComponent else { return }
             
             gestureComponent.onChanged(value: value)
