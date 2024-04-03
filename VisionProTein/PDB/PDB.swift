@@ -47,7 +47,14 @@ struct Atom : Codable {
   }
 }
 
-struct Residue : Codable {
+struct Residue : Codable, Equatable, Hashable {
+  static func == (lhs: Residue, rhs: Residue) -> Bool {
+    lhs.id == rhs.id
+  }
+  func hash(into hasher: inout Hasher) {
+    hasher.combine(id)
+  }
+
   let id: Int
   let serNum: Int
   let chainID: String
@@ -127,21 +134,27 @@ struct PDB : Codable {
   
 // HETATM 1857  O12ABTN A5100      32.721  19.445  13.867  0.62 14.89           O
 
-  static func parsePDB(named: String) -> ([Atom],[Residue]) {
+  static func parsePDB(named: String, maxChains: Int = 99, atom: Bool = true, hexatm: Bool = false, water: Bool = false) -> ([Atom],[Residue]) {
     var atoms = [Atom]()
     guard let u = Bundle.main.url(forResource: named, withExtension: "pdb"), // 3aid 6uml (Thilidomide) 1a3n (Hemoglobin) 3nir 6a5j
           let s = try? String(contentsOf: u)
     else { return ([],[]) }
-    let lines = s.components(separatedBy: .newlines).filter{$0.hasPrefix("ATOM") || $0.hasPrefix("HETATM") || $0.hasPrefix("ENDMDL") || $0.hasPrefix("TER")}
+    var ccnt = maxChains
+    let lines = s.components(separatedBy: .newlines).filter{(atom && $0.hasPrefix("ATOM")) || (hexatm && $0.hasPrefix("HETATM")) || $0.hasPrefix("ENDMDL") || $0.hasPrefix("TER")}
     for l in lines {
       print(l)
 //    lines.forEach { l in
       let c = Array(l)
       let code = String(c[0...5]).trimmingCharacters(in: .whitespaces)
-      if code == "ENDMDL" || code == "TER" { break }
+      if code == "ENDMDL" { break }
+      if code == "TER" {
+        ccnt -= 1
+        if ccnt <= 0 { break }
+      }
       let ser = Int(String(c[6...10]).trimmingCharacters(in: .whitespaces))
       let name = String(c[12...15]).trimmingCharacters(in: .whitespaces)
       let res = String(c[17...19]).trimmingCharacters(in: .whitespaces)
+      if (!water && res == "HOH") { continue }
       let chain = String(c[21])
       let rs = Int(String(c[22...25]).trimmingCharacters(in: .whitespaces))
       let x = Double(String(c[30...37]).trimmingCharacters(in: .whitespaces))

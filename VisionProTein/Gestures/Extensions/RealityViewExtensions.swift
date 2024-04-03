@@ -22,6 +22,7 @@ public extension RealityView {
     /// Builds a drag gesture.
     var dragGesture: some Gesture {
         DragGesture()
+//        .targetedToEntity(where: .has(ProteinComponent.self))
             .targetedToAnyEntity()
             .useGestureComponent()
     }
@@ -29,6 +30,7 @@ public extension RealityView {
     /// Builds a magnify gesture.
     var magnifyGesture: some Gesture {
         MagnifyGesture()
+//        .targetedToEntity(where: .has(ProteinComponent.self))
             .targetedToAnyEntity()
             .useGestureComponent()
     }
@@ -36,6 +38,7 @@ public extension RealityView {
     /// Buildsa rotate gesture.
     var rotateGesture: some Gesture {
         RotateGesture3D()
+//        .targetedToEntity(where: .has(ProteinComponent.self))
             .targetedToAnyEntity()
             .useGestureComponent()
     }

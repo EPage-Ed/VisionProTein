@@ -19,11 +19,15 @@ final class ARModel : ObservableObject {
   
   private var rightHandOpen = true
   private var leftHandOpen = true
-  private var grabState = true
+  private var grabState = false
+  private var rgrabState = false
   private var popState = false
 
   let rootEntity = Entity()
+  @Published var loading = false
   @Published var showResidues = true
+  @Published var tagState = false
+  @Published var tagged = Set<Residue>()
 
   var planes = [UUID: PlaneAnchor]()
   var entityMap: [UUID: Entity] = [:]
@@ -31,10 +35,15 @@ final class ARModel : ObservableObject {
   var meshMap: [UUID: ModelEntity] = [:]
   
   var protein : ModelEntity?
+  var proteinTag : ModelEntity?
+  var ligand : ModelEntity?
+
   var initialHandRotation : simd_quatf = .init(vector: [0,0,0,0])
   var initialHandTranslation : SIMD3<Float> = .zero
   var initialProteinTranslation : SIMD3<Float> = .zero
-  
+  var initialRHandTranslation : SIMD3<Float> = .zero
+  var initialLigandTranslation : SIMD3<Float> = .zero
+
   init() {
   }
   
@@ -52,6 +61,10 @@ final class ARModel : ObservableObject {
     }
   }
   
+  func ligandScale(scale: SIMD3<Float>) {
+    ligand?.scale = scale
+  }
+  
   @MainActor
   func processHandAnchorUpdate(_ update: AnchorUpdate<HandAnchor>) async {
     //            print(update.description)
@@ -62,7 +75,7 @@ final class ARModel : ObservableObject {
       //              print("Left",lh.description)
 //      let jt = fingerTip.anchorFromJointTransform
       //              let t = Transform(matrix: jt)
-      let a = hand.originFromAnchorTransform * fingerTip.anchorFromJointTransform
+//      let a = hand.originFromAnchorTransform * fingerTip.anchorFromJointTransform
 //      let a = hand.originFromAnchorTransform
 
       let originFromLeftHandFingerTipTransform = matrix_multiply(
@@ -90,9 +103,50 @@ final class ARModel : ObservableObject {
         let newTrans = initialProteinTranslation + move
         
         protein?.transform.translation = newTrans
-        
+        proteinTag?.transform.translation = newTrans
       }
     }
+
+    /*
+    if let hand = handTracker.latestAnchors.rightHand,
+       let fingerTip = hand.handSkeleton?.joint(.middleFingerTip)
+//       let fingerBase = hand.handSkeleton?.joint(.middleFingerKnuckle)
+    {
+      //              print("Left",lh.description)
+//      let jt = fingerTip.anchorFromJointTransform
+      //              let t = Transform(matrix: jt)
+//      let a = hand.originFromAnchorTransform * fingerTip.anchorFromJointTransform
+//      let a = hand.originFromAnchorTransform
+
+      let originFromRightHandFingerTipTransform = matrix_multiply(
+          hand.originFromAnchorTransform, fingerTip.anchorFromJointTransform
+      ).columns.3.xyz
+      let handTransform = hand.originFromAnchorTransform.columns.3.xyz
+
+      let fingersDistance = distance(originFromRightHandFingerTipTransform, handTransform)
+      let handWasOpen = !rgrabState
+      let handClosed = fingersDistance < 0.07
+      rgrabState = handClosed
+      if handWasOpen && handClosed {
+        let t = Transform(matrix: hand.originFromAnchorTransform)
+//        initialHandRotation = t.rotation
+        initialRHandTranslation = t.translation
+        initialLigandTranslation = ligand?.transform.translation ?? .zero
+      }
+      
+
+      if rgrabState {
+        
+        let wt = Transform(matrix: hand.originFromAnchorTransform) // a
+        let trans = wt.translation
+        let move = trans - initialRHandTranslation
+        let newTrans = initialLigandTranslation + move
+        
+        ligand?.transform.translation = newTrans
+
+      }
+    }
+     */
   }
   
 }

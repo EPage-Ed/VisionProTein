@@ -205,6 +205,8 @@ public struct GestureComponent: Component { //, Codable {
         
         let magnification = Float(value.magnification)
         entity.scale = state.startScale * magnification
+      
+      NotificationCenter.default.post(name: .init("EntityScale"), object: nil, userInfo: ["scale":entity.scale])
     }
     
     /// Handle `.onEnded` actions for magnify (scale)  gestures
