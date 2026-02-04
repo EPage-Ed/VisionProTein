@@ -8,27 +8,31 @@
 import SwiftUI
 import RealityKit
 import RealityKitContent
+import MolecularRender
+import ProteinRibbon
 
 struct ContentView: View {
   @ObservedObject var model : ARModel
-
+  
   @State private var showImmersiveSpace = false
   @State private var immersiveSpaceIsShown = false
-//  @State private var loading = false
-  @State private var progress : Double = 0
+  //  @State private var loading = false
+  //  @State private var progress : Double = 0
   @State private var rotate : Angle = .zero
+//  let arb = AdvancedRibbonBuilder()
 
   @Environment(\.openImmersiveSpace) var openImmersiveSpace
   @Environment(\.dismissImmersiveSpace) var dismissImmersiveSpace
   
   var body: some View {
     VStack {
+      /*
       Model3D(named: "protein") { model in
         model
           .resizable()
           .aspectRatio(contentMode: .fit)
           .rotation3DEffect(rotate, axis: .y, anchor: .bottomBack)
-
+        
       } placeholder: {
         VStack {
           Text("Loading...")
@@ -36,248 +40,729 @@ struct ContentView: View {
         }
       }
       .frame(height: 160)
-
-      Group {
-        Text("Vision ") +
-        Text("ProTein")
-          .foregroundStyle(Color.green)
-      }
-        .font(.largeTitle)
-
-      ProgressView()
-        .opacity(model.loading ? 1 : 0)
+       */
       
-      ProteinListView(model: model, showImmersiveSpace: $showImmersiveSpace)
+      Text("Vision \(Text("ProTein").foregroundStyle(Color.green))")
+        .font(.largeTitle)
+      
+      HStack {
+        ProgressView()
+        Text(model.progress.formatted(.percent.precision(.fractionLength(2))))
+      }
+      .opacity(model.loading ? 1 : 0)
+      
+      Button(showImmersiveSpace ? "Close" : "Show") {
+        model.proteinItem = ProteinItem(code: "2P6A", name: "Activin:Follistatin", text: "Follistatin is studied for its role in regulation of muscle growth in mice, as an antagonist to myostatin (also known as GDF-8, a TGF superfamily member) which inhibits         excessive muscle growth.", image: nil, ligand: nil)
+        showImmersiveSpace.toggle()
+      }
+      .font(.title2)
+      .padding()
+      
+      if immersiveSpaceIsShown {
+        HStack {
+          Spacer()
+          Text("Folded")
+          Toggle("", isOn: $model.foldedState).labelsHidden()
+            .disabled(!model.showSpheres || model.modelState != .tagging)
+          
+          Spacer()
+
+          VStack {
+            Picker("Mode", selection: $model.modelState) {
+              Text("Resize").tag(ModelState.resizing)
+              Text("Tag").tag(ModelState.tagging)
+            }
+            .pickerStyle(.segmented)
+            .disabled(model.showRibbons || (model.showSpheres && model.showBallAndStick))
+            .frame(width: 300)
+            
+            HStack(spacing: 20) {
+              Toggle("Sphere", isOn: $model.showSpheres)
+                .toggleStyle(.button)
+              Toggle("Ribbon", isOn: $model.showRibbons)
+                .toggleStyle(.button)
+              Toggle("Ball-and-Stick", isOn: $model.showBallAndStick)
+                .toggleStyle(.button)
+            }
+          }
+
+//          Text("Tag Residues")
+//          Toggle("", isOn: $model.tagState).labelsHidden()
+          Spacer()
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.horizontal)
+        
+        HStack {
+          VStack {
+            Text("Tagged Residues")
+              .font(.title2)
+            List(Array(model.tagged).sorted(by: { $0.serNum < $1.serNum }), id: \.id) { r in
+              Text("\(r.resName) \(r.chainID)\(r.serNum)")
+                .onTapGesture {
+                  if model.selectedResidue == r {
+                    model.selectedResidue = nil
+                  } else {
+                    model.selectedResidue = r
+                  }
+                }
+                .background(model.selectedResidue == r ? Color.blue.opacity(0.3) : Color.clear)
+            }
+          }
+          Spacer()
+          if let r = model.selectedResidue {
+            ScrollView {
+              VStack(alignment: .leading) {
+                Text("Residue Details")
+                  .font(.title2)
+                Text("Name: \(r.resName)")
+                Text("Chain: \(r.chainID)")
+                Text("Sequence Number: \(r.serNum)")
+                Text("Number of Atoms: \(r.atoms.count)")
+                Text("Amino Acid: \(r.aminoAcid?.fullName ?? "Unknown")")
+                Text("Details:")
+                Text(r.aminoAcid?.details ?? "No description available.")
+              }
+            }
+            .frame(maxWidth: 400, alignment: .leading)
+          } else {
+            Text("Select a residue to see details")
+              .italic()
+          }
+        }
+        .frame(height: 300)
+
+      }
+      
+//      ProteinListView(model: model, showImmersiveSpace: $showImmersiveSpace)
       
       /*
-      HStack(spacing: 20) {
-        Spacer()
-        Toggle("\(showImmersiveSpace ? "Hide" : "Show") Immersive Space", isOn: $showImmersiveSpace)
-          .toggleStyle(.button)
-          .disabled(model.loading)
-        Spacer()
-
-      }
-      .padding(.top, 50)
+       HStack(spacing: 20) {
+       Spacer()
+       Toggle("\(showImmersiveSpace ? "Hide" : "Show") Immersive Space", isOn: $showImmersiveSpace)
+       .toggleStyle(.button)
+       .disabled(model.loading)
+       Spacer()
+       
+       }
+       .padding(.top, 50)
        */
-
-//      Toggle("Show ImmersiveSpace", isOn: $showImmersiveSpace)
-//        .font(.title)
-//        .frame(width: 360)
-//        .padding(24)
-//        .glassBackgroundEffect()
+      
+      //      Toggle("Show ImmersiveSpace", isOn: $showImmersiveSpace)
+      //        .font(.title)
+      //        .frame(width: 360)
+      //        .padding(24)
+      //        .glassBackgroundEffect()
     }
     .padding()
-    .onChange(of: model.tagState) { _, newValue in
+    .onChange(of: model.modelState) { _, newValue in
+      switch newValue {
+      case .resizing:
+//        model.ribbon?.isEnabled = false
+        if model.proteinCollision != nil {
+          model.protein?.components.set(model.proteinCollision!)
+        }
+//        model.protein?.children.forEach { c in
+//          if c.name != "Ribbon" {
+//            c.isEnabled = true
+//          }
+//        }
+      case .tagging:
+//        model.ribbon?.isEnabled = false
+        model.protein?.components.remove(CollisionComponent.self)
+//        model.protein?.children.forEach { c in
+//          if c.name != "Ribbon" {
+//            c.isEnabled = true
+//          }
+//        }
+      case .ribbon:
+        model.ribbon?.isEnabled = true
+        if model.proteinCollision != nil {
+          model.protein?.components.set(model.proteinCollision!)
+        }
+//        model.protein?.children.forEach { c in
+//          if c.name != "Ribbon" {
+//            c.isEnabled = false
+//          }
+//        }
+      }
+    }
+    .onChange(of: model.showSpheres) { _, newValue in
+      model.spheres?.isEnabled = newValue
+    }
+    .onChange(of: model.showRibbons) { _, newValue in
+      model.ribbons?.isEnabled = newValue
+    }
+    .onChange(of: model.showBallAndStick) { _, newValue in
+      model.ballAndStick?.isEnabled = newValue
+    }
+    .onChange(of: model.foldedState) { _, folded in
+      //      model.tagState = !newValue
+      Task { @MainActor in
+        
+        if folded {
+          for (i,r) in model.spheres!.children.enumerated() {
+            var t = r.transform
+            t.translation = model.foldedPositions[i] - r.position
+            r.move(to: t, relativeTo: r, duration: 8)
+//            r.move(to: model.foldedPositions[i]!, relativeTo: nil, duration: 8)
+          }
+        } else {
+          let tot = Float(model.spheres!.children.count)
+          for (i,r) in model.spheres!.children.enumerated() {
+            let p : SIMD3<Float> = [(Float(i) - tot/2) * 0.1, 0.5, -0.5]
+            model.foldedPositions.append(r.position)
+            var t = r.transform
+            t.translation = p - r.position
+            r.move(to: t, relativeTo: r, duration: 8)
+          }
+
+        }
+
+        /*
+        if !folded {
+          model.foldedPositions.removeAll()
+          model.proteinTransform = model.spheres!.transform // proteinTag
+        } else {
+          model.spheres!.move(to: model.proteinTransform, relativeTo: nil, duration: 8) // proteinTag
+          //          model.proteinTag!.transform = model.proteinTransform
+//          model.protein!.transform = model.proteinTransform
+        }
+        //        let offset = model.proteinTag!.transform.translation - model.proteinTransform
+        //        print("offset",offset)
+        let tot = Float(model.spheres!.children.count) // proteinTag
+        for (i,r) in model.spheres!.children.enumerated() { // proteinTag
+          if !folded {
+            model.foldedPositions.append(r.position)
+          }
+          if i < model.foldedPositions.count {
+            let p : SIMD3<Float> = [(Float(i) - tot/2) * 0.1, 0.5, -0.5]
+            let tr = folded ? model.foldedPositions[i] - p : p - r.position
+            //          let tr = folded ? model.foldedPositions[i] - p - offset : p - r.position
+            var t = r.transform
+            t.translation = tr
+            let ac = r.move(to: t, relativeTo: r, duration: 8)
+          }
+          
+        }
+         */
+
+      }
+    }
+    /*
+    .onChange(of: model.modelState) { _, newValue in
       if model.protein == nil || model.proteinTag == nil { return }
+      /*
       if newValue {
         model.proteinTag?.isEnabled = true
         model.protein?.isEnabled = false
-        model.proteinTag!.transform.scale = model.protein!.children[0].transform.scale
-        model.proteinTag!.transform.rotation = model.protein!.children[0].transform.rotation
-//        model.rootEntity.addChild(model.proteinTag!)
-//        model.rootEntity.removeChild(model.protein!)
+//        model.proteinTag?.transform.scale = model.protein?.children.first?.transform.scale ?? .one
+//        model.proteinTag?.transform.rotation = model.protein?.children.first?.transform.rotation ?? simd_quatf(vector:[0,0,0,0])
+        //        model.rootEntity.addChild(model.proteinTag!)
+        //        model.rootEntity.removeChild(model.protein!)
       } else {
         model.proteinTag?.isEnabled = false
         model.protein?.isEnabled = true
-//        model.rootEntity.addChild(model.protein!)
-//        model.rootEntity.removeChild(model.proteinTag!)
+        //        model.rootEntity.addChild(model.protein!)
+        //        model.rootEntity.removeChild(model.proteinTag!)
       }
+       */
     }
+     */
     .onChange(of: showImmersiveSpace) { _, newValue in
+      
+      //      Task {
+      if newValue {
+        model.loading = true
+        Task {
+          await openImmersiveSpace(id: "ImmersiveSpace")
+          Task { @MainActor in
+            immersiveSpaceIsShown = true
+          }
+        }
+        
+        /*
+         switch result {
+         case .success:
+         immersiveSpaceIsShown = true
+         case .failure:
+         immersiveSpaceIsShown = false
+         showImmersiveSpace = false
+         }
+         */
+        //          }
+        
+        /*
+         switch await openImmersiveSpace(id: "ImmersiveSpace") {
+         case .opened:
+         immersiveSpaceIsShown = true
+         //            model.loading = false
+         case .error, .userCancelled:
+         fallthrough
+         @unknown default:
+         immersiveSpaceIsShown = false
+         showImmersiveSpace = false
+         }
+         */
+      } else if immersiveSpaceIsShown {
+        model.loading = false
+        model.tagged.removeAll()
+        model.protein?.removeFromParent()
+        model.proteinTag?.removeFromParent()
+        model.ligand?.removeFromParent()
+        model.protein = nil
+        model.proteinTag = nil
+        model.ligand = nil
+        
+        Task {
+          await dismissImmersiveSpace()
+          immersiveSpaceIsShown = false
+        }
+        
+        //          return
+      }
+      
+      
+      //      }
+    }
+    .onChange(of: immersiveSpaceIsShown) { _, newValue in
+      
       if newValue {
         model.loading = true
         
-
-//        model.rootEntity.components.set(HoverEffectComponent()) 
-//        model.rootEntity.components.set(InputTargetComponent())
-//        model.rootEntity.generateCollisionShapes(recursive: true, static: true)
-//        model.rootEntity.components.set(GestureComponent(canDrag: true, pivotOnDrag: true, preserveOrientationOnPivotDrag: true, canScale: true, canRotate: true))
-
-      }
-      
-
-      Task {
-        if newValue {
+        
+        //        model.loading = true
+        
+        
+        //        model.rootEntity.components.set(HoverEffectComponent())
+        //        model.rootEntity.components.set(InputTargetComponent())
+        //        model.rootEntity.generateCollisionShapes(recursive: true, static: true)
+        //        model.rootEntity.components.set(GestureComponent(canDrag: true, pivotOnDrag: true, preserveOrientationOnPivotDrag: true, canScale: true, canRotate: true))
+        
+        //      }
+        
+        
+        Task { // @MainActor in
+          //        Task.detached(priority: .userInitiated) {
+          //          if newValue {
+          
+          /*
+           if let m = await Molecule.protein(named: "1nc9") {
+           model.protein = m
+           m.setPosition([0, 1, -0.5], relativeTo: nil)
+           model.rootEntity.addChild(m)
+           }
+           */
+          
+          let pName = "1ERT" // 1hqq Biotin 3nir 1nc9 4HR9 1ERT
           
           // Get the Ligand
-          let (latoms,lresidues) = PDB.parsePDB(named: "1nc9", maxChains: 99, atom: false, hexatm: true)
+          let (latoms,lresidues,lhelices,lsheets,lseqres) = PDB.parsePDB(named: pName, maxChains: 99, atom: false, hexatm: true)
           if latoms.count > 0 {
             let le = ModelEntity()
+//            Task { @MainActor in
             le.name = "Ligand"
+//            }
             
             if let l = Molecule.protein(atoms: latoms, saveCloud: false) {
-  //            print(p.name)
+              //            print(p.name)
               l.components.set(HoverEffectComponent())
               l.components.set(InputTargetComponent())
               l.generateCollisionShapes(recursive: true, static: true)
               l.components.set(GestureComponent(canDrag: true, pivotOnDrag: true, preserveOrientationOnPivotDrag: true, canScale: false, canRotate: true))
               le.addChild(l)
               
-  //            pe.position = pte.position + firstPos // pte.position
+              //            pe.position = pte.position + firstPos // pte.position
               le.setPosition([0.5, 1, -0.5], relativeTo: nil)
-  //            let pc = ProteinComponent()
-  //            pe.components.set(pc)
-              model.ligand = le
-
-              model.rootEntity.addChild(le)
-
+              //            let pc = ProteinComponent()
+              //            pe.components.set(pc)
+//              Task { @MainActor in
+                model.ligand = le
+                
+                model.rootEntity.addChild(le)
+//              }
+              
             }
-            
           }
           
-          let (atoms,residues) = PDB.parsePDB(named: "1nc9", maxChains: 2)  // 1hqq Biotin 3nir 1nc9
+          
+          let (atoms,residues,helices,sheets,seqres) = PDB.parsePDB(named: pName, maxChains: 2)
           let pe = ModelEntity()
           let pte = ModelEntity()
-          pe.name = "Protein"
-          pte.name = "ProteinTag"
-  //        let pc = ProteinComponent()
-  //        pe.components.set(pc)
-          var firstPos : SIMD3<Float> = .zero
-
-  //        if model.showResidues {
-            var cnt : Double = 0
-            let tot = Double(residues.count)
-            for r in residues {
-  //          residues.forEach { r in
-              if let me = Molecule.entity(residue: r) {
-                let mc = MoleculeComponent(residue: r)
-                
-                
-                let p = r.atoms.first!
-                let pos : SIMD3<Float> = [Float(p.x/100), Float(p.y/100), Float(p.z/100)]
-                if cnt == 0 {
-                  firstPos = pos
-                }
-                me.transform.translation = pos - firstPos
-                            
-                me.name = r.resName
-                me.components.set(HoverEffectComponent())
-  //              me.components.set(InputTargetComponent())
-  //              me.generateCollisionShapes(recursive: true, static: true)
-                me.components.set(mc)
-  //              me.components.remove(CollisionComponent.self)
-  //              me.components.remove(InputTargetComponent.self)
-                
-    //            print(me.name, r.resName)
-                
-                pte.addChild(me)
-                
-                if cnt == 0 {
-                  print(me.name, me.position)
-                }
-
-/*
-                if r.serNum == 37 || r.serNum == 96 {
-
-                  mc.outline = true
-                  model.tagged.insert(mc.residue)
-                  
-                  let lmc = MoleculeComponent(residue: Residue(id: r.id, serNum: -1, chainID: "", resName: me.name, atoms: []))
-                  let outline = me.clone(recursive: true) // as! ModelEntity
-                  outline.scale *= 1.03
-                  outline.name = "Outline"
-                  outline.components[MoleculeComponent.self] = lmc
-                  
-                  var material = PhysicallyBasedMaterial()
-                  material.emissiveColor.color = .white
-                  material.emissiveIntensity = 0.5
-                  
-                  // an outer surface doesn't contribute to the final image
-                  material.faceCulling = .front
-                  
-                  outline.model?.materials = outline.model!.materials.map { _ in material }
-                  //              outline.transform = res.transform
-                  pte.addChild(outline)
-
-                  
-                  let tm = MeshResource.generateText(me.name, extrusionDepth: 0.002, font: .boldSystemFont(ofSize: 0.015), containerFrame: .zero, alignment: .center)
-                  let textEntity = ModelEntity(mesh: tm, materials: [SimpleMaterial(color: .red, isMetallic: false)])
-                  textEntity.name = "Text"
-                  textEntity.components[MoleculeComponent.self] = lmc
-                  let vb = outline.visualBounds(relativeTo: pte)
-                  let bc = vb.center
-                  let br = vb.boundingRadius
-                  let bt = vb.max.y
-                  let bb = vb.min.y
-                  textEntity.position = bc + [0, (bt - bb)/2, 0]
-    //              textEntity.position = outline.position + [-0.02,0.01,0]
-                  pte.addChild(textEntity)
-
-                  
-                }
-  */
-                
-              }
-              
-              
-              cnt += 1
-  //            DispatchQueue.main.async {
-                progress = cnt / tot
-                print("Building",progress)
-  //            }
-              
+//          Task {@MainActor in
+            pe.name = "Protein"
+            pte.name = "ProteinTag"
+//          }
+          //        let pc = ProteinComponent()
+          //        pe.components.set(pc)
+          let firstPos : SIMD3<Float> = {
+            if let r = residues.first, r.atoms.count > 0 {
+              SIMD3(Float(r.atoms[0].x/100), Float(r.atoms[0].y/100), Float(r.atoms[0].z/100))
+            } else {
+              .zero
             }
-            
-            pte.components.set(InputTargetComponent())
-            pte.generateCollisionShapes(recursive: true, static: true)
-            pte.components.set(GestureComponent(canDrag: false, pivotOnDrag: false, preserveOrientationOnPivotDrag: false, canScale: true, canRotate: true))
+          }()
 
-          pte.position = [0, 1, -0.5]
-  //        pte.setPosition([0, 1, -0.5], relativeTo: nil)
+//          print(pte.components)
+          
+//          let topGroupID = HoverEffectComponent.GroupID()
+          
+          //        if model.showResidues {
+          print("Residues = \(residues.count)")
+          residues.forEach {
+            print("\($0.serNum) \($0.resName) \($0.chainID)")
+          }
+//          print(residues.map { "\($0.resName) \($0.chainID) \($0.serNum)" })
+
+
+          if let me = Molecule.genRichardsonDiagramEntity(residues: residues, helices: helices, sheets: sheets) {
+            me.transform.translation = -firstPos
+            me.name = "Ribbon"
+            /*
+            let hoverA = HoverEffectComponent(
+              .highlight(HoverEffectComponent.HighlightHoverEffectStyle(
+                color: .blue, strength: 0.25
+              )))
+            //                hoverA.hoverEffect.groupID = topGroupID
+            me.components.set(hoverA)
+             */
+            me.isEnabled = false
+            pte.addChild(me)
+            model.ribbon = me
+          }
+
+
+          
+          var cnt : Double = 0
+          let tot = Double(residues.count)
+          for r in residues { // .prefix(100) {
+            //          residues.forEach { r in
+            let me = Molecule.genResidueEntity(residue: r)
+//            if let me = Molecule.genMolecule(residue: r) {
+              //              if let me = await Molecule.entity(residue: r) {
+            let mc = MoleculeComponent(residue: r)
+            me.children.forEach { c in
+              c.components.set(mc)
+            }
+              //                me.components.set(mc)
+              
+            let p = r.atoms.first!
+            let pos : SIMD3<Float> = [Float(p.x/100), Float(p.y/100), Float(p.z/100)]
+//              if cnt == 0 {
+//                firstPos = pos
+//              }
+//            Task {@MainActor in
+            me.position = pos // - firstPos
+//              me.transform.translation = pos - firstPos
+                
+            me.name = r.resName
+//            }
+            
+            /*
+            let hoverA = HoverEffectComponent(
+              .highlight(HoverEffectComponent.HighlightHoverEffectStyle(
+                color: .green, strength: 0.35
+              )))
+              //                hoverA.hoverEffect.groupID = topGroupID
+            me.components.set(hoverA)
+             */
+              //                me.components.set(InputTargetComponent())
+              //                me.generateCollisionShapes(recursive: true, static: true)
+              //              me.components.remove(CollisionComponent.self)
+              //              me.components.remove(InputTargetComponent.self)
+              
+              //            print(me.name, r.resName)
+              
+            pte.addChild(me)
+              
+              //              if cnt == 0 {
+              //                print(me.name)
+//            print(me.name, me.position)
+              //              }
+                          
+            
+            //            DispatchQueue.main.async {
+//            Task { @MainActor in
+              cnt += 1
+              model.progress = cnt / tot
+//              print("Building",model.progress)
+//            }
+            //            }
+            //            }
+            
+          }
+          
+//          let pm = ModelEntity()
+//          pm.name = "ProteinModel"
+//          pm.addChild(pte)
+          
+          /*
+           let hoverA = HoverEffectComponent(
+           .highlight(HoverEffectComponent.HighlightHoverEffectStyle(
+           color: .white, strength: 0.5
+           )))
+           //            hoverA.hoverEffect.groupID = topGroupID
+           pm.components.set(hoverA)
+           //            pte.components.set(hoverA)
+           */
+          
+          //            pm.components.set(InputTargetComponent())
+          //            pm.generateCollisionShapes(recursive: true, static: true)
+          //            pm.components.set(GestureComponent(canDrag: true, pivotOnDrag: false, preserveOrientationOnPivotDrag: false, canScale: true, canRotate: true))
+          
+          //        pte.setPosition([0, 1, -0.5], relativeTo: nil)
           let ptc = ProteinComponent()
           pte.components.set(ptc)
+          
           pte.isEnabled = false
-          model.proteinTag = pte
-
-  //        } else {
-
-            if let p = Molecule.protein(atoms: atoms, saveCloud: false) {
-  //            print(p.name)
-              print(p.name, p.position)
-              p.components.set(HoverEffectComponent())
-              p.components.set(InputTargetComponent())
-              p.generateCollisionShapes(recursive: true, static: true)
-              p.components.set(GestureComponent(canDrag: false, pivotOnDrag: false, preserveOrientationOnPivotDrag: false, canScale: true, canRotate: true))
-              pe.addChild(p)
-              
-  //            pe.position = pte.position + firstPos // pte.position
-              pe.setPosition([0, 1, -0.5], relativeTo: nil)
-              let pc = ProteinComponent()
-              pe.components.set(pc)
-              model.protein = pe
-
-            }
-
-  //        }
+          model.spheres = pte
           
-          model.rootEntity.addChild(pe)
+          
+          
+          /*
+//          Task { @MainActor in
+          pte.position = [0, 1, -0.85]
+          pte.isEnabled = true
+          //              model.proteinTag = pte
+          
+          model.protein = pte
           model.rootEntity.addChild(pte)
+          
+          pte.components.set(InputTargetComponent())
+          pte.generateCollisionShapes(recursive: true, static: true)
+          pte.components.set(GestureComponent(canDrag: false, pivotOnDrag: false, preserveOrientationOnPivotDrag: true, canScale: true, canRotate: true))
+          
+          
+          let vb = pte.visualBounds(recursive: true, relativeTo: pte, excludeInactive: false)
+          print(vb.extents, vb.center)
+          let collisionShape = ShapeResource.generateBox(size: vb.extents)
+            .offsetBy(translation: vb.center)
+          let collisionComponent = CollisionComponent(shapes: [collisionShape], isStatic: true)
+          model.proteinCollision = collisionComponent
+          pte.components.set(collisionComponent)
+           
+           */
+          
+          
+          
 
-          switch await openImmersiveSpace(id: "ImmersiveSpace") {
-          case .opened:
-            immersiveSpaceIsShown = true
-//            model.loading = false
-          case .error, .userCancelled:
-            fallthrough
-          @unknown default:
-            immersiveSpaceIsShown = false
-            showImmersiveSpace = false
+          let rbs = ModelEntity()
+          rbs.name = "RibbonAndStick"
+          rbs.position = [0, 1, -0.85]
+          model.rootEntity.addChild(rbs)
+          model.protein = rbs
+          
+          rbs.addChild(pte)
+          print(pte.position)
+//          print(pte.children.first!.position)
+
+          let hoverA = HoverEffectComponent(
+            .highlight(HoverEffectComponent.HighlightHoverEffectStyle(
+              color: .white, strength: 0.15
+            )))
+          rbs.components.set(hoverA)
+
+          
+          if let u = Bundle.main.url(forResource: pName, withExtension: "pdb"), // 3aid 6uml (Thilidomide) 1a3n (Hemoglobin) 3nir 4HR9 6a5j 1ERT
+             let s = try? String(contentsOf: u, encoding: .utf8) {
+            let entity = ProteinRibbon.structureColoredEntity(from: s)  // Red helix, blue sheet, green coil
+            entity.name = "Ribbon2"
+//            entity.scale *= [0.1,0.1,0.1]
+            entity.isEnabled = false
+//            entity.position = [0, 2, -1.5]
+            rbs.addChild(entity)
+            model.ribbons = entity
+            print(entity.position)
+
+            /*
+            let vb = entity.visualBounds(recursive: true, relativeTo: entity, excludeInactive: false)
+            print(vb.extents, vb.center)
+            let collisionShape = ShapeResource.generateBox(size: vb.extents)
+              .offsetBy(translation: vb.center)
+            let collisionComponent = CollisionComponent(shapes: [collisionShape], isStatic: true)
+            entity.components.set(collisionComponent)
+
+            entity.components.set(InputTargetComponent())
+            entity.generateCollisionShapes(recursive: true, static: true)
+            entity.components.set(GestureComponent(canDrag: true, pivotOnDrag: false, preserveOrientationOnPivotDrag: true, canScale: true, canRotate: true))
+            */
+            
+            let bse = ProteinRibbon.ballAndStickCPK(from: s)
+            bse.name = "BallAndStick"
+//            bse.position = [0, 3, -2]
+            rbs.addChild(bse)
+            model.ballAndStick = bse
+            print(bse.position)
+            
+            /*
+            let vbb = bse.visualBounds(recursive: true, relativeTo: bse, excludeInactive: false)
+            print(vbb.extents, vbb.center)
+            let collisionShapeB = ShapeResource.generateBox(size: vbb.extents)
+              .offsetBy(translation: vbb.center)
+            let collisionComponentB = CollisionComponent(shapes: [collisionShapeB], isStatic: true)
+            bse.components.set(collisionComponentB)
+
+            bse.components.set(InputTargetComponent())
+            bse.generateCollisionShapes(recursive: true, static: true)
+            bse.components.set(GestureComponent(canDrag: true, pivotOnDrag: false, preserveOrientationOnPivotDrag: true, canScale: true, canRotate: true))
+             */
+
+            /*
+            let arb = AdvancedRibbonBuilder()
+            let me = arb.buildEntity(from: s, colorMode: .byStructure)
+            me.name = "AdvancedRibbon"
+            me.scale *= [0.1,0.1,0.1]
+            me.isEnabled = true
+            me.position = [0, 4, -3.5]
+            model.rootEntity.addChild(me)
+             */
           }
-        } else if immersiveSpaceIsShown {
-          await dismissImmersiveSpace()
-          immersiveSpaceIsShown = false
+
+          let rvb = rbs.visualBounds(recursive: true, relativeTo: rbs, excludeInactive: false)
+          print(rvb.extents, rvb.center)
+          let collisionShape = ShapeResource.generateBox(size: rvb.extents)
+            .offsetBy(translation: rvb.center)
+          let collisionComponent = CollisionComponent(shapes: [collisionShape], isStatic: true)
+          rbs.components.set(collisionComponent)
+          model.proteinCollision = collisionComponent
           
-          model.loading = false
-          model.tagged.removeAll()
-          model.protein?.removeFromParent()
-          model.proteinTag?.removeFromParent()
-          model.ligand?.removeFromParent()
-          model.protein = nil
-          model.proteinTag = nil
-          model.ligand = nil
+          rbs.components.set(InputTargetComponent())
+          rbs.generateCollisionShapes(recursive: true, static: true)
+          rbs.components.set(GestureComponent(canDrag: true, pivotOnDrag: false, preserveOrientationOnPivotDrag: true, canScale: true, canRotate: true))
+
           
+//            model.arView.installGestures(.translation, for: pte)
+
+            /*
+            var boundsMat: PhysicallyBasedMaterial {
+              var boundsMat = PhysicallyBasedMaterial()
+              boundsMat.baseColor = .init(tint: .red)
+              boundsMat.blending = .transparent(opacity: .init(floatLiteral:0.4))
+              return boundsMat
+            }
+            
+//            let vb = pte.visualBounds(recursive: true, relativeTo: pte, excludeInactive: false)
+//            let material = SimpleMaterial(color: UIColor.red.withAlphaComponent(0.4), isMetallic: false)
+            let pBox = ModelEntity(mesh: .generateBox(size: vb.extents), materials: [boundsMat])
+            //            pBox.position = SIMD3<Float>(vb.center.x - vb.extents.x / 2, vb.center.y - vb.extents.y / 2, vb.center.z - vb.extents.z / 2)
+            pBox.position = pte.position + vb.center
+            
+            /*
+             pBox.components.set(InputTargetComponent())
+             pBox.generateCollisionShapes(recursive: true, static: true)
+             pBox.components.set(GestureComponent(canDrag: true, pivotOnDrag: true, preserveOrientationOnPivotDrag: true, canScale: true, canRotate: true))
+             */
+
+            
+            //            pBox.position = vb.center // pte.position // + vb.center
+            //            pm.addChild(pBox)
+            model.rootEntity.addChild(pBox)
+             */
+            
+            
+//          }
+          
+          
+          //        } else {
+          
+          
+          /* Single Protein
+           
+           if let p = await Molecule.protein(atoms: atoms, saveCloud: false) {
+           //            print(p.name)
+           await print(p.name, p.position)
+           await p.components.set(HoverEffectComponent())
+           await p.components.set(InputTargetComponent())
+           await p.generateCollisionShapes(recursive: true, static: true)
+           await p.components.set(GestureComponent(canDrag: false, pivotOnDrag: false, preserveOrientationOnPivotDrag: false, canScale: true, canRotate: true))
+           await pe.addChild(p)
+           
+           //            pe.position = pte.position + firstPos // pte.position
+           await pe.setPosition([0, 1, -0.5], relativeTo: nil)
+           let pc = ProteinComponent()
+           await pe.components.set(pc)
+           
+           Task { @MainActor in
+           model.protein = pe
+           }
+           
+           }
+           */
+          
+          /*
+           pe.setPosition([0, 1, -0.5], relativeTo: nil)
+           let pc = ProteinComponent()
+           pe.components.set(pc)
+           
+           Task { @MainActor in
+           model.protein = pe
+           }
+           */
+          
+          /*
+           Task { @MainActor in
+           //              model.rootEntity.addChild(pe)
+           model.rootEntity.addChild(pte)
+           }
+           */
+          
+          /*
+           switch await openImmersiveSpace(id: "ImmersiveSpace") {
+           case .opened:
+           immersiveSpaceIsShown = true
+           //            model.loading = false
+           case .error, .userCancelled:
+           fallthrough
+           @unknown default:
+           immersiveSpaceIsShown = false
+           showImmersiveSpace = false
+           }
+           */
+          
+          /*
+           } else if immersiveSpaceIsShown {
+           await dismissImmersiveSpace()
+           immersiveSpaceIsShown = false
+           
+           model.loading = false
+           model.tagged.removeAll()
+           model.protein?.removeFromParent()
+           model.proteinTag?.removeFromParent()
+           model.ligand?.removeFromParent()
+           model.protein = nil
+           model.proteinTag = nil
+           model.ligand = nil
+           
+           }
+           */
+          //        */
+          //        }
+          
+          /*
+           } else {
+           Task {
+           if immersiveSpaceIsShown {
+           model.loading = false
+           model.tagged.removeAll()
+           model.protein?.removeFromParent()
+           model.proteinTag?.removeFromParent()
+           model.ligand?.removeFromParent()
+           model.protein = nil
+           model.proteinTag = nil
+           model.ligand = nil
+           
+           await dismissImmersiveSpace()
+           immersiveSpaceIsShown = false
+           
+           }
+           }
+           }
+           */
         }
+        
+//        Task { @MainActor in
+          model.loading = false
+//        }
       }
     }
   }

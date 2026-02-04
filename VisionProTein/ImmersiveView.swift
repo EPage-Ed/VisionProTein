@@ -28,14 +28,17 @@ struct ImmersiveView: View {
     RealityView { content, attachments in
       // Add the initial RealityKit content
       content.add(model.rootEntity)
+      /*
       if let entity = attachments.entity(for: "Panel") {
         entity.position = [-0.5,1,-0.75]
         content.add(entity)
       }
       model.loading = false
+       */
 
     } update: { content, attachments in
     } attachments: {
+      
       Attachment(id: "Panel") {
         VStack {
           HStack {
@@ -56,6 +59,7 @@ struct ImmersiveView: View {
             .padding()
              */
             
+            /*
             Button("Select Binding Sites") {
               for i in 0..<model.proteinTag!.children.count {
                 let r = model.proteinTag!.children[i] as! ModelEntity
@@ -106,17 +110,23 @@ struct ImmersiveView: View {
               
             }
             .buttonStyle(.borderedProminent)
-            .disabled(!model.tagState)
+            .disabled(model.modelState != .tag)
             .padding()
             
             HStack {
               Spacer()
+              Text("Folded")
+              Toggle("", isOn: $model.foldedState).labelsHidden()
+                .disabled(model.modelState != .tag)
+
+              Spacer()
               Text("Tag Residues")
-              Toggle("", isOn: $model.tagState).labelsHidden()
+              Toggle("", isOn: $model.modelState).labelsHidden()
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
             .padding(.trailing)
 //              .toggleStyle(.automatic)
+             */
           }
           .padding()
           ZStack {
@@ -168,7 +178,7 @@ struct ImmersiveView: View {
             
           }
           .buttonStyle(.borderedProminent)
-          .disabled(!model.tagState)
+          .disabled(model.modelState != .tagging)
           .padding()
         }
         .glassBackgroundEffect()
@@ -182,41 +192,68 @@ struct ImmersiveView: View {
 //      }
 //    }
 
+    /*
+    .gesture(
+      TapGesture(count: 2)
+        .targetedToAnyEntity()
+        .onEnded { _ in
+          print("Tap 1 !!!")
+        }
+    )
+     */
+    
+
     .gesture(
       TapGesture(count: 1)
 //        .targetedToAnyEntity()
         .targetedToEntity(where: .has(MoleculeComponent.self))
         .onEnded { value in
-          print("Tap !!!")
-          guard let res = value.entity as? ModelEntity,
-                let mc = res.components[MoleculeComponent.self],
-                let protein = res.parent
+//          print("Tap !!!")
+          guard let atom = value.entity as? ModelEntity,
+                let mc = atom.components[MoleculeComponent.self],
+                let res = atom.parent
           else { return }
           
-          let r = mc.residue
-          if r.atoms.count == 0 {
-            res.removeFromParent()
+          let residue = mc.residue
+          print(residue.resName)
+
+//          return;
+          
+          if mc.outline {
             
-            let ents = protein.children.compactMap({ $0.components[MoleculeComponent.self]?.residue.id == r.id ? $0 : nil })
+            let mcs = res.children.compactMap({ $0.components[MoleculeComponent.self]})
+            for ac in mcs {
+              ac.outline = false
+            }
+
+            res.children.filter { $0.name == "Text" }.forEach { $0.removeFromParent() }
+//          if residue.atoms.count == 0 {
+//            res.removeFromParent()
+            
+            /*
+            let ents = protein.children.compactMap({ $0.components[MoleculeComponent.self]?.residue.id == residue.id ? $0 : nil })
             for e in ents {
               if e.name == "Text" { e.removeFromParent() }
             }
 
             
             let mcs = protein.children.compactMap({ $0.components[MoleculeComponent.self]})
-            for mc in mcs.filter({ $0.residue.id == r.id}) {
+            for mc in mcs.filter({ $0.residue.id == residue.id}) {
               mc.outline = false
-              model.tagged.remove(mc.residue)
             }
+             */
+            model.tagged.remove(residue)
           } else {
-            mc.outline = true
-            Task {
-//            print(res.name, res.parent?.parent)
-//              if let protein = res.parent {
-              print(res.name)
-              model.tagged.insert(mc.residue)
+            let mcs = res.children.compactMap({ $0.components[MoleculeComponent.self]})
+            for ac in mcs {
+              ac.outline = true
+            }
+            
+            /*
+            for mc in mcs.filter({ $0.residue.id == residue.id}) {
+              mc.outline = true
               
-              let lmc = MoleculeComponent(residue: Residue(id: r.id, serNum: -1, chainID: "", resName: res.name, atoms: []))
+              let lmc = MoleculeComponent(residue: Residue(id: residue.id, serNum: -1, chainID: "", resName: res.name, atoms: []))
               let outline = res.clone(recursive: true) // as! ModelEntity
               outline.scale *= 1.03
               outline.name = "Outline"
@@ -232,6 +269,35 @@ struct ImmersiveView: View {
               outline.model?.materials = outline.model!.materials.map { _ in material }
               //              outline.transform = res.transform
               protein.addChild(outline)
+
+            }
+             */
+//            mc.outline = true
+            Task {
+//            print(res.name, res.parent?.parent)
+//              if let protein = res.parent {
+//              print(res.name)
+
+              model.tagged.insert(residue)
+              
+              /*
+              let lmc = MoleculeComponent(residue: Residue(id: residue.id, serNum: -1, chainID: "", resName: res.name, atoms: []))
+              let outline = res.clone(recursive: true) // as! ModelEntity
+              outline.scale *= 1.03
+              outline.name = "Outline"
+              outline.components[MoleculeComponent.self] = lmc
+              
+              var material = PhysicallyBasedMaterial()
+              material.emissiveColor.color = .white
+              material.emissiveIntensity = 0.5
+              
+              // an outer surface doesn't contribute to the final image
+              material.faceCulling = .front
+              
+              outline.model?.materials = outline.model!.materials.map { _ in material }
+              //              outline.transform = res.transform
+              protein.addChild(outline)
+               */
               
 //              let textEntity = ModelEntity(mesh: .generateText(res.name, extrusionDepth: 0.4, font: .boldSystemFont(ofSize: 24), containerFrame: .zero, alignment: .center, lineBreakMode: .byWordWrapping))
 
@@ -240,15 +306,15 @@ struct ImmersiveView: View {
               let tm = MeshResource.generateText(res.name, extrusionDepth: 0.002, font: .boldSystemFont(ofSize: 0.015), containerFrame: .zero, alignment: .center)
               let textEntity = ModelEntity(mesh: tm, materials: [SimpleMaterial(color: .red, isMetallic: false)])
               textEntity.name = "Text"
-              textEntity.components[MoleculeComponent.self] = lmc
-              let vb = outline.visualBounds(relativeTo: protein)
+              textEntity.components[MoleculeComponent.self] = mc
+              let vb = res.visualBounds(relativeTo: res)
               let bc = vb.center
               let br = vb.boundingRadius
               let bt = vb.max.y
               let bb = vb.min.y
               textEntity.position = bc + [0, (bt - bb)/2, 0]
 //              textEntity.position = outline.position + [-0.02,0.01,0]
-              protein.addChild(textEntity)
+              res.addChild(textEntity)
 
               
 //              } else {

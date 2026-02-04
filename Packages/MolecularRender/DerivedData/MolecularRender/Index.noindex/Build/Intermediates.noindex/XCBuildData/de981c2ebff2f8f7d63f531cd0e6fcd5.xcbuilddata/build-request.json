@@ -1,0 +1,46 @@
+{
+  "buildCommand" : {
+    "command" : "prepareForIndexing",
+    "enableIndexBuildArena" : true,
+    "targets" : null
+  },
+  "configuredTargets" : [
+
+  ],
+  "containerPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/Packages/MolecularRender",
+  "continueBuildingAfterErrors" : true,
+  "dependencyScope" : "workspace",
+  "enableIndexBuildArena" : false,
+  "hideShellScriptEnvironment" : false,
+  "parameters" : {
+    "action" : "indexbuild",
+    "arenaInfo" : {
+      "buildIntermediatesPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/Packages/MolecularRender/DerivedData/MolecularRender/Index.noindex/Build/Intermediates.noindex",
+      "buildProductsPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/Packages/MolecularRender/DerivedData/MolecularRender/Index.noindex/Build/Products",
+      "derivedDataPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/Packages/MolecularRender/DerivedData",
+      "indexDataStoreFolderPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/Packages/MolecularRender/DerivedData/MolecularRender/Index.noindex/DataStore",
+      "indexEnableDataStore" : true,
+      "indexPCHPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/Packages/MolecularRender/DerivedData/MolecularRender/Index.noindex/PrecompiledHeaders",
+      "indexRegularBuildIntermediatesPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/Packages/MolecularRender/DerivedData/Build/Intermediates.noindex",
+      "indexRegularBuildProductsPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/Packages/MolecularRender/DerivedData/Build/Products",
+      "pchPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/Packages/MolecularRender/DerivedData/MolecularRender/Index.noindex/Build/Intermediates.noindex/PrecompiledHeaders"
+    },
+    "configurationName" : "Debug",
+    "overrides" : {
+      "synthesized" : {
+        "table" : {
+          "ENABLE_PREVIEWS" : "NO",
+          "ENABLE_XOJIT_PREVIEWS" : "NO",
+          "ONLY_ACTIVE_ARCH" : "YES"
+        }
+      }
+    }
+  },
+  "qos" : "utility",
+  "schemeCommand" : "launch",
+  "showNonLoggedProgress" : true,
+  "useDryRun" : false,
+  "useImplicitDependencies" : true,
+  "useLegacyBuildLocations" : false,
+  "useParallelTargets" : true
+}

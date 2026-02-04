@@ -1,0 +1,847 @@
+{
+  "builtTestProducts" : [
+    {
+      "binaryPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.xctest/Contents/MacOS/ProteinRibbonPackageTests",
+      "packagePath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon",
+      "productName" : "ProteinRibbonPackageTests"
+    }
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.ProteinRibbon-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/sources",
+      "importPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/AminoAcid.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/BallAndStick.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/BondDetection.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/ColorSchemes.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/MeshBuilder.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/PDBParser.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/ProteinRibbon.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/RealityKitEntity.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/RibbonGeometry.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/SecondaryStructure.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/SplineInterpolation.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/TNBFrame.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "ProteinRibbon",
+      "moduleOutputPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/Modules/ProteinRibbon.swiftmodule",
+      "objects" : [
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/AminoAcid.swift.o",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/BallAndStick.swift.o",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/BondDetection.swift.o",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/ColorSchemes.swift.o",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/MeshBuilder.swift.o",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/PDBParser.swift.o",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/ProteinRibbon.swift.o",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/RealityKitEntity.swift.o",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/RibbonGeometry.swift.o",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/SecondaryStructure.swift.o",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/SplineInterpolation.swift.o",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/TNBFrame.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/include/ProteinRibbon-Swift.h",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "proteinribbon"
+      ],
+      "outputFileMapPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/AminoAcid.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/BallAndStick.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/BondDetection.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/ColorSchemes.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/MeshBuilder.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/PDBParser.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/ProteinRibbon.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/RealityKitEntity.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/RibbonGeometry.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/SecondaryStructure.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/SplineInterpolation.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/TNBFrame.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/Modules/ProteinRibbon.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/AminoAcid.swift",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/BallAndStick.swift",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/BondDetection.swift",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/ColorSchemes.swift",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/MeshBuilder.swift",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/PDBParser.swift",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/ProteinRibbon.swift",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/RealityKitEntity.swift",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/RibbonGeometry.swift",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/SecondaryStructure.swift",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/SplineInterpolation.swift",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/TNBFrame.swift"
+      ],
+      "tempsPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.ProteinRibbonPackageTests-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.build/sources",
+      "importPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.derived/runner.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/Modules/ProteinRibbonTests.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "ProteinRibbonPackageTests",
+      "moduleOutputPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/Modules/ProteinRibbonPackageTests.swiftmodule",
+      "objects" : [
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.build/runner.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-Xfrontend",
+        "-enable-cross-import-overlays",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.build/include/ProteinRibbonPackageTests-Swift.h",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "proteinribbon"
+      ],
+      "outputFileMapPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.build/runner.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/Modules/ProteinRibbonPackageTests.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.derived/runner.swift"
+      ],
+      "tempsPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.ProteinRibbonTests-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonTests.build/sources",
+      "importPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Tests/ProteinRibbonTests/ProteinRibbonTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/Modules/ProteinRibbon.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonTests.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "ProteinRibbonTests",
+      "moduleOutputPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/Modules/ProteinRibbonTests.swiftmodule",
+      "objects" : [
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonTests.build/ProteinRibbonTests.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-Xfrontend",
+        "-enable-cross-import-overlays",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "proteinribbon"
+      ],
+      "outputFileMapPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonTests.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonTests.build/ProteinRibbonTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/Modules/ProteinRibbonTests.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Tests/ProteinRibbonTests/ProteinRibbonTests.swift"
+      ],
+      "tempsPath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonTests.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "ProteinRibbon" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "ProteinRibbon",
+      "-package-name",
+      "proteinribbon",
+      "-c",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/AminoAcid.swift",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/BallAndStick.swift",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/BondDetection.swift",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/ColorSchemes.swift",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/MeshBuilder.swift",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/PDBParser.swift",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/ProteinRibbon.swift",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/RealityKitEntity.swift",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/RibbonGeometry.swift",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/SecondaryStructure.swift",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/SplineInterpolation.swift",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/TNBFrame.swift",
+      "-I",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/include/ProteinRibbon-Swift.h",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "proteinribbon",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "ProteinRibbonPackageTests" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "ProteinRibbonPackageTests",
+      "-package-name",
+      "proteinribbon",
+      "-c",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.derived/runner.swift",
+      "-I",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-Xfrontend",
+      "-enable-cross-import-overlays",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.build/include/ProteinRibbonPackageTests-Swift.h",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "proteinribbon",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "ProteinRibbonTests" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "ProteinRibbonTests",
+      "-package-name",
+      "proteinribbon",
+      "-c",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Tests/ProteinRibbonTests/ProteinRibbonTests.swift",
+      "-I",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-Xfrontend",
+      "-enable-cross-import-overlays",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "proteinribbon",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "ProteinRibbon" : [
+
+    ],
+    "ProteinRibbonPackageTests" : [
+      "ProteinRibbonTests",
+      "ProteinRibbon"
+    ],
+    "ProteinRibbonTests" : [
+      "ProteinRibbon"
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+    "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.derived/runner.swift" : {
+      "inputs" : [
+
+      ],
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.derived/runner.swift"
+        }
+      ]
+    }
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/AminoAcid.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/BallAndStick.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/BondDetection.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/ColorSchemes.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/MeshBuilder.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/PDBParser.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/ProteinRibbon.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/RealityKitEntity.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/RibbonGeometry.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/SecondaryStructure.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/SplineInterpolation.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Sources/ProteinRibbon/TNBFrame.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/sources"
+    },
+    "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.derived/runner.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.build/sources"
+    },
+    "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/AminoAcid.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/BallAndStick.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/BondDetection.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/ColorSchemes.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/MeshBuilder.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/PDBParser.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/ProteinRibbon.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/RealityKitEntity.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/RibbonGeometry.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/SecondaryStructure.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/SplineInterpolation.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbon.build/TNBFrame.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.build/runner.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonTests.build/ProteinRibbonTests.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonPackageTests.product/Objects.LinkFileList"
+    },
+    "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonTests.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Tests/ProteinRibbonTests/ProteinRibbonTests.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonTests.build/sources"
+    },
+    "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}

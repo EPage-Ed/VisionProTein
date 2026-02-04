@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonTests.build/master.swiftdeps"
+  },
+  "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/Tests/ProteinRibbonTests/ProteinRibbonTests.swift": {
+    "dependencies": "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonTests.build/ProteinRibbonTests.d",
+    "object": "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonTests.build/ProteinRibbonTests.swift.o",
+    "swiftmodule": "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonTests.build/ProteinRibbonTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonTests.build/ProteinRibbonTests.swiftdeps",
+    "diagnostics": "/Users/arenberg/Developer/VisionProTein/VisionProTein26/ProteinRibbon/.build/arm64-apple-macosx/debug/ProteinRibbonTests.build/ProteinRibbonTests.dia"
+  }
+}
