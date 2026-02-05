@@ -32,6 +32,7 @@
 		D8AA5A252BB9EE2100340803 /* ProteinListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8AA5A242BB9EE2100340803 /* ProteinListView.swift */; };
 		D8D19CDD2F30734700B6DBC6 /* ProteinRibbon in Frameworks */ = {isa = PBXBuildFile; productRef = D8D19CDC2F30734700B6DBC6 /* ProteinRibbon */; };
 		D8D19CE22F31D59B00B6DBC6 /* 1ERT.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D8D19CE12F31D59B00B6DBC6 /* 1ERT.pdb */; };
+		D8F59B0E2F33FE72009EE16D /* Molecule+BallAndStick.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8F59B0D2F33FE72009EE16D /* Molecule+BallAndStick.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -60,6 +61,7 @@
 		D8AA5A222BB9597400340803 /* 3nir.pdb */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = 3nir.pdb; sourceTree = "<group>"; };
 		D8AA5A242BB9EE2100340803 /* ProteinListView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProteinListView.swift; sourceTree = "<group>"; };
 		D8D19CE12F31D59B00B6DBC6 /* 1ERT.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 1ERT.pdb; sourceTree = "<group>"; };
+		D8F59B0D2F33FE72009EE16D /* Molecule+BallAndStick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Molecule+BallAndStick.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -134,6 +136,7 @@
 				D8AA59FB2BB7B0C500340803 /* ARModel.swift */,
 				D8AA5A052BB7F49000340803 /* Molecule.swift */,
 				D8241D122F2824D6007B32BB /* AminoAcid.swift */,
+				D8F59B0D2F33FE72009EE16D /* Molecule+BallAndStick.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -277,6 +280,7 @@
 				D8AA59EE2BB7AEF000340803 /* ImmersiveView.swift in Sources */,
 				D8AA5A1C2BB90D9F00340803 /* RealityViewExtensions.swift in Sources */,
 				D8AA5A1A2BB90D9F00340803 /* EntityExtensions.swift in Sources */,
+				D8F59B0E2F33FE72009EE16D /* Molecule+BallAndStick.swift in Sources */,
 				D8AA5A1D2BB90D9F00340803 /* GestureComponent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

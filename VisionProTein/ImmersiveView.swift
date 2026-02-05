@@ -203,6 +203,176 @@ struct ImmersiveView: View {
      */
     
 
+    // Tap gesture for ball and stick representation  
+    .gesture(
+      SpatialTapGesture()
+        .targetedToAnyEntity()
+        .onEnded { value in
+          // Check if we tapped on the ball and stick entity
+          guard let ballAndStick = model.ballAndStick,
+                ballAndStick.isEnabled,
+                let tappedEntity = value.entity as? ModelEntity else {
+            return
+          }
+          
+          // First check if we tapped on a highlighted residue entity
+          var current: Entity? = tappedEntity
+          var highlightedEntity: ModelEntity?
+          
+          while let entity = current {
+            // Check if this entity is one of our highlighted residues
+            if entity.name.hasPrefix("Selected_") {
+              highlightedEntity = entity as? ModelEntity
+              break
+            }
+            current = entity.parent
+          }
+          
+          // If we tapped a highlighted residue, remove it
+          if let highlighted = highlightedEntity {
+            // Extract residue ID from name format: "Selected_<resName>_<chainID><serNum>"
+            let nameParts = highlighted.name.split(separator: "_")
+            if nameParts.count >= 3 {
+              // Parse the chain and sequence number from the last part
+              let chainAndSeq = String(nameParts[2])
+              if let serNum = Int(chainAndSeq.dropFirst()) {
+                // Remove from tracking dictionary
+                model.highlightedResidueEntities.removeValue(forKey: serNum)
+                
+                // Find and remove from tagged set
+                if let residue = model.tagged.first(where: { $0.serNum == serNum }) {
+                  model.tagged.remove(residue)
+                  print("Removed highlighted residue: \(residue.resName) \(residue.chainID)\(residue.serNum)")
+                }
+                
+                // Remove entity from scene
+                highlighted.removeFromParent()
+              }
+            }
+            return  // Don't process as a new selection
+          }
+          
+          // Check if the tapped entity is part of the ball and stick hierarchy
+          current = tappedEntity
+          var isPartOfBallAndStick = false
+          while let entity = current {
+            if entity === ballAndStick {
+              isPartOfBallAndStick = true
+              break
+            }
+            current = entity.parent
+          }
+          
+          if isPartOfBallAndStick {
+            // Get all residues from the PDB
+            let pName = "1ERT"
+            let (atoms, residues, helices, sheets, seqres) = PDB.parsePDB(named: pName, maxChains: 2)
+            
+            // Simplest reliable approach: find the closest atom to the tap point
+            // Convert tap location to ball and stick local space
+            let tapWorldPos = value.convert(value.location3D, from: .local, to: .scene)
+            let tapLocalPos = ballAndStick.convert(position: tapWorldPos, from: nil)
+            
+            print("Tap position (local): \(tapLocalPos)")
+            
+            // Find the closest atom
+            var closestAtom: Atom?
+            var closestResidue: Residue?
+            var minDistance: Float = .infinity
+            
+            for residue in residues {
+              for atom in residue.atoms {
+                let atomPos = SIMD3<Float>(
+                  Float(atom.x) * 0.01,
+                  Float(atom.y) * 0.01,
+                  Float(atom.z) * 0.01
+                )
+                
+                let dist = distance(tapLocalPos, atomPos)
+                
+                if dist < minDistance {
+                  minDistance = dist
+                  closestAtom = atom
+                  closestResidue = residue
+                }
+              }
+            }
+            
+            print("Closest atom: \(closestAtom?.name ?? "none") in \(closestResidue?.resName ?? "")\(closestResidue?.serNum ?? -1), distance: \(minDistance)")
+            
+            // Debug: show what we found
+            if let atom = closestAtom, let residue = closestResidue {
+              let atomPos = SIMD3<Float>(
+                Float(atom.x) * 0.01,
+                Float(atom.y) * 0.01,
+                Float(atom.z) * 0.01
+              )
+              print("Closest atom: \(atom.name) in residue \(residue.resName)\(residue.serNum)")
+              print("Atom position: \(atomPos), distance: \(minDistance)")
+            }
+            
+            // Accept matches within 0.1 units (10 cm in scene scale)
+            // This is generous enough to account for tap location inaccuracy with instanced meshes
+            if let residue = closestResidue, minDistance < 0.1 {
+              // Check if this residue is already highlighted - if so, remove it
+              if let existingEntity = model.highlightedResidueEntities[residue.serNum] {
+                print("Removing highlighted residue: \(residue.resName) \(residue.chainID)\(residue.serNum)")
+                
+                // Remove from tracking dictionary
+                model.highlightedResidueEntities.removeValue(forKey: residue.serNum)
+                
+                // Remove from tagged set
+                model.tagged.remove(residue)
+                
+                // Remove entity from scene
+                existingEntity.removeFromParent()
+                return
+              }
+              
+              print("Selected residue: \(residue.resName) \(residue.chainID)\(residue.serNum)")
+              
+              // Create a separate entity for this residue with larger atom radius
+              if let residueEntity = Molecule.genBallAndStickResidue(residue: residue, atomScale: 1.5) {
+                residueEntity.name = "Selected_\(residue.resName)_\(residue.chainID)\(residue.serNum)"
+                
+                // Add emissive material for highlight with 50% opacity
+                var material = PhysicallyBasedMaterial()
+                material.emissiveColor.color = .yellow
+                material.emissiveIntensity = 0.3
+                material.blending = .transparent(opacity: 0.3)
+                
+                // Apply material to all children
+                residueEntity.children.forEach { child in
+                  if var modelEntity = child as? ModelEntity,
+                     let model = modelEntity.model {
+                    modelEntity.model?.materials = model.materials.map { _ in material }
+                  }
+                }
+                
+                // Add collision shapes and input target to make it tappable
+                residueEntity.components.set(InputTargetComponent())
+                residueEntity.generateCollisionShapes(recursive: true, static: true)
+                
+                // Add it to the same parent as the ball and stick entity
+                // This ensures it uses the same coordinate space
+                if let parent = ballAndStick.parent {
+                  parent.addChild(residueEntity)
+                } else {
+                  model.rootEntity.addChild(residueEntity)
+                }
+                
+                // Track this highlighted entity
+                model.highlightedResidueEntities[residue.serNum] = residueEntity
+                
+                // Add to tagged residues
+                model.tagged.insert(residue)
+              }
+            }
+            return
+          }
+        }
+    )
+    
     .gesture(
       TapGesture(count: 1)
 //        .targetedToAnyEntity()

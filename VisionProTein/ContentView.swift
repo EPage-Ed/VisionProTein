@@ -548,8 +548,6 @@ struct ContentView: View {
 
           let rbs = ModelEntity()
           rbs.name = "RibbonAndStick"
-          rbs.position = [0, 1, -0.85]
-          model.rootEntity.addChild(rbs)
           model.protein = rbs
           
           rbs.addChild(pte)
@@ -594,18 +592,9 @@ struct ContentView: View {
             model.ballAndStick = bse
             print(bse.position)
             
-            /*
-            let vbb = bse.visualBounds(recursive: true, relativeTo: bse, excludeInactive: false)
-            print(vbb.extents, vbb.center)
-            let collisionShapeB = ShapeResource.generateBox(size: vbb.extents)
-              .offsetBy(translation: vbb.center)
-            let collisionComponentB = CollisionComponent(shapes: [collisionShapeB], isStatic: true)
-            bse.components.set(collisionComponentB)
-
+            // Enable collision and input for tap gestures
             bse.components.set(InputTargetComponent())
             bse.generateCollisionShapes(recursive: true, static: true)
-            bse.components.set(GestureComponent(canDrag: true, pivotOnDrag: false, preserveOrientationOnPivotDrag: true, canScale: true, canRotate: true))
-             */
 
             /*
             let arb = AdvancedRibbonBuilder()
@@ -618,8 +607,24 @@ struct ContentView: View {
              */
           }
 
+//          let pivotEntity = Entity()
+          
+          model.rootEntity.addChild(rbs)
+          rbs.position = [0, 1, -0.85]
+//          model.rootEntity.addChild(pivotEntity)
+          
           let rvb = rbs.visualBounds(recursive: true, relativeTo: rbs, excludeInactive: false)
           print(rvb.extents, rvb.center)
+          
+//          pivotEntity.position = rvb.center
+//          rbs.setParent(pivotEntity, preservingWorldTransform: true)
+//          pivotEntity.scale = SIMD3(2, 2, 2)
+          
+//          pivotEntity.components[InputTargetComponent.self] = InputTargetComponent()
+//          pivotEntity.generateCollisionShapes(recursive: true)
+
+//          pivotEntity.position = [0, 1, -0.85]
+
           let collisionShape = ShapeResource.generateBox(size: rvb.extents)
             .offsetBy(translation: rvb.center)
           let collisionComponent = CollisionComponent(shapes: [collisionShape], isStatic: true)

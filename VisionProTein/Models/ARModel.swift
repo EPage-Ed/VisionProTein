@@ -193,6 +193,9 @@ final class ARModel : ObservableObject {
   var ligand : ModelEntity?
   
   var proteinCollision : CollisionComponent?
+  
+  // Track highlighted residue entities for removal
+  var highlightedResidueEntities: [Int: ModelEntity] = [:]
 
   var initialHandRotation : simd_quatf = .init(vector: [0,0,0,0])
   var initialHandTranslation : SIMD3<Float> = .zero
