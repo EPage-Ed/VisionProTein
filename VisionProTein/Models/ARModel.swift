@@ -9,6 +9,20 @@ import RealityKit
 import ARKit
 import Accelerate
 
+/*
+extension simd_float4x4 {
+  /// Extracts the 3D position from the transform matrix
+  var translation: SIMD3<Float> {
+    SIMD3<Float>(columns.3.x, columns.3.y, columns.3.z)
+  }
+}
+
+/// Standard Euclidean distance between two 3D points
+func distance(_ a: SIMD3<Float>, _ b: SIMD3<Float>) -> Float {
+  simd_distance(a, b)
+}
+*/
+
 enum ModelState : CaseIterable, Identifiable {
   case resizing
   case tagging
@@ -164,6 +178,7 @@ final class ARModel : ObservableObject {
   }
    */
   
+  var pName = "1ERT" // 1hqq Biotin 3nir 1nc9 4HR9 1ERT
   let rootEntity = Entity()
   @Published var loading = false
   @Published var progress : Double = 0
@@ -196,6 +211,12 @@ final class ARModel : ObservableObject {
   
   // Track highlighted residue entities for removal
   var highlightedResidueEntities: [Int: ModelEntity] = [:]
+  
+  // Cached protein data for tap selection
+  var proteinResidues: [Residue] = []
+  var atomPositions: [SIMD3<Float>] = []  // Scaled positions matching ball and stick (in ball&stick local space)
+  var atomRadii: [Float] = []  // Visual radii (scaled by 0.3)
+  var atomToResidueMap: [Int: Residue] = [:]  // Maps atom index to its residue
 
   var initialHandRotation : simd_quatf = .init(vector: [0,0,0,0])
   var initialHandTranslation : SIMD3<Float> = .zero
@@ -225,9 +246,61 @@ final class ARModel : ObservableObject {
     ligand?.scale = scale
   }
   
+  var tapAnchor : AnchorEntity?
+  var tapEntity : Entity?
+  var tapActive = false
+  
   @MainActor
   func processHandAnchorUpdate(_ update: AnchorUpdate<HandAnchor>) async {
     //            print(update.description)
+    if let leftHand = handTracker.latestAnchors.leftHand,
+       let indexTip = leftHand.handSkeleton?.joint(.middleFingerTip),
+       let thumbTip = leftHand.handSkeleton?.joint(.thumbTip),
+       indexTip.isTracked && thumbTip.isTracked {
+      
+      let distance = distance(indexTip.anchorFromJointTransform.columns.3, thumbTip.anchorFromJointTransform.columns.3)
+
+      if !tapActive {
+        // 3. Calculate distance to detect pinch
+      
+        if distance < 0.02 {
+          print("Pinch detected")
+          tapActive = true
+          tapEntity?.removeFromParent()
+          tapEntity = nil
+          tapAnchor = nil
+          
+//          let transform = indexTip.anchorFromJointTransform
+//          let indexPos = SIMD3<Float>(transform.columns.3.x,
+//                                      transform.columns.3.y,
+//                                      transform.columns.3.z)
+          let sphere = ModelEntity(
+            mesh: .generateSphere(radius: 0.01),
+            materials: [SimpleMaterial(color: .red, isMetallic: true)]
+          )
+          
+          // Multiply hand anchor by joint transform to get World Space
+          let worldMatrix = leftHand.originFromAnchorTransform * indexTip.anchorFromJointTransform
+          let worldPos = SIMD3<Float>(worldMatrix.columns.3.x, worldMatrix.columns.3.y, worldMatrix.columns.3.z)
+          
+//          let anchor = AnchorEntity(world: worldPos)
+          sphere.position = worldPos // [0,0,0]
+//          anchor.addChild(sphere)
+          rootEntity.addChild(sphere)
+          tapEntity = sphere
+//          tapAnchor = anchor
+
+        }
+      } else {
+        if distance > 0.02 {
+          print("Pinch released")
+          tapActive = false
+        }
+      }
+    }
+
+
+    
     if let hand = handTracker.latestAnchors.leftHand,
        let fingerTip = hand.handSkeleton?.joint(.middleFingerTip)
 //       let fingerBase = hand.handSkeleton?.joint(.middleFingerKnuckle)
