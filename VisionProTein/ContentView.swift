@@ -48,9 +48,16 @@ struct ContentView: View {
       Text("Vision \(Text("ProTein").foregroundStyle(Color.green))")
         .font(.largeTitle)
       
-      HStack {
-        ProgressView()
-        Text(model.progress.formatted(.percent.precision(.fractionLength(2))))
+      VStack(spacing: 4) {
+        HStack {
+          ProgressView(value: model.progress)
+            .frame(width: 400)
+          Text(model.progress.formatted(.percent.precision(.fractionLength(0))))
+            .font(.caption)
+        }
+        Text(model.loadingStatus)
+          .font(.caption)
+          .foregroundStyle(.secondary)
       }
       .opacity(model.loading ? 1 : 0)
       
@@ -76,12 +83,20 @@ struct ContentView: View {
             model.pName = "1nc9"
             showImmersiveSpace.toggle()
           }
-          Button("3nir") {
-            model.pName = "3nir"
+          Button("5JLH") {
+            model.pName = "5JLH"
             showImmersiveSpace.toggle()
           }
           Button("4HR9") {
             model.pName = "4HR9"
+            showImmersiveSpace.toggle()
+          }
+          Button("4HHB") {
+            model.pName = "4HHB"
+            showImmersiveSpace.toggle()
+          }
+          Button("5NPO") {
+            model.pName = "5NPO"
             showImmersiveSpace.toggle()
           }
         }
@@ -357,10 +372,13 @@ struct ContentView: View {
       
       //      }
     }
+
     .onChange(of: immersiveSpaceIsShown) { _, newValue in
       
       if newValue {
         model.loading = true
+        model.progress = 0.0
+        model.loadingStatus = "Initializing..."
         
         Task { // @MainActor in
           
@@ -592,6 +610,10 @@ struct ContentView: View {
           
           if let u = Bundle.main.url(forResource: model.pName, withExtension: "pdb"), // 3aid 6uml (Thilidomide) 1a3n (Hemoglobin) 3nir 4HR9 6a5j 1ERT
              let s = try? String(contentsOf: u, encoding: .utf8) {
+            await MainActor.run {
+              model.progress = 0.2
+              model.loadingStatus = "Creating ribbon structure..."
+            }
             let entity = ProteinRibbon.structureColoredEntity(from: s)  // Red helix, blue sheet, green coil
             entity.name = "Ribbon2"
 //            entity.scale *= [0.1,0.1,0.1]
@@ -600,6 +622,11 @@ struct ContentView: View {
             rbs.addChild(entity)
             model.ribbons = entity
             print(entity.position)
+            
+            await MainActor.run {
+              model.progress = 0.4
+              model.loadingStatus = "Creating ball-and-stick model..."
+            }
 
             /*
             let vb = entity.visualBounds(recursive: true, relativeTo: entity, excludeInactive: false)
@@ -621,6 +648,11 @@ struct ContentView: View {
             model.ballAndStick = bse
             print(bse.position)
             
+            await MainActor.run {
+              model.progress = 0.7
+              model.loadingStatus = "Creating sphere representation..."
+            }
+            
             // Enable collision and input for tap gestures
 //            bse.components.set(InputTargetComponent())
 //            bse.generateCollisionShapes(recursive: true, static: true)
@@ -631,6 +663,11 @@ struct ContentView: View {
             rbs.addChild(se)
             model.spheres = se
             print(se.position)
+            
+            await MainActor.run {
+              model.progress = 0.9
+              model.loadingStatus = "Finalizing..."
+            }
 
             /*
             let se = ProteinSpheres.
@@ -656,7 +693,7 @@ struct ContentView: View {
 //          let pivotEntity = Entity()
           
           model.rootEntity.addChild(rbs)
-          rbs.position = [0, 1, -0.85]
+          rbs.position = [0, 1, -1.85]
 //          model.rootEntity.addChild(pivotEntity)
           
           let rvb = rbs.visualBounds(recursive: true, relativeTo: rbs, excludeInactive: false)
@@ -871,13 +908,21 @@ struct ContentView: View {
            }
            }
            */
-        }
         
-//        Task { @MainActor in
-          model.loading = false
-//        }
+          await MainActor.run {
+            model.progress = 1.0
+            model.loadingStatus = "Complete!"
+          }
+          try? await Task.sleep(for: .milliseconds(300))
+          await MainActor.run {
+            model.loading = false
+            model.progress = 0.0
+            model.loadingStatus = ""
+          }
+        }
       }
     }
+    
   }
 }
 

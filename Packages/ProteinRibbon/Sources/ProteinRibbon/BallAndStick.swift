@@ -8,6 +8,7 @@
 import Foundation
 import simd
 import RealityKit
+import UIKit
 
 // MARK: - Ball-and-Stick Options
 
@@ -45,7 +46,7 @@ extension ProteinRibbon {
         public init(
             atomScale: Float = 0.3,
             bondRadius: Float = 0.15,
-            sphereSegments: Int = 16,
+            sphereSegments: Int = 6, // 6 = ~80 triangles icosphere (subdivision level 1)
             colorScheme: AtomColorScheme = .byElement,
             scale: Float = 0.01,
             bondTolerance: Float = 1.3,
@@ -118,6 +119,7 @@ public struct BallAndStickBuilder {
 
     /// Builds a ball-and-stick model from a PDB structure
     /// Returns a parent entity containing child entities grouped by color
+    @available(visionOS 26.0, *)
     public static func buildEntity(
         from structure: PDBStructure,
         options: ProteinRibbon.BallAndStickOptions
@@ -140,12 +142,15 @@ public struct BallAndStickBuilder {
             return ModelEntity()
         }
 
-        // Detect bonds
-        let bonds = BondDetector.detectBonds(
+      print("BallAndStickBuilder: Detecting bonds")
+        // Detect bonds using simplified residue-aware detection
+        let bonds = BondDetector.detectBondsSimplified(
             in: atoms,
+            residues: structure.residues,
             tolerance: options.bondTolerance,
             maxBondLength: options.maxBondLength
         )
+      print("BallAndStickBuilder: Found \(bonds.count) bonds")
 
         // Create parent entity
         let parent = ModelEntity()
@@ -160,6 +165,7 @@ public struct BallAndStickBuilder {
             atomsByColor[key, default: []].append((atom, index))
         }
 
+      /*
       // Create entity for each color group
       for (color, atomGroup) in atomsByColor {
         let atoms = atomGroup.map { $0.atom }
@@ -168,19 +174,32 @@ public struct BallAndStickBuilder {
           color: color,
           options: options
         )
-        
+
         if !atomMesh.positions.isEmpty {
           let entity = createColoredEntity(from: atomMesh, color: color, options: options, name: "Atoms")
           parent.addChild(entity)
         }
       }
+      */
       
-        // Build bond cylinders (group by color pairs)
-        let bondEntities = buildBondEntities(atoms: atoms, bonds: bonds, structure: structure, options: options)
-        for entity in bondEntities {
-            parent.addChild(entity)
+      // Mesh Instancing
+      for (color, atomGroup) in atomsByColor {
+        let atomEntities = buildAtomSpheresWithInstancing(
+          atomGroup: atomGroup.map { $0.atom },
+          color: color,
+          options: options
+        )
+        
+        for entity in atomEntities {
+          parent.addChild(entity)
         }
+      }
 
+
+        // Build bond cylinders using simplified gray bonds (much faster)
+        if let bondEntity = buildSimplifiedBondEntity(atoms: atoms, bonds: bonds, options: options) {
+            parent.addChild(bondEntity)
+        }
 
         return parent
     }
@@ -196,34 +215,285 @@ public struct BallAndStickBuilder {
         )
     }
 
-    /// Builds spheres for a group of atoms with the same color
-    private static func buildAtomSpheresForColor(
+    /// Builds spheres for a group of atoms with the same color using instancing
+    @available(visionOS 26.0, *)
+    private static func buildAtomSpheresWithInstancing(
         atomGroup: [PDBAtom],
         color: SIMD4<Float>,
         options: ProteinRibbon.BallAndStickOptions
-    ) -> MeshData {
-        var mesh = MeshData()
+    ) -> [ModelEntity] {
+        var entities: [ModelEntity] = []
 
-        for atom in atomGroup {
-            // Determine atom radius based on element
-            let baseRadius = atomRadius(for: atom.element)
-            let radius = baseRadius * options.atomScale
+        // Group atoms by element type for different radii
+        let atomsByElement = Dictionary(grouping: atomGroup, by: { $0.element.uppercased() })
 
-            // Create sphere mesh
-            let sphereMesh = createSphereMesh(
-                center: atom.position,
-                radius: radius,
-                color: color,
-                segments: options.sphereSegments
-            )          
+        for (element, atoms) in atomsByElement {
+            let totalAtoms = atoms.count
+            guard totalAtoms > 0 else { continue }
 
-            mesh.append(sphereMesh)
+            // Get radius for this element
+            let baseRadius = atomRadius(for: element)
+            let scaledRadius = baseRadius * options.atomScale * options.scale
+
+            print("[BallAndStick] Creating instanced sphere mesh for \(totalAtoms) \(element) atoms")
+
+            // Create a single sphere mesh for this element type
+//            let mesh = MeshResource.generateSphere(radius: scaledRadius)
+          // Create low-poly mesh for this element type
+          guard let mesh = try? generateLowPolySphere(radius: scaledRadius, segments: options.sphereSegments) else {
+            print("[ProteinSpheresMesh] ERROR: Failed to generate low-poly sphere for \(element)")
+            continue
+          }
+
+            // Split into chunks of 10,000 atoms
+            let maxAtomsPerEntity = 10000
+            let numChunks = (totalAtoms + maxAtomsPerEntity - 1) / maxAtomsPerEntity
+
+            print("[BallAndStick] Splitting \(element) atoms into \(numChunks) chunk(s)")
+
+            // Create material with element color - match ProteinSpheresMesh approach exactly
+            let uiColor = UIColor(
+                red: CGFloat(color.x),
+                green: CGFloat(color.y),
+                blue: CGFloat(color.z),
+                alpha: CGFloat(color.w)
+            )
+            let material = SimpleMaterial(color: uiColor, isMetallic: false)
+
+            for chunkIndex in 0..<numChunks {
+                let startIndex = chunkIndex * maxAtomsPerEntity
+                let endIndex = min(startIndex + maxAtomsPerEntity, totalAtoms)
+                let count = endIndex - startIndex
+
+                let chunkAtoms = Array(atoms[startIndex..<endIndex])
+
+                // Create instance data for this chunk
+                guard let instanceData = try? LowLevelInstanceData(instanceCount: count) else {
+                    print("[BallAndStick] Failed to create instance data for \(count) atoms")
+                    continue
+                }
+
+                instanceData.withMutableTransforms { transforms in
+                    for i in 0..<count {
+                        let atom = chunkAtoms[i]
+                        let position = atom.position * options.scale
+                        transforms[i] = Transform(scale: .one, rotation: simd_quatf(angle: 0, axis: [0,0,1]), translation: position).matrix
+                    }
+                }
+
+                // Create entity with instances
+                if let modelID = mesh.contents.models.first?.id {
+                    let entity = ModelEntity()
+                    if numChunks > 1 {
+                        entity.name = "BallAndStick_\(element)_\(chunkIndex)"
+                    } else {
+                        entity.name = "BallAndStick_\(element)"
+                    }
+                    entity.model = ModelComponent(mesh: mesh, materials: [material])
+
+                    // Create and set component
+                    do {
+                        let component = try MeshInstancesComponent(
+                            mesh: mesh,
+                            modelID: modelID,
+                            instances: instanceData
+                        )
+                        entity.components[MeshInstancesComponent.self] = component
+                        entities.append(entity)
+                        print("[BallAndStick] Created chunk \(chunkIndex) with \(count) \(element) atoms")
+                    } catch {
+                        print("[BallAndStick] Failed to create MeshInstancesComponent for \(element) chunk \(chunkIndex): \(error)")
+                    }
+                } else {
+                    print("[BallAndStick] No modelID found for \(element) mesh")
+                }
+            }
         }
 
-        return mesh
+        return entities
+    }
+  
+  /// Generates an icosphere mesh with specified radius and subdivision level
+  /// Icospheres provide better triangle distribution than UV spheres
+  /// - Parameters:
+  ///   - radius: Radius of the sphere
+  ///   - segments: Controls subdivision level (4-16 typical, lower = fewer triangles)
+  /// - Returns: MeshResource for the icosphere
+  private static func generateLowPolySphere(radius: Float, segments: Int) throws -> MeshResource {
+    // Map segments to subdivision levels
+    // segments: 4->0, 6->1, 8->1, 12->2, 16->2
+    let subdivisionLevel = max(0, min(2, (segments - 4) / 4))
+
+    // Start with icosahedron (12 vertices, 20 faces)
+    let t = Float((1.0 + sqrt(5.0)) / 2.0)
+    var baseVertices: [SIMD3<Float>] = []
+    baseVertices.append(SIMD3<Float>(-1,  t,  0))
+    baseVertices.append(SIMD3<Float>( 1,  t,  0))
+    baseVertices.append(SIMD3<Float>(-1, -t,  0))
+    baseVertices.append(SIMD3<Float>( 1, -t,  0))
+    baseVertices.append(SIMD3<Float>( 0, -1,  t))
+    baseVertices.append(SIMD3<Float>( 0,  1,  t))
+    baseVertices.append(SIMD3<Float>( 0, -1, -t))
+    baseVertices.append(SIMD3<Float>( 0,  1, -t))
+    baseVertices.append(SIMD3<Float>( t,  0, -1))
+    baseVertices.append(SIMD3<Float>( t,  0,  1))
+    baseVertices.append(SIMD3<Float>(-t,  0, -1))
+    baseVertices.append(SIMD3<Float>(-t,  0,  1))
+    baseVertices = baseVertices.map { simd_normalize($0) }
+
+    let baseFaces: [[UInt32]] = [
+      [0,11,5], [0,5,1], [0,1,7], [0,7,10], [0,10,11],
+      [1,5,9], [5,11,4], [11,10,2], [10,7,6], [7,1,8],
+      [3,9,4], [3,4,2], [3,2,6], [3,6,8], [3,8,9],
+      [4,9,5], [2,4,11], [6,2,10], [8,6,7], [9,8,1]
+    ]
+
+    var positions = baseVertices
+    var faces = baseFaces
+
+    // Subdivide
+    for _ in 0..<subdivisionLevel {
+      var newFaces: [[UInt32]] = []
+      var midpointCache: [String: UInt32] = [:]
+
+      for face in faces {
+        let v1 = face[0], v2 = face[1], v3 = face[2]
+
+        // Get midpoint indices (with caching to avoid duplicates)
+        let m12 = getMidpoint(v1, v2, &positions, &midpointCache)
+        let m23 = getMidpoint(v2, v3, &positions, &midpointCache)
+        let m31 = getMidpoint(v3, v1, &positions, &midpointCache)
+
+        // Create 4 new triangles
+        newFaces.append([v1, m12, m31])
+        newFaces.append([v2, m23, m12])
+        newFaces.append([v3, m31, m23])
+        newFaces.append([m12, m23, m31])
+      }
+
+      faces = newFaces
     }
 
-    /// Builds bond entities grouped by color
+    // Scale to radius and compute normals
+    let scaledPositions = positions.map { $0 * radius }
+    let normals = positions // Normals are the same as normalized positions for a sphere
+
+    // Flatten faces to indices
+    let indices = faces.flatMap { $0 }
+
+    print("[ProteinRibbon] Icosphere: \(positions.count) vertices, \(faces.count) triangles (subdivision level \(subdivisionLevel))")
+
+    var descriptor = MeshDescriptor()
+    descriptor.positions = MeshBuffer(scaledPositions)
+    descriptor.normals = MeshBuffer(normals)
+    descriptor.primitives = .triangles(indices)
+
+    return try MeshResource.generate(from: [descriptor])
+  }
+
+  /// Helper to get or create midpoint between two vertices
+  private static func getMidpoint(
+    _ v1: UInt32,
+    _ v2: UInt32,
+    _ positions: inout [SIMD3<Float>],
+    _ cache: inout [String: UInt32]
+  ) -> UInt32 {
+    let key = v1 < v2 ? "\(v1)-\(v2)" : "\(v2)-\(v1)"
+
+    if let cached = cache[key] {
+      return cached
+    }
+
+    let p1 = positions[Int(v1)]
+    let p2 = positions[Int(v2)]
+    let midpoint = simd_normalize((p1 + p2) * 0.5)
+
+    let index = UInt32(positions.count)
+    positions.append(midpoint)
+    cache[key] = index
+
+    return index
+  }
+
+
+  /// Builds spheres for a group of atoms with the same color
+  private static func buildAtomSpheresForColor(
+    atomGroup: [PDBAtom],
+    color: SIMD4<Float>,
+    options: ProteinRibbon.BallAndStickOptions
+  ) -> MeshData {
+    var mesh = MeshData()
+    
+    print("[BallAndStickBuilder] Building sphere MeshData for atom group \(atomGroup[0].name) with \(atomGroup.count) atoms")
+    for atom in atomGroup {
+      // Determine atom radius based on element
+      let baseRadius = atomRadius(for: atom.element)
+      let radius = baseRadius * options.atomScale
+      
+      // Create sphere mesh
+      let sphereMesh = createSphereMesh(
+        center: atom.position,
+        radius: radius,
+        color: color,
+        segments: options.sphereSegments
+      )
+      
+      mesh.append(sphereMesh)
+    }
+    
+    return mesh
+  }
+
+  /// Builds all bonds as a single gray mesh (optimized for performance)
+    private static func buildSimplifiedBondEntity(
+        atoms: [PDBAtom],
+        bonds: [Bond],
+        options: ProteinRibbon.BallAndStickOptions
+    ) -> ModelEntity? {
+        guard !bonds.isEmpty else { return nil }
+
+        print("[BallAndStick] Building simplified bonds: \(bonds.count) bonds")
+
+        var mesh = MeshData()
+        let grayColor = SIMD4<Float>(0.5, 0.5, 0.5, 1.0) // Uniform gray color
+
+        // Use fewer segments for cylinders (4-6 is enough for small radius bonds)
+        let cylinderSegments = max(4, options.sphereSegments / 2)
+
+        for bond in bonds {
+            guard bond.atom1 < atoms.count && bond.atom2 < atoms.count else { continue }
+
+            let atom1 = atoms[bond.atom1]
+            let atom2 = atoms[bond.atom2]
+
+            // Adjust bond endpoints to account for atom radii
+            let atom1Radius = atomRadius(for: atom1.element) * options.atomScale
+            let atom2Radius = atomRadius(for: atom2.element) * options.atomScale
+
+            let direction = simd_normalize(atom2.position - atom1.position)
+            let adjustedStart = atom1.position + direction * atom1Radius
+            let adjustedEnd = atom2.position - direction * atom2Radius
+
+            // Create single cylinder for entire bond (not split by color)
+            let cylinder = createCylinderMesh(
+                start: adjustedStart,
+                end: adjustedEnd,
+                radius: options.bondRadius,
+                color: grayColor,
+                segments: cylinderSegments
+            )
+
+            mesh.append(cylinder)
+        }
+
+        guard !mesh.positions.isEmpty else { return nil }
+
+        print("[BallAndStick] Created bond mesh: \(mesh.positions.count) vertices")
+
+        return createColoredEntity(from: mesh, color: grayColor, options: options, name: "Bonds_Simplified")
+    }
+
+  /// Builds bond entities grouped by color
     private static func buildBondEntities(
         atoms: [PDBAtom],
         bonds: [Bond],

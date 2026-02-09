@@ -160,16 +160,18 @@ public struct BallAndStickBuilder {
             atomsByColor[key, default: []].append((atom, index))
         }
 
-        // Create entity for each color group
+        // CRITICAL FIX: Use mesh instancing instead of creating individual sphere meshes
+        // This reduces creation time from minutes to seconds for large proteins
+        print("[BallAndStick] Creating atom entities with instancing")
+
         for (color, atomGroup) in atomsByColor {
-            let atomMesh = buildAtomSpheresForColor(
+            let atomEntities = buildAtomSpheresWithInstancing(
                 atomGroup: atomGroup.map { $0.atom },
                 color: color,
                 options: options
             )
 
-            if !atomMesh.positions.isEmpty {
-                let entity = createColoredEntity(from: atomMesh, color: color, options: options, name: "Atoms")
+            for entity in atomEntities {
                 parent.addChild(entity)
             }
         }
@@ -194,6 +196,97 @@ public struct BallAndStickBuilder {
         )
     }
 
+    /// Builds spheres using mesh instancing for MUCH faster performance
+    /// This creates one base sphere mesh and instances it for all atoms
+    private static func buildAtomSpheresWithInstancing(
+        atomGroup: [PDBAtom],
+        color: SIMD4<Float>,
+        options: ProteinRibbon.BallAndStickOptions
+    ) -> [ModelEntity] {
+        guard !atomGroup.isEmpty else { return [] }
+
+        var entities: [ModelEntity] = []
+
+        // Group by element (which determines radius)
+        let atomsByElement = Dictionary(grouping: atomGroup, by: { $0.element.uppercased() })
+
+        for (element, atoms) in atomsByElement {
+            let baseRadius = atomRadius(for: element)
+            let radius = baseRadius * options.atomScale * options.scale
+
+            // Create ONE sphere mesh for this element type
+            let mesh = MeshResource.generateSphere(radius: radius)
+
+            // Convert color to platform color
+            let platformColor = PlatformColor(
+                red: CGFloat(color.x),
+                green: CGFloat(color.y),
+                blue: CGFloat(color.z),
+                alpha: CGFloat(color.w)
+            )
+
+            var material = SimpleMaterial()
+            material.color = .init(tint: platformColor)
+            material.metallic = .init(floatLiteral: 0.0)
+            material.roughness = .init(floatLiteral: 0.4)
+
+            // Split into chunks of 10,000 atoms if needed
+            let maxAtomsPerEntity = 10000
+            let totalAtoms = atoms.count
+            let numChunks = (totalAtoms + maxAtomsPerEntity - 1) / maxAtomsPerEntity
+
+            if numChunks > 1 {
+                print("[BallAndStick] Splitting \(totalAtoms) \(element) atoms into \(numChunks) chunks")
+            }
+
+            for chunkIndex in 0..<numChunks {
+                let startIndex = chunkIndex * maxAtomsPerEntity
+                let endIndex = min(startIndex + maxAtomsPerEntity, totalAtoms)
+                let chunkAtoms = Array(atoms[startIndex..<endIndex])
+                let count = chunkAtoms.count
+
+                guard let instanceData = try? LowLevelInstanceData(instanceCount: count) else {
+                    print("[BallAndStick] ERROR: Failed to create instance data for \(count) atoms")
+                    continue
+                }
+
+                instanceData.withMutableTransforms { transforms in
+                    for i in 0..<count {
+                        let atom = chunkAtoms[i]
+                        let position = atom.position * options.scale
+                        let transform = Transform(
+                            scale: .one,
+                            rotation: simd_quatf(angle: 0, axis: [0, 0, 1]),
+                            translation: position
+                        )
+                        transforms[i] = transform.matrix
+                    }
+                }
+
+                // Create entity with instances
+                if let modelID = mesh.contents.models.first?.id,
+                   let instancesComponent = try? MeshInstancesComponent(
+                    mesh: mesh,
+                    modelID: modelID,
+                    instances: instanceData
+                   ) {
+                    let entity = ModelEntity()
+                    if numChunks > 1 {
+                        entity.name = "Atoms_\(element)_\(chunkIndex)"
+                    } else {
+                        entity.name = "Atoms_\(element)"
+                    }
+                    entity.model = ModelComponent(mesh: mesh, materials: [material])
+                    entity.components.set(instancesComponent)
+                    entities.append(entity)
+                }
+            }
+        }
+
+        return entities
+    }
+
+    /// OLD SLOW METHOD - Keep for reference but not used anymore
     /// Builds spheres for a group of atoms with the same color
     private static func buildAtomSpheresForColor(
         atomGroup: [PDBAtom],

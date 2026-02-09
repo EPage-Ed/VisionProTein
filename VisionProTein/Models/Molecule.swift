@@ -17,6 +17,7 @@ extension SCNVector3 {
 class Molecule {
   
   static func genMolecule(residue: Residue) -> ModelEntity? {
+    print("[Memory] genMolecule called for residue \(residue.resName) with \(residue.atoms.count) atoms")
     let basePos = residue.atoms.first.map { a in
       SIMD3(x: Float(a.x)/100, y: Float(a.y)/100, z: Float(a.z)/100)
     }
@@ -66,44 +67,63 @@ class Molecule {
       //      let aPos = SIMD3(x: Float(a.x)/100, y: Float(a.y)/100, z: Float(a.z)/100)
       
       //      let m = atomDict[k]! // .dropFirst()
-      let count = atomDict[k]?.count ?? 0
-      //      print("\(k) : \(a.name) : \(count)")
+      let atoms = atomDict[k]!
+      let totalAtoms = atoms.count
+      //      print("\(k) : \(a.name) : \(totalAtoms)")
       guard let mesh = s.components[ModelComponent.self]?.mesh else { continue }
-      guard let instanceData = try? LowLevelInstanceData.init(instanceCount: count) else { continue }
-      instanceData.withMutableTransforms { transforms in
-        for i in 0..<count {
-          let a = atomDict[k]![i]
-          //          let s = Float(a.radius) // baseSize > 0 ? Float(a.radius) / baseSize : 1
-          //            print(s)
-          //          let scale = SIMD3<Float>(repeating: s)
-          //        let instanceAngle = 2 * .pi * Float(i) / Float(count)
-          //        let radialTranslation: SIMD3<Float> = [-sin(instanceAngle), cos(instanceAngle), 0] * 0.02
-          let translation = SIMD3<Float>(x: Float(a.x)/100, y: Float(a.y)/100, z: Float(a.z)/100) - basePos
-          //          print(i,translation)
-          
-          // Position each robot around a circle.
-          let transform = Transform(
-            scale: .one, // scale / 10, // .one / 2, // / 10,
-            rotation: simd_quatf(angle: 0, axis: [0,0,1]), // .init(), // simd_quatf(angle: instanceAngle, axis: [0, 0, 1]),
-            translation: translation // radialTranslation
-          )
-          transforms[i] = transform.matrix
+      
+      // Split into chunks of 10,000 atoms if needed
+      let maxAtomsPerEntity = 10000
+      let numChunks = (totalAtoms + maxAtomsPerEntity - 1) / maxAtomsPerEntity
+      
+      for chunkIndex in 0..<numChunks {
+        let startIndex = chunkIndex * maxAtomsPerEntity
+        let endIndex = min(startIndex + maxAtomsPerEntity, totalAtoms)
+        let chunkAtoms = Array(atoms[startIndex..<endIndex])
+        let count = chunkAtoms.count
+        
+        guard let instanceData = try? LowLevelInstanceData.init(instanceCount: count) else { continue }
+        instanceData.withMutableTransforms { transforms in
+          for i in 0..<count {
+            let a = chunkAtoms[i]
+            //          let s = Float(a.radius) // baseSize > 0 ? Float(a.radius) / baseSize : 1
+            //            print(s)
+            //          let scale = SIMD3<Float>(repeating: s)
+            //        let instanceAngle = 2 * .pi * Float(i) / Float(count)
+            //        let radialTranslation: SIMD3<Float> = [-sin(instanceAngle), cos(instanceAngle), 0] * 0.02
+            let translation = SIMD3<Float>(x: Float(a.x)/100, y: Float(a.y)/100, z: Float(a.z)/100) - basePos
+            //          print(i,translation)
+            
+            // Position each robot around a circle.
+            let transform = Transform(
+              scale: .one, // scale / 10, // .one / 2, // / 10,
+              rotation: simd_quatf(angle: 0, axis: [0,0,1]), // .init(), // simd_quatf(angle: instanceAngle, axis: [0, 0, 1]),
+              translation: translation // radialTranslation
+            )
+            transforms[i] = transform.matrix
+          }
+        }
+        // Instance only the first model.
+        let modelID = mesh.contents.models.first?.id
+        
+        // Create the component using the convenience initializer.
+        if let instancesComponent = try? MeshInstancesComponent(
+          mesh: mesh,
+          modelID: modelID,
+          instances: instanceData
+        ) {
+          let chunkEntity = ModelEntity()
+          // Add chunk suffix if there are multiple chunks
+          if numChunks > 1 {
+            chunkEntity.name = "\(a.name)_\(chunkIndex)"
+          } else {
+            chunkEntity.name = a.name
+          }
+          chunkEntity.model = s.model
+          chunkEntity.components.set(instancesComponent)
+          me.addChild(chunkEntity)
         }
       }
-      // Instance only the first model.
-      let modelID = mesh.contents.models.first?.id
-      
-      // Create the component using the convenience initializer.
-      if let instancesComponent = try? MeshInstancesComponent(
-        mesh: mesh,
-        modelID: modelID,
-        instances: instanceData
-      ) {
-        s.components.set(instancesComponent)
-      }
-      
-      me.addChild(s)
-      
     }
     
     /*

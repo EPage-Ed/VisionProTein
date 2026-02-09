@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		D80E63CC2F3695F2007DB605 /* ProteinSpheres in Frameworks */ = {isa = PBXBuildFile; productRef = D80E63CB2F3695F2007DB605 /* ProteinSpheres */; };
 		D80E63D72F37F952007DB605 /* ProteinSpheresMesh in Frameworks */ = {isa = PBXBuildFile; productRef = D80E63D62F37F952007DB605 /* ProteinSpheresMesh */; };
+		D80E63D92F3947A1007DB605 /* 5JLH.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D80E63D82F3947A1007DB605 /* 5JLH.pdb */; };
+		D80E63DC2F3A48F7007DB605 /* 5NP0.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D80E63DB2F3A48F7007DB605 /* 5NP0.pdb */; };
+		D80E63DD2F3A48F7007DB605 /* 4HHB.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D80E63DA2F3A48F7007DB605 /* 4HHB.pdb */; };
 		D8241D132F2824DD007B32BB /* AminoAcid.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8241D122F2824D6007B32BB /* AminoAcid.swift */; };
 		D8474FAE2F2ACBEF0076B827 /* Molecule+ResidueEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8474FAD2F2ACBEF0076B827 /* Molecule+ResidueEntity.swift */; };
 		D8474FB02F2AEBEB0076B827 /* Molecule+Richardson.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8474FAF2F2AEBEB0076B827 /* Molecule+Richardson.swift */; };
@@ -45,6 +48,9 @@
 		D80E63D02F37F37B007DB605 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		D80E63D12F37F3CB007DB605 /* ProteinSpheresMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProteinSpheresMesh.swift; sourceTree = "<group>"; };
 		D80E63D22F37F3E1007DB605 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		D80E63D82F3947A1007DB605 /* 5JLH.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 5JLH.pdb; sourceTree = "<group>"; };
+		D80E63DA2F3A48F7007DB605 /* 4HHB.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 4HHB.pdb; sourceTree = "<group>"; };
+		D80E63DB2F3A48F7007DB605 /* 5NP0.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 5NP0.pdb; sourceTree = "<group>"; };
 		D8241D122F2824D6007B32BB /* AminoAcid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AminoAcid.swift; sourceTree = "<group>"; };
 		D8474FAD2F2ACBEF0076B827 /* Molecule+ResidueEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Molecule+ResidueEntity.swift"; sourceTree = "<group>"; };
 		D8474FAF2F2AEBEB0076B827 /* Molecule+Richardson.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Molecule+Richardson.swift"; sourceTree = "<group>"; };
@@ -212,7 +218,10 @@
 			children = (
 				D8AA59FE2BB7B84600340803 /* PDB.swift */,
 				D8AA5A002BB7C63100340803 /* protein.usdz */,
+				D80E63DA2F3A48F7007DB605 /* 4HHB.pdb */,
+				D80E63DB2F3A48F7007DB605 /* 5NP0.pdb */,
 				D8D19CE12F31D59B00B6DBC6 /* 1ERT.pdb */,
+				D80E63D82F3947A1007DB605 /* 5JLH.pdb */,
 				D8474FB12F2C26530076B827 /* 4HR9.pdb */,
 				D8AA5A222BB9597400340803 /* 3nir.pdb */,
 				D8AA5A202BB94D3D00340803 /* 1nc9.pdb */,
@@ -320,9 +329,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				D8D19CE22F31D59B00B6DBC6 /* 1ERT.pdb in Resources */,
+				D80E63DC2F3A48F7007DB605 /* 5NP0.pdb in Resources */,
+				D80E63DD2F3A48F7007DB605 /* 4HHB.pdb in Resources */,
 				D8AA59F32BB7AEF100340803 /* Preview Assets.xcassets in Resources */,
 				D8AA5A212BB94D3D00340803 /* 1nc9.pdb in Resources */,
 				D8AA59F02BB7AEF100340803 /* Assets.xcassets in Resources */,
+				D80E63D92F3947A1007DB605 /* 5JLH.pdb in Resources */,
 				D8AA5A012BB7C63100340803 /* protein.usdz in Resources */,
 				D8474FB22F2C26530076B827 /* 4HR9.pdb in Resources */,
 				D8AA5A232BB9597400340803 /* 3nir.pdb in Resources */,

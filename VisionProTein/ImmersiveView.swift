@@ -26,8 +26,18 @@ struct ImmersiveView: View {
     */
 
     RealityView { content, attachments in
-      // Add the initial RealityKit content
-      content.add(model.rootEntity)
+      // CRITICAL FIX: Only add rootEntity if it's not already in the scene
+      // This prevents the "already parented" error when SwiftUI re-evaluates
+      print("[ImmersiveView] RealityView make closure called")
+      print("[ImmersiveView] rootEntity children: \(model.rootEntity.children.count), parent: \(String(describing: model.rootEntity.parent?.name))")
+      
+      // Check if rootEntity is already in content by checking if it has a scene
+      if model.rootEntity.scene == nil {
+        print("[ImmersiveView] Adding rootEntity to content (first time)")
+        content.add(model.rootEntity)
+      } else {
+        print("[ImmersiveView] WARNING: rootEntity already has a scene, skipping add")
+      }
       /*
       if let entity = attachments.entity(for: "Panel") {
         entity.position = [-0.5,1,-0.75]

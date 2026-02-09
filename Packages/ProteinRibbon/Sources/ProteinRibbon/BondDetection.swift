@@ -63,7 +63,91 @@ public struct BondDetector {
 
     // MARK: - Bond Detection
 
+    /// Fast bond detection optimized for single-mesh rendering
+    /// Only checks likely bonds (adjacent residues + close neighbors)
+    /// Much faster than full bond detection for large proteins
+    /// - Parameters:
+    ///   - atoms: Array of atoms to analyze
+    ///   - residues: Array of residues (for adjacent residue optimization)
+    ///   - tolerance: Distance tolerance factor
+    ///   - maxBondLength: Maximum bond length in Angstroms
+    /// - Returns: Array of detected bonds
+    public static func detectBondsSimplified(
+        in atoms: [PDBAtom],
+        residues: [PDBResidue],
+        tolerance: Float = 1.3,
+        maxBondLength: Float = 2.0
+    ) -> [Bond] {
+        guard atoms.count > 1 else { return [] }
+
+        var bonds: [Bond] = []
+
+        // Build atom index lookup
+        var atomIndexMap: [Int: Int] = [:] // serial -> index
+        for (index, atom) in atoms.enumerated() {
+            atomIndexMap[atom.serial] = index
+        }
+
+        // Strategy: Only check bonds within residues and to adjacent residues
+        // This is 10-100x faster than checking all pairs
+
+        for (resIndex, residue) in residues.enumerated() {
+            let residueAtoms = residue.atoms.compactMap { atom -> (atom: PDBAtom, index: Int)? in
+                guard let index = atomIndexMap[atom.serial] else { return nil }
+                return (atoms[index], index)
+            }
+
+            // Bonds within this residue
+            for i in 0..<residueAtoms.count {
+                for j in (i+1)..<residueAtoms.count {
+                    let atom1 = residueAtoms[i]
+                    let atom2 = residueAtoms[j]
+
+                    if areBonded(atom1.atom, atom2.atom, tolerance: tolerance, maxBondLength: maxBondLength) {
+                        bonds.append(Bond(atom1: atom1.index, atom2: atom2.index, length: simd_distance(atom1.atom.position, atom2.atom.position)))
+                    }
+                }
+            }
+
+            // Bonds to next residue (peptide bond + any side chain interactions)
+            if resIndex < residues.count - 1 {
+                let nextResidue = residues[resIndex + 1]
+                let nextResidueAtoms = nextResidue.atoms.compactMap { atom -> (atom: PDBAtom, index: Int)? in
+                    guard let index = atomIndexMap[atom.serial] else { return nil }
+                    return (atoms[index], index)
+                }
+
+                // Only check atoms that could plausibly bond (within residue distance)
+                for atom1 in residueAtoms {
+                    for atom2 in nextResidueAtoms {
+                        if areBonded(atom1.atom, atom2.atom, tolerance: tolerance, maxBondLength: maxBondLength) {
+                            bonds.append(Bond(atom1: atom1.index, atom2: atom2.index, length: simd_distance(atom1.atom.position, atom2.atom.position)))
+                        }
+                    }
+                }
+            }
+        }
+
+        return bonds
+    }
+
+    /// Helper to check if two atoms are bonded
+    private static func areBonded(_ atom1: PDBAtom, _ atom2: PDBAtom, tolerance: Float, maxBondLength: Float) -> Bool {
+        let distSq = simd_distance_squared(atom1.position, atom2.position)
+        let maxDistSq = maxBondLength * maxBondLength
+
+        guard distSq <= maxDistSq else { return false }
+
+        let distance = sqrt(distSq)
+        let r1 = covalentRadius(for: atom1.element)
+        let r2 = covalentRadius(for: atom2.element)
+        let expectedLength = r1 + r2
+
+        return distance <= expectedLength * tolerance
+    }
+
     /// Detects bonds between atoms based on distance criteria
+    /// Uses spatial grid partitioning for O(n) average case performance
     /// - Parameters:
     ///   - atoms: Array of atoms to analyze
     ///   - tolerance: Distance tolerance factor (1.3 = 130% of sum of covalent radii)
@@ -74,25 +158,80 @@ public struct BondDetector {
         tolerance: Float = 1.3,
         maxBondLength: Float = 2.0
     ) -> [Bond] {
+        guard atoms.count > 1 else { return [] }
+
+        // Use spatial grid for faster neighbor lookup
+        // Grid cell size = maxBondLength to ensure we check all neighbors
+        let cellSize = maxBondLength * tolerance
+        var grid: [SIMD3<Int>: [Int]] = [:]
+
+        // Build spatial grid
+        for (index, atom) in atoms.enumerated() {
+            let gridPos = SIMD3<Int>(
+                Int(floor(atom.position.x / cellSize)),
+                Int(floor(atom.position.y / cellSize)),
+                Int(floor(atom.position.z / cellSize))
+            )
+            grid[gridPos, default: []].append(index)
+        }
+
         var bonds: [Bond] = []
+        var checkedPairs = Set<String>()
 
-        // Check all pairs of atoms
+        // Check atoms against neighbors in their cell and adjacent cells
         for i in 0..<atoms.count {
-            for j in (i + 1)..<atoms.count {
-                let atom1 = atoms[i]
-                let atom2 = atoms[j]
+            let atom1 = atoms[i]
+            let gridPos = SIMD3<Int>(
+                Int(floor(atom1.position.x / cellSize)),
+                Int(floor(atom1.position.y / cellSize)),
+                Int(floor(atom1.position.z / cellSize))
+            )
 
-                // Calculate distance
-                let distance = simd_distance(atom1.position, atom2.position)
+            // Check 27 neighboring cells (3x3x3 cube)
+            for dx in -1...1 {
+                for dy in -1...1 {
+                    for dz in -1...1 {
+                        let neighborPos = SIMD3<Int>(
+                            gridPos.x + dx,
+                            gridPos.y + dy,
+                            gridPos.z + dz
+                        )
 
-                // Get expected bond length based on covalent radii
-                let r1 = covalentRadius(for: atom1.element)
-                let r2 = covalentRadius(for: atom2.element)
-                let expectedLength = r1 + r2
+                        guard let cellAtoms = grid[neighborPos] else { continue }
 
-                // Bond if distance is within tolerance of expected length and below max
-                if distance <= expectedLength * tolerance && distance <= maxBondLength {
-                    bonds.append(Bond(atom1: i, atom2: j, length: distance))
+                        for j in cellAtoms {
+                            // Skip if same atom or already checked this pair
+                            guard j > i else { continue }
+
+                            let pairKey = "\(i)-\(j)"
+                            guard !checkedPairs.contains(pairKey) else { continue }
+                            checkedPairs.insert(pairKey)
+
+                            let atom2 = atoms[j]
+
+                            // Quick rejection: check squared distance first (avoids sqrt)
+                            let dx = atom1.position.x - atom2.position.x
+                            let dy = atom1.position.y - atom2.position.y
+                            let dz = atom1.position.z - atom2.position.z
+                            let distSq = dx*dx + dy*dy + dz*dz
+                            let maxDistSq = maxBondLength * maxBondLength
+
+                            guard distSq <= maxDistSq else { continue }
+
+                            // Calculate actual distance
+                            let distance = sqrt(distSq)
+
+                            // Get expected bond length based on covalent radii
+                            let r1 = covalentRadius(for: atom1.element)
+                            let r2 = covalentRadius(for: atom2.element)
+                            let expectedLength = r1 + r2
+
+                            // Bond if distance is within tolerance of expected length
+                            if distance <= expectedLength * tolerance {
+                                bonds.append(Bond(atom1: i, atom2: j, length: distance))
+                            }
+                        }
+                    }
                 }
             }
         }

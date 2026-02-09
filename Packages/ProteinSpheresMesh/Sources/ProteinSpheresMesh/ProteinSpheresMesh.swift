@@ -158,6 +158,7 @@ struct SpheresBuilder {
         var atoms = structure.atoms
         
         print("[ProteinSpheresMesh] Total atoms parsed: \(atoms.count)")
+        print("[Memory] Starting sphere build - Estimated memory: \(atoms.count * 12) bytes for positions")
         
         if !options.showHydrogens {
             atoms = atoms.filter { $0.element.uppercased() != "H" }
@@ -173,6 +174,7 @@ struct SpheresBuilder {
         // Create parent entity
         let parent = ModelEntity()
         parent.name = "Spheres"
+        print("[Memory] Created parent entity")
         
         // Group atoms by element for efficient instancing
         let atomsByElement = Dictionary(grouping: atoms, by: { $0.element.uppercased() })
@@ -182,7 +184,8 @@ struct SpheresBuilder {
             print("  \(element): \(elementAtoms.count) atoms")
         }
         
-        // Create one entity per element type
+        // Create one or more entities per element type
+        // Split into chunks of 10,000 atoms if needed
         for (element, elementAtoms) in atomsByElement {
             guard !elementAtoms.isEmpty else { continue }
             
@@ -210,50 +213,80 @@ struct SpheresBuilder {
             )
             let material = SimpleMaterial(color: uiColor, isMetallic: false)
             
-            // Create instancing data
-            let count = elementAtoms.count
-            guard let instanceData = try? LowLevelInstanceData(instanceCount: count) else { continue }
+            // Split into chunks of 10,000 if needed
+            let maxAtomsPerEntity = 10000
+            let totalAtoms = elementAtoms.count
+            let numChunks = (totalAtoms + maxAtomsPerEntity - 1) / maxAtomsPerEntity
             
-            instanceData.withMutableTransforms { transforms in
-                for i in 0..<count {
-                    let atom = elementAtoms[i]
-                    // Scale positions from Angstroms to scene units
-                    let position = atom.position * options.scale
-                    let transform = Transform(
-                        scale: .one,
-                        rotation: simd_quatf(angle: 0, axis: [0, 0, 1]),
-                        translation: position
-                    )
-                    transforms[i] = transform.matrix
-                }
+            if numChunks > 1 {
+                print("[ProteinSpheresMesh] Splitting \(totalAtoms) \(element) atoms into \(numChunks) chunks of max \(maxAtomsPerEntity)")
             }
             
-            // Create entity with instances
-            if let modelID = mesh.contents.models.first?.id {
-                let entity = ModelEntity()
-                entity.name = "Spheres_\(element)"
-                entity.model = ModelComponent(mesh: mesh, materials: [material])
+            for chunkIndex in 0..<numChunks {
+                let startIndex = chunkIndex * maxAtomsPerEntity
+                let endIndex = min(startIndex + maxAtomsPerEntity, totalAtoms)
+                let chunkAtoms = Array(elementAtoms[startIndex..<endIndex])
+                let count = chunkAtoms.count
                 
-                // Create and set component with nonisolated context
-                do {
-                    let component = try MeshInstancesComponent(
-                        mesh: mesh,
-                        modelID: modelID,
-                        instances: instanceData
-                    )
-                    entity.components[MeshInstancesComponent.self] = component
-                    print("[ProteinSpheresMesh] Successfully created instanced entity for \(element)")
-                } catch {
-                    print("[ProteinSpheresMesh] ERROR: Failed to create MeshInstancesComponent for \(element): \(error)")
+                print("[ProteinSpheresMesh] Processing chunk \(chunkIndex + 1)/\(numChunks) with \(count) atoms")
+                print("[Memory] Chunk \(chunkIndex): Allocating \(count * 64) bytes for instance transforms")
+                
+                // Create instancing data for this chunk
+                guard let instanceData = try? LowLevelInstanceData(instanceCount: count) else {
+                    print("[ProteinSpheresMesh] ERROR: Failed to create instance data for chunk \(chunkIndex)")
+                    print("[Memory] ERROR: Instance data allocation failed - possible out of memory")
+                    continue
                 }
                 
-                parent.addChild(entity)
-                print("[ProteinSpheresMesh] Added \(element) entity to parent")
-            } else {
-                print("[ProteinSpheresMesh] ERROR: No modelID found for \(element) mesh")
+                instanceData.withMutableTransforms { transforms in
+                    for i in 0..<count {
+                        let atom = chunkAtoms[i]
+                        // Scale positions from Angstroms to scene units
+                        let position = atom.position * options.scale
+                        let transform = Transform(
+                            scale: .one,
+                            rotation: simd_quatf(angle: 0, axis: [0, 0, 1]),
+                            translation: position
+                        )
+                        transforms[i] = transform.matrix
+                    }
+                }
+                
+                // Create entity with instances
+                if let modelID = mesh.contents.models.first?.id {
+                    let entity = ModelEntity()
+                    // Add chunk suffix if there are multiple chunks
+                    if numChunks > 1 {
+                        entity.name = "Spheres_\(element)_\(chunkIndex)"
+                    } else {
+                        entity.name = "Spheres_\(element)"
+                    }
+                    entity.model = ModelComponent(mesh: mesh, materials: [material])
+                    
+                    // Create and set component with nonisolated context
+                    do {
+                        let component = try MeshInstancesComponent(
+                            mesh: mesh,
+                            modelID: modelID,
+                            instances: instanceData
+                        )
+                        entity.components[MeshInstancesComponent.self] = component
+                        print("[ProteinSpheresMesh] Successfully created instanced entity for \(element) chunk \(chunkIndex)")
+                        print("[Memory] Entity created - Total children in parent: \(parent.children.count + 1)")
+                    } catch {
+                        print("[ProteinSpheresMesh] ERROR: Failed to create MeshInstancesComponent for \(element) chunk \(chunkIndex): \(error)")
+                        print("[Memory] ERROR: MeshInstancesComponent creation failed - possible resource limit")
+                    }
+                    
+                    parent.addChild(entity)
+                    print("[ProteinSpheresMesh] Added \(element) chunk \(chunkIndex) entity to parent")
+                } else {
+                    print("[ProteinSpheresMesh] ERROR: No modelID found for \(element) mesh")
+                }
             }
         }
         
+        print("[Memory] Sphere build complete - Total entities: \(parent.children.count)")
         return parent
     }
     
@@ -464,10 +497,12 @@ struct PDBParser {
             element = inferElement(from: name)
         }
         
+      /*
         // Debug logging for first few atoms and carbon atoms
         if serial <= 5 || element.uppercased() == "C" {
             print("[PDBParser] Atom \(serial) '\(name)': element='\(elementFromPDB)' -> inferred='\(element)'")
         }
+       */
         
         let charge = paddedLine.count > 79 ? paddedLine[78..<80].trimmingCharacters(in: .whitespaces) : ""
         

@@ -27,6 +27,8 @@ extension Molecule {
     static func genBallAndStickResidue(residue: Residue, basePosition: SIMD3<Float>? = nil, atomScale: Float = 1.0) -> ModelEntity? {
         guard !residue.atoms.isEmpty else { return nil }
         
+        print("[Memory] Creating ball-and-stick for residue \(residue.resName)\(residue.serNum) with \(residue.atoms.count) atoms")
+        
         let parent = ModelEntity()
         parent.name = "\(residue.resName)_\(residue.chainID)\(residue.serNum)"
         
@@ -46,46 +48,72 @@ extension Molecule {
         for (element, atoms) in atomGroups {
             guard let firstAtom = atoms.first else { continue }
             
-            // Create mesh for this element type with scaled radius
+            // CRITICAL FIX: Create mesh ONCE per element type, BEFORE chunking
+            // This prevents creating duplicate meshes for each chunk
             let scaledRadius = Float(firstAtom.radius) * atomScale
             let mesh = MeshResource.generateSphere(radius: scaledRadius)
             let material = SimpleMaterial(color: firstAtom.color, isMetallic: false)
             
-            // Use instancing for multiple atoms of same element
-            let count = atoms.count
-            guard let instanceData = try? LowLevelInstanceData(instanceCount: count) else { continue }
+            print("[Memory] Created mesh for element \(element) with radius \(scaledRadius)")
             
-            instanceData.withMutableTransforms { transforms in
-                for i in 0..<count {
-                    let atom = atoms[i]
-                    // Use 0.01 scale to match ProteinRibbon
-                    let atomPos = SIMD3<Float>(
-                        Float(atom.x) * 0.01,
-                        Float(atom.y) * 0.01,
-                        Float(atom.z) * 0.01
-                    )
-                    let translation = atomPos - basePos
-                    let transform = Transform(
-                        scale: .one,
-                        rotation: simd_quatf(angle: 0, axis: [0, 0, 1]),
-                        translation: translation
-                    )
-                    transforms[i] = transform.matrix
-                }
+            // Split into chunks of 10,000 atoms if needed
+            let maxAtomsPerEntity = 10000
+            let totalAtoms = atoms.count
+            let numChunks = (totalAtoms + maxAtomsPerEntity - 1) / maxAtomsPerEntity
+            
+            if numChunks > 1 {
+                print("[Memory] Splitting \(totalAtoms) \(element) atoms into \(numChunks) chunks (reusing same mesh)")
             }
             
-            // Create entity with instances
-            if let modelID = mesh.contents.models.first?.id,
-               let instancesComponent = try? MeshInstancesComponent(
-                mesh: mesh,
-                modelID: modelID,
-                instances: instanceData
-               ) {
-                let entity = ModelEntity()
-                entity.name = "Atoms_\(element)"
-                entity.model = ModelComponent(mesh: mesh, materials: [material])
-                entity.components.set(instancesComponent)
-                parent.addChild(entity)
+            for chunkIndex in 0..<numChunks {
+                let startIndex = chunkIndex * maxAtomsPerEntity
+                let endIndex = min(startIndex + maxAtomsPerEntity, totalAtoms)
+                let chunkAtoms = Array(atoms[startIndex..<endIndex])
+                let count = chunkAtoms.count
+                
+                print("[Memory] Ball-and-stick chunk \(chunkIndex): \(count) \(element) atoms")
+                guard let instanceData = try? LowLevelInstanceData(instanceCount: count) else {
+                    print("[Memory] ERROR: Failed to allocate instance data for \(count) atoms")
+                    continue
+                }
+                
+                instanceData.withMutableTransforms { transforms in
+                    for i in 0..<count {
+                        let atom = chunkAtoms[i]
+                        // Use 0.01 scale to match ProteinRibbon
+                        let atomPos = SIMD3<Float>(
+                            Float(atom.x) * 0.01,
+                            Float(atom.y) * 0.01,
+                            Float(atom.z) * 0.01
+                        )
+                        let translation = atomPos - basePos
+                        let transform = Transform(
+                            scale: .one,
+                            rotation: simd_quatf(angle: 0, axis: [0, 0, 1]),
+                            translation: translation
+                        )
+                        transforms[i] = transform.matrix
+                    }
+                }
+                
+                // Create entity with instances
+                if let modelID = mesh.contents.models.first?.id,
+                   let instancesComponent = try? MeshInstancesComponent(
+                    mesh: mesh,
+                    modelID: modelID,
+                    instances: instanceData
+                   ) {
+                    let entity = ModelEntity()
+                    // Add chunk suffix if there are multiple chunks
+                    if numChunks > 1 {
+                        entity.name = "Atoms_\(element)_\(chunkIndex)"
+                    } else {
+                        entity.name = "Atoms_\(element)"
+                    }
+                    entity.model = ModelComponent(mesh: mesh, materials: [material])
+                    entity.components.set(instancesComponent)
+                    parent.addChild(entity)
+                }
             }
         }
         
@@ -158,5 +186,76 @@ extension Molecule {
         
         // Only return if we found something reasonably close (within 0.05 units)
         return minDistance < 0.05 ? closestResidue : nil
+    }
+    
+    /// Finds and highlights the nearest residue to a world space coordinate using direct coordinate comparison
+    /// - Parameters:
+    ///   - ballAndStickEntity: The root ball and stick entity
+    ///   - worldPosition: The world space coordinate to search from
+    ///   - residues: Array of all residues in the protein
+    ///   - maxDistance: Maximum distance threshold for selection (default 0.05 meters)
+    /// - Returns: A tuple containing the found residue and a highlighted ModelEntity, or nil if none found
+    static func findAndHighlightNearestResidue(
+        ballAndStickEntity: Entity,
+        worldPosition: SIMD3<Float>,
+        residues: [Residue],
+        maxDistance: Float = 0.05
+    ) -> (residue: Residue, highlightEntity: ModelEntity)? {
+        // Convert world position to ball and stick local space
+        let localPosition = ballAndStickEntity.convert(position: worldPosition, from: nil)
+        
+        // Find the closest atom by comparing distances
+        var closestResidue: Residue?
+        var closestAtomDistance: Float = .infinity
+        
+        for residue in residues {
+            for atom in residue.atoms {
+                // Use 0.01 scale to match ball and stick representation
+                let atomLocalPos = SIMD3<Float>(
+                    Float(atom.x) * 0.01,
+                    Float(atom.y) * 0.01,
+                    Float(atom.z) * 0.01
+                )
+                
+                let dist = distance(localPosition, atomLocalPos)
+                
+                if dist < closestAtomDistance {
+                    closestAtomDistance = dist
+                    closestResidue = residue
+                }
+            }
+        }
+        
+        // Only proceed if we found an atom within the max distance threshold
+        guard let residue = closestResidue, closestAtomDistance < maxDistance else {
+            return nil
+        }
+        
+        // Create a highlighted version of this residue with larger atom radius
+        guard let residueEntity = genBallAndStickResidue(residue: residue, atomScale: 1.5) else {
+            return nil
+        }
+        
+        residueEntity.name = "Selected_\(residue.resName)_\(residue.chainID)\(residue.serNum)"
+        
+        // Add emissive material for highlight with transparency
+        var material = PhysicallyBasedMaterial()
+        material.emissiveColor.color = .yellow
+        material.emissiveIntensity = 0.3
+        material.blending = .transparent(opacity: 0.3)
+        
+        // Apply material to all children
+        residueEntity.children.forEach { child in
+            if var modelEntity = child as? ModelEntity,
+               let model = modelEntity.model {
+                modelEntity.model?.materials = model.materials.map { _ in material }
+            }
+        }
+        
+        // Add collision shapes and input target to make it interactive
+        residueEntity.components.set(InputTargetComponent())
+        residueEntity.generateCollisionShapes(recursive: true, static: true)
+        
+        return (residue: residue, highlightEntity: residueEntity)
     }
 }

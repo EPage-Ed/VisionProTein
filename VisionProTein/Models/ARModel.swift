@@ -182,6 +182,7 @@ final class ARModel : ObservableObject {
   let rootEntity = Entity()
   @Published var loading = false
   @Published var progress : Double = 0
+  @Published var loadingStatus: String = ""
   @Published var showResidues = true
   @Published var modelState : ModelState = .resizing
   @Published var tagged = Set<Residue>()

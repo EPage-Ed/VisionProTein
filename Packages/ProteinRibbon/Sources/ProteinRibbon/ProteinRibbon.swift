@@ -103,7 +103,7 @@ public struct ProteinRibbon {
     ///   - pdbString: The raw PDB file content
     ///   - options: Rendering options (uses defaults if not specified)
     /// - Returns: A ModelEntity containing the protein ribbon visualization
-    public static func entity(
+  @MainActor public static func entity(
         from pdbString: String,
         options: Options = Options()
     ) -> ModelEntity {
@@ -143,7 +143,7 @@ public struct ProteinRibbon {
     ///   - pdbString: The raw PDB file content
     ///   - options: Rendering options
     /// - Returns: An Entity containing child ModelEntities for each segment
-    public static func entityHierarchy(
+  @MainActor public static func entityHierarchy(
         from pdbString: String,
         options: Options = Options()
     ) -> Entity {
@@ -184,12 +184,14 @@ public struct ProteinRibbon {
     ///   - pdbString: The raw PDB file content
     ///   - options: Ball-and-stick rendering options (uses defaults if not specified)
     /// - Returns: A ModelEntity containing the ball-and-stick visualization
+    @available(visionOS 26.0, *)
     public static func ballAndStickEntity(
         from pdbString: String,
         options: BallAndStickOptions = BallAndStickOptions()
     ) -> ModelEntity {
         let structure = PDBParser.parse(pdbString)
 
+      print("ProteinRibbon BallAndStick: Parsed \(structure.atoms.count) atoms")
         guard !structure.atoms.isEmpty else {
             print("ProteinRibbon: No atoms found in PDB string")
             return ModelEntity()
@@ -205,33 +207,35 @@ extension ProteinRibbon {
     // MARK: Ribbon Convenience Methods
 
     /// Creates an entity with default structure coloring (red helix, blue sheet, green coil)
-    public static func structureColoredEntity(from pdbString: String) -> ModelEntity {
+  @MainActor public static func structureColoredEntity(from pdbString: String) -> ModelEntity {
         return entity(from: pdbString, options: Options(colorScheme: .byStructure))
     }
 
     /// Creates an entity with chain coloring
-    public static func chainColoredEntity(from pdbString: String) -> ModelEntity {
+  @MainActor public static func chainColoredEntity(from pdbString: String) -> ModelEntity {
         return entity(from: pdbString, options: Options(colorScheme: .byChain))
     }
 
     /// Creates an entity with rainbow gradient coloring
-    public static func rainbowEntity(from pdbString: String) -> ModelEntity {
+  @MainActor public static func rainbowEntity(from pdbString: String) -> ModelEntity {
         return entity(from: pdbString, options: Options(colorScheme: .byResidue))
     }
 
     /// Creates an entity with residue type coloring (hydrophobic, polar, charged)
-    public static func typeColoredEntity(from pdbString: String) -> ModelEntity {
+  @MainActor public static func typeColoredEntity(from pdbString: String) -> ModelEntity {
         return entity(from: pdbString, options: Options(colorScheme: .byResidueType))
     }
 
     // MARK: Ball-and-Stick Convenience Methods
 
     /// Creates a ball-and-stick entity with CPK element coloring
+    @available(visionOS 26.0, *)
     public static func ballAndStickCPK(from pdbString: String) -> ModelEntity {
         return ballAndStickEntity(from: pdbString, options: BallAndStickOptions(colorScheme: .byElement))
     }
 
     /// Creates a ball-and-stick entity showing only backbone atoms (N, CA, C, O)
+    @available(visionOS 26.0, *)
     public static func backboneOnly(from pdbString: String) -> ModelEntity {
         return ballAndStickEntity(
             from: pdbString,
@@ -245,6 +249,7 @@ extension ProteinRibbon {
     }
 
     /// Creates a ball-and-stick entity with larger atoms and thicker bonds
+    @available(visionOS 26.0, *)
     public static func ballAndStickLarge(from pdbString: String) -> ModelEntity {
         return ballAndStickEntity(
             from: pdbString,

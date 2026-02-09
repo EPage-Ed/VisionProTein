@@ -24,6 +24,7 @@ public struct RealityKitEntityBuilder {
 
     // MARK: - Main Entity Building
 
+    @MainActor
     /// Builds a complete protein ribbon entity from parsed PDB structure
     /// - Parameters:
     ///   - structure: Parsed PDB structure
@@ -384,6 +385,7 @@ public struct RealityKitEntityBuilder {
 
     // MARK: - Entity Creation
 
+    @MainActor
     /// Creates a RealityKit ModelEntity from mesh data
     private static func createEntity(
         from meshData: MeshData,
@@ -422,6 +424,7 @@ public struct RealityKitEntityBuilder {
         return scaled
     }
 
+    @MainActor
     /// Creates a RealityKit material
     private static func createMaterial(options: ProteinRibbon.Options) -> Material {
         var material = SimpleMaterial()
@@ -438,6 +441,7 @@ public struct RealityKitEntityBuilder {
 
     // MARK: - Alternative: Per-Segment Entities with Proper Colors
 
+    @MainActor
     /// Builds separate entities for each segment with proper material colors
     /// Uses shared backbone for seamless connections between segments
     public static func buildSegmentedEntities(
@@ -508,6 +512,7 @@ public struct RealityKitEntityBuilder {
         return entities
     }
 
+    @MainActor
     /// Creates an entity for a single segment with appropriate material color
     private static func createSegmentEntity(
         meshData: MeshData,
@@ -550,6 +555,7 @@ public struct RealityKitEntityBuilder {
 
     // MARK: - Parent Entity Builder
 
+    @MainActor
     /// Creates a parent entity containing segment entities as children
     /// Segments use shared backbone for seamless connections
     public static func buildParentEntity(
@@ -572,6 +578,7 @@ public struct RealityKitEntityBuilder {
 // MARK: - Convenience Extensions
 
 extension ModelEntity {
+    @MainActor
     /// Centers the entity at the origin based on its bounding box
     public func centerAtOrigin() {
         let bounds = self.visualBounds(relativeTo: nil)
@@ -579,3 +586,4 @@ extension ModelEntity {
         self.position = -center
     }
 }
+
