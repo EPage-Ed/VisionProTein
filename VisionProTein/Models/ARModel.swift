@@ -8,6 +8,7 @@
 import RealityKit
 import ARKit
 import Accelerate
+import AVFoundation
 
 /*
 extension simd_float4x4 {
@@ -23,12 +24,48 @@ func distance(_ a: SIMD3<Float>, _ b: SIMD3<Float>) -> Float {
 }
 */
 
+/*
 enum ModelState : CaseIterable, Identifiable {
   case resizing
   case tagging
   case ribbon
   
   var id: Self { self } // Conforms to Identifiable
+}
+ */
+
+// Simple spatial index for efficient nearest-atom queries
+class AtomSpatialIndex {
+  struct AtomEntry {
+    let position: SIMD3<Float>
+    let atomIndex: Int
+    let residue: Residue
+  }
+  
+  private var atoms: [AtomEntry] = []
+  
+  init(atoms: [AtomEntry]) {
+    self.atoms = atoms
+  }
+  
+  // Find the nearest atom to a given position
+  func findNearest(to position: SIMD3<Float>) -> (atomIndex: Int, residue: Residue, distance: Float)? {
+    guard !atoms.isEmpty else { return nil }
+    
+    var nearestIndex = 0
+    var minDistance = distance(position, atoms[0].position)
+    
+    for i in 1..<atoms.count {
+      let dist = distance(position, atoms[i].position)
+      if dist < minDistance {
+        minDistance = dist
+        nearestIndex = i
+      }
+    }
+    
+    let nearest = atoms[nearestIndex]
+    return (atomIndex: nearest.atomIndex, residue: nearest.residue, distance: minDistance)
+  }
 }
 
 final class ARModel : ObservableObject {
@@ -48,6 +85,7 @@ final class ARModel : ObservableObject {
   var spheres : ModelEntity?
   var ribbons : ModelEntity?
   var ballAndStick : ModelEntity?
+  var proteinCenterOffset: SIMD3<Float> = .zero  // Offset applied to center the protein for rotation
   
   var proteinItem: ProteinItem? {
     didSet {
@@ -185,7 +223,8 @@ final class ARModel : ObservableObject {
   @Published var progress : Double = 0
   @Published var loadingStatus: String = ""
   @Published var showResidues = true
-  @Published var modelState : ModelState = .resizing
+//  @Published var modelState : ModelState = .resizing
+  @Published var tagExtendDistance = 0.0
   @Published var tagged = Set<Residue>()
   @Published var selectedResidue: Residue?
   @Published var showRibbon: Bool = false
@@ -219,14 +258,162 @@ final class ARModel : ObservableObject {
   var atomPositions: [SIMD3<Float>] = []  // Scaled positions matching ball and stick (in ball&stick local space)
   var atomRadii: [Float] = []  // Visual radii (scaled by 0.3)
   var atomToResidueMap: [Int: Residue] = [:]  // Maps atom index to its residue
+  var atomSpatialIndex: AtomSpatialIndex?  // Spatial index for efficient nearest atom search
 
   var initialHandRotation : simd_quatf = .init(vector: [0,0,0,0])
   var initialHandTranslation : SIMD3<Float> = .zero
   var initialProteinTranslation : SIMD3<Float> = .zero
   var initialRHandTranslation : SIMD3<Float> = .zero
   var initialLigandTranslation : SIMD3<Float> = .zero
+  
+  // Audio player for tap feedback
+  private var tapSoundPlayer: AVAudioPlayer?
 
   init() {
+    setupTapSound()
+  }
+  
+  // Setup tap sound using system sound
+  private func setupTapSound() {
+    // Use a system tap sound (ID 1104 is a gentle tap sound)
+    // Alternatively, we can use AVAudioPlayer with a custom sound file
+    // For now, we'll prepare to use system sounds via AudioServicesPlaySystemSound
+  }
+  
+  // Play tap sound feedback
+  func playTapSound() {
+    // Use system sound for tap feedback (1104 is a gentle tap)
+    AudioServicesPlaySystemSound(1104)
+  }
+  func playDeselectSound() {
+    // Use system sound for deselect feedback
+    AudioServicesPlaySystemSound(1103)
+  }
+  
+  // Clear cached protein data
+  func clearProteinData() {
+    proteinResidues.removeAll()
+    atomPositions.removeAll()
+    atomRadii.removeAll()
+    atomToResidueMap.removeAll()
+    atomSpatialIndex = nil
+    highlightedResidueEntities.values.forEach { $0.removeFromParent() }
+    highlightedResidueEntities.removeAll()
+    tagged.removeAll()
+    proteinCenterOffset = .zero
+  }
+  
+  // Clear all selected residues and remove highlights
+  func clearAllSelections() {
+    highlightedResidueEntities.values.forEach { $0.removeFromParent() }
+    highlightedResidueEntities.removeAll()
+    tagged.removeAll()
+  }
+  
+  // Find residues within a specified distance (in angstroms) from a given residue
+  // Returns residues not already in the tagged set
+  func findNearbyResidues(from selectedResidue: Residue, withinDistance distanceAngstroms: Double) -> [Residue] {
+    guard distanceAngstroms > 0, !proteinResidues.isEmpty else { return [] }
+    
+    // Convert angstroms to meters (PDB uses angstroms, scaled by 0.01 for display)
+    let distanceMeters = Float(distanceAngstroms * 0.01)
+    let distanceSquared = distanceMeters * distanceMeters
+    
+    var nearbyResidues: [Residue] = []
+    
+    // Calculate the center position of the selected residue (average of all atom positions)
+    let selectedAtoms = selectedResidue.atoms
+    guard !selectedAtoms.isEmpty else { return [] }
+    
+    var selectedCenter = SIMD3<Float>.zero
+    for atom in selectedAtoms {
+      selectedCenter += SIMD3<Float>(
+        Float(atom.x) * 0.01,
+        Float(atom.y) * 0.01,
+        Float(atom.z) * 0.01
+      )
+    }
+    selectedCenter /= Float(selectedAtoms.count)
+    
+    // Check each residue for proximity
+    for residue in proteinResidues {
+      // Skip if already tagged or if it's the selected residue itself
+      if tagged.contains(residue) || residue == selectedResidue {
+        continue
+      }
+      
+      // Calculate center of this residue
+      guard !residue.atoms.isEmpty else { continue }
+      var residueCenter = SIMD3<Float>.zero
+      for atom in residue.atoms {
+        residueCenter += SIMD3<Float>(
+          Float(atom.x) * 0.01,
+          Float(atom.y) * 0.01,
+          Float(atom.z) * 0.01
+        )
+      }
+      residueCenter /= Float(residue.atoms.count)
+      
+      // Check if within distance using squared distance (more efficient)
+      let delta = residueCenter - selectedCenter
+      let distSq = dot(delta, delta)
+      
+      if distSq <= distanceSquared {
+        nearbyResidues.append(residue)
+      }
+    }
+    
+    print("Found \(nearbyResidues.count) residues within \(distanceAngstroms)Å of \(selectedResidue.resName)\(selectedResidue.serNum)")
+    return nearbyResidues
+  }
+  
+  // Highlight a residue by creating its visual entity
+  @MainActor
+  func highlightResidue(_ residue: Residue) {
+    // Skip if already highlighted
+    guard highlightedResidueEntities[residue.serNum] == nil else { return }
+    
+    // Create highlighted residue entity
+    guard let residueEntity = Molecule.genBallAndStickResidue(residue: residue, atomScale: 1.5) else {
+      print("Failed to create entity for residue \(residue.resName)\(residue.serNum)")
+      return
+    }
+    
+    residueEntity.name = "Selected_\(residue.resName)_\(residue.chainID)\(residue.serNum)"
+    
+    // Apply the same center offset that was applied to ball and stick
+    residueEntity.position = residueEntity.position + proteinCenterOffset
+    
+    // Add emissive material for highlight
+    var material = PhysicallyBasedMaterial()
+    material.emissiveColor.color = .yellow
+    material.emissiveIntensity = 0.3
+    material.blending = .transparent(opacity: 0.3)
+    
+    // Apply material to all children
+    residueEntity.children.forEach { child in
+      if var modelEntity = child as? ModelEntity,
+         let model = modelEntity.model {
+        modelEntity.model?.materials = model.materials.map { _ in material }
+      }
+    }
+    
+    // Add collision shapes and input target
+    residueEntity.components.set(InputTargetComponent())
+    residueEntity.generateCollisionShapes(recursive: true, static: true)
+    
+    // Add to same parent as ball and stick
+    if let ballAndStick = ballAndStick, let parent = ballAndStick.parent {
+      parent.addChild(residueEntity)
+    } else {
+      rootEntity.addChild(residueEntity)
+    }
+    
+    // Track this highlighted entity
+    highlightedResidueEntities[residue.serNum] = residueEntity
+    tagged.insert(residue)
+    
+    print("Highlighted residue: \(residue.resName) \(residue.chainID)\(residue.serNum)")
   }
   
   func run() async {
@@ -265,36 +452,87 @@ final class ARModel : ObservableObject {
       if !tapActive {
         // 3. Calculate distance to detect pinch
       
-        if distance < 0.02 {
+        if distance < 0.005 {
           print("Pinch detected")
           tapActive = true
           tapEntity?.removeFromParent()
           tapEntity = nil
           tapAnchor = nil
           
-//          let transform = indexTip.anchorFromJointTransform
-//          let indexPos = SIMD3<Float>(transform.columns.3.x,
-//                                      transform.columns.3.y,
-//                                      transform.columns.3.z)
+          // Multiply hand anchor by joint transform to get World Space
+          let worldMatrix = leftHand.originFromAnchorTransform * indexTip.anchorFromJointTransform
+          let pinchWorldPos = SIMD3<Float>(worldMatrix.columns.3.x, worldMatrix.columns.3.y, worldMatrix.columns.3.z)
+          
+          // Debug sphere at pinch location
           let sphere = ModelEntity(
             mesh: .generateSphere(radius: 0.01),
             materials: [SimpleMaterial(color: .red, isMetallic: true)]
           )
-          
-          // Multiply hand anchor by joint transform to get World Space
-          let worldMatrix = leftHand.originFromAnchorTransform * indexTip.anchorFromJointTransform
-          let worldPos = SIMD3<Float>(worldMatrix.columns.3.x, worldMatrix.columns.3.y, worldMatrix.columns.3.z)
-          
-//          let anchor = AnchorEntity(world: worldPos)
-          sphere.position = worldPos // [0,0,0]
-//          anchor.addChild(sphere)
+          sphere.position = pinchWorldPos
           rootEntity.addChild(sphere)
           tapEntity = sphere
-//          tapAnchor = anchor
-
+          
+          // Find nearest atom using spatial index
+          guard let ballAndStick = ballAndStick,
+                ballAndStick.isEnabled,
+                let spatialIndex = atomSpatialIndex else {
+            print("Ball and stick not enabled or spatial index not available")
+            return
+          }
+          
+          // Convert world position to ball and stick local coordinates
+          let localPos = ballAndStick.convert(position: pinchWorldPos, from: nil)
+          
+          print("========== PINCH GESTURE ==========")
+          print("Pinch world position: \(pinchWorldPos)")
+          print("Pinch local position: \(localPos)")
+          
+          // Find nearest atom
+          if let result = spatialIndex.findNearest(to: localPos) {
+            let residue = result.residue
+            print("Nearest atom at distance: \(result.distance)m")
+            print("Residue: \(residue.resName) \(residue.chainID)\(residue.serNum)")
+            
+            // Only select if within reasonable distance (5cm)
+            if result.distance < 0.05 {
+              // Check if this residue is already highlighted
+              if let existingEntity = highlightedResidueEntities[residue.serNum] {
+                print("Removing highlight from residue: \(residue.resName) \(residue.chainID)\(residue.serNum)")
+                
+                playDeselectSound()
+                // Remove from tracking
+                highlightedResidueEntities.removeValue(forKey: residue.serNum)
+                tagged.remove(residue)
+                
+                // Remove entity from scene
+                existingEntity.removeFromParent()
+              } else {
+                print("Highlighting residue: \(residue.resName) \(residue.chainID)\(residue.serNum)")
+                
+                // Play tap sound feedback
+                playTapSound()
+                
+                // Highlight the selected residue
+                highlightResidue(residue)
+                
+                // Find and highlight nearby residues if tagExtendDistance > 0
+                if tagExtendDistance > 0 {
+                  let nearbyResidues = findNearbyResidues(from: residue, withinDistance: tagExtendDistance)
+                  for nearbyResidue in nearbyResidues {
+                    highlightResidue(nearbyResidue)
+                  }
+                }
+              }
+            } else {
+              print("Atom too far away (\(result.distance)m), not selecting")
+            }
+          } else {
+            print("No atoms found in spatial index")
+          }
+          print("===================================")
         }
       } else {
-        if distance > 0.02 {
+        if distance > 0.01 {
           print("Pinch released")
           tapActive = false
         }

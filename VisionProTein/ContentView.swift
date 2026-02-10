@@ -138,11 +138,13 @@ struct ContentView: View {
           Spacer()
           Text("Folded")
           Toggle("", isOn: $model.foldedState).labelsHidden()
-            .disabled(!model.showSpheres || model.modelState != .tagging)
+            .disabled(true)
+//            .disabled(!model.showSpheres || model.modelState != .tagging)
           
           Spacer()
 
           VStack(spacing: 20) {
+            /*
             Picker("Mode", selection: $model.modelState) {
               Text("Resize").tag(ModelState.resizing)
               Text("Tag").tag(ModelState.tagging)
@@ -150,6 +152,20 @@ struct ContentView: View {
             .pickerStyle(.segmented)
             .disabled(model.showRibbons || (model.showSpheres && model.showBallAndStick))
             .frame(width: 300)
+             */
+
+            HStack {
+              Text("Tag Extension:")
+              Slider(
+                value: $model.tagExtendDistance,
+                in: 0.0...15.0,
+                step: 1.0 // This creates the "fixed detents"
+              )
+              .frame(width: 300)
+              .padding(.trailing)
+              Text("\(Int(model.tagExtendDistance)) Å")
+                .font(.title)
+            }
             
             HStack(spacing: 20) {
               Toggle("Sphere", isOn: $model.showSpheres)
@@ -171,8 +187,19 @@ struct ContentView: View {
         
         HStack {
           VStack {
-            Text("Tagged Residues")
-              .font(.title2)
+            HStack {
+              Button("Clear", role: .destructive) {
+                // Remove all highlight entities
+                withAnimation {
+                  model.clearAllSelections()
+                }
+              }
+              .buttonStyle(.borderedProminent)
+              .opacity(model.tagged.isEmpty ? 0.3 : 1.0)
+              .disabled(model.tagged.isEmpty)
+              Text("Tagged Residues")
+                .font(.title2)
+            }
             List(Array(model.tagged).sorted(by: { $0.serNum < $1.serNum }), id: \.id) { r in
               Text("\(r.resName) \(r.chainID)\(r.serNum)")
                 .onTapGesture {
@@ -231,6 +258,7 @@ struct ContentView: View {
       //        .glassBackgroundEffect()
     }
     .padding()
+    /*
     .onChange(of: model.modelState) { _, newValue in
       switch newValue {
       case .resizing:
@@ -263,6 +291,7 @@ struct ContentView: View {
 //        }
       }
     }
+     */
     .onChange(of: model.showSpheres) { _, newValue in
       model.spheres?.isEnabled = newValue
     }
@@ -382,7 +411,7 @@ struct ContentView: View {
          */
       } else if immersiveSpaceIsShown {
         model.loading = false
-        model.tagged.removeAll()
+        model.clearProteinData()
         model.protein?.removeFromParent()
         model.proteinTag?.removeFromParent()
         model.ligand?.removeFromParent()
@@ -681,6 +710,42 @@ struct ContentView: View {
             model.ballAndStick = bse
             print(bse.position)
             
+            // Build spatial index for efficient atom lookup
+            await MainActor.run {
+              model.progress = 0.6
+              model.loadingStatus = "Building spatial index..."
+            }
+            
+            // Parse PDB to get atom and residue data
+            let (atoms, residues, _, _, _) = PDB.parsePDB(pdb: s, maxChains: 4)
+            model.proteinResidues = residues
+            
+            // Build spatial index entries
+            var indexEntries: [AtomSpatialIndex.AtomEntry] = []
+            var atomIndex = 0
+            for residue in residues {
+              for atom in residue.atoms {
+                // Use 0.01 scale to match ball and stick representation
+                let atomPos = SIMD3<Float>(
+                  Float(atom.x) * 0.01,
+                  Float(atom.y) * 0.01,
+                  Float(atom.z) * 0.01
+                )
+                model.atomPositions.append(atomPos)
+                model.atomRadii.append(Float(atom.radius))
+                model.atomToResidueMap[atomIndex] = residue
+                
+                indexEntries.append(AtomSpatialIndex.AtomEntry(
+                  position: atomPos,
+                  atomIndex: atomIndex,
+                  residue: residue
+                ))
+                atomIndex += 1
+              }
+            }
+            model.atomSpatialIndex = AtomSpatialIndex(atoms: indexEntries)
+            print("Built spatial index with \(indexEntries.count) atoms for \(residues.count) residues")
+            
             await MainActor.run {
               model.progress = 0.7
               model.loadingStatus = "Creating sphere representation..."
@@ -735,6 +800,7 @@ struct ContentView: View {
 
           // Offset all children so the visual center becomes the pivot point
           let centerOffset = -rvb.center
+          model.proteinCenterOffset = centerOffset
           for child in rbs.children {
             child.position = child.position + centerOffset
           }

@@ -14,7 +14,6 @@
 		D80E63DD2F3A48F7007DB605 /* 4HHB.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D80E63DA2F3A48F7007DB605 /* 4HHB.pdb */; };
 		D8241D132F2824DD007B32BB /* AminoAcid.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8241D122F2824D6007B32BB /* AminoAcid.swift */; };
 		D8474FAE2F2ACBEF0076B827 /* Molecule+ResidueEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8474FAD2F2ACBEF0076B827 /* Molecule+ResidueEntity.swift */; };
-		D8474FB02F2AEBEB0076B827 /* Molecule+Richardson.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8474FAF2F2AEBEB0076B827 /* Molecule+Richardson.swift */; };
 		D8474FB22F2C26530076B827 /* 4HR9.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D8474FB12F2C26530076B827 /* 4HR9.pdb */; };
 		D8474FBC2F2E906C0076B827 /* MolecularRender in Frameworks */ = {isa = PBXBuildFile; productRef = D8474FBB2F2E906C0076B827 /* MolecularRender */; };
 		D8AA59E82BB7AEF000340803 /* RealityKitContent in Frameworks */ = {isa = PBXBuildFile; productRef = D8AA59E72BB7AEF000340803 /* RealityKitContent */; };
@@ -54,7 +53,6 @@
 		D80E63DB2F3A48F7007DB605 /* 5NP0.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 5NP0.pdb; sourceTree = "<group>"; };
 		D8241D122F2824D6007B32BB /* AminoAcid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AminoAcid.swift; sourceTree = "<group>"; };
 		D8474FAD2F2ACBEF0076B827 /* Molecule+ResidueEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Molecule+ResidueEntity.swift"; sourceTree = "<group>"; };
-		D8474FAF2F2AEBEB0076B827 /* Molecule+Richardson.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Molecule+Richardson.swift"; sourceTree = "<group>"; };
 		D8474FB12F2C26530076B827 /* 4HR9.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 4HR9.pdb; sourceTree = "<group>"; };
 		D8AA59E22BB7AEF000340803 /* VisionProTein.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VisionProTein.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8AA59E62BB7AEF000340803 /* RealityKitContent */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = RealityKitContent; sourceTree = "<group>"; };
@@ -205,7 +203,6 @@
 		D8AA59FA2BB7AFB300340803 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				D8474FAF2F2AEBEB0076B827 /* Molecule+Richardson.swift */,
 				D8474FAD2F2ACBEF0076B827 /* Molecule+ResidueEntity.swift */,
 				D8AA59FB2BB7B0C500340803 /* ARModel.swift */,
 				D8AA5A052BB7F49000340803 /* Molecule.swift */,
@@ -353,7 +350,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D8474FB02F2AEBEB0076B827 /* Molecule+Richardson.swift in Sources */,
 				D8AA59FC2BB7B0C500340803 /* ARModel.swift in Sources */,
 				D8AA5A1B2BB90D9F00340803 /* GestureExtensions.swift in Sources */,
 				D8AA5A062BB7F49000340803 /* Molecule.swift in Sources */,

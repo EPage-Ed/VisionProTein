@@ -188,7 +188,7 @@ struct ImmersiveView: View {
             
           }
           .buttonStyle(.borderedProminent)
-          .disabled(model.modelState != .tagging)
+//          .disabled(model.modelState != .tagging)
           .padding()
         }
         .glassBackgroundEffect()
