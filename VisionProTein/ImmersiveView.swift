@@ -195,6 +195,7 @@ struct ImmersiveView: View {
       }
     }
     
+    /*
     .gesture(
       DragGesture(minimumDistance: 0, coordinateSpace: .immersiveSpace)
         .onChanged { value in
@@ -213,6 +214,7 @@ struct ImmersiveView: View {
 //          content.add(dot)
         }
     )
+     */
 
 //    .installGestures()
 //    .onChange(of: model.protein?.scale) { old, new in

@@ -179,6 +179,7 @@ final class ARModel : ObservableObject {
    */
   
   var pName = "1ERT" // 1hqq Biotin 3nir 1nc9 4HR9 1ERT
+  var pDetails = ""
   let rootEntity = Entity()
   @Published var loading = false
   @Published var progress : Double = 0
@@ -301,7 +302,7 @@ final class ARModel : ObservableObject {
     }
 
 
-    
+    /*
     if let hand = handTracker.latestAnchors.leftHand,
        let fingerTip = hand.handSkeleton?.joint(.middleFingerTip)
 //       let fingerBase = hand.handSkeleton?.joint(.middleFingerKnuckle)
@@ -340,6 +341,7 @@ final class ARModel : ObservableObject {
 //        proteinTag?.transform.translation = newTrans
       }
     }
+     */
 
     /*
     if let hand = handTracker.latestAnchors.rightHand,
