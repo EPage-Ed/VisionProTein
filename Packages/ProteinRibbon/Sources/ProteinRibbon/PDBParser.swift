@@ -136,8 +136,10 @@ public struct PDBParser {
             let recordType = String(line.prefix(6)).trimmingCharacters(in: .whitespaces)
 
             switch recordType {
-            case "ATOM", "HETATM":
-                if let atom = parseAtom(line: line, isHetAtm: recordType == "HETATM") {
+            case "ATOM":
+                // Only parse ATOM records, not HETATM (which includes ligands, water, ions, etc.)
+                // This matches the behavior of the sphere representation
+                if let atom = parseAtom(line: line, isHetAtm: false) {
                     atoms.append(atom)
                     chains.insert(atom.chainID)
                 }
@@ -209,8 +211,8 @@ public struct PDBParser {
         // Residue name (columns 18-20)
         let residueName = substring(chars, 17, 20).trimmingCharacters(in: .whitespaces)
 
-        // Skip water molecules
-        if residueName == "HOH" { return nil }
+        // Skip water molecules and unknown residues (non-standard amino acids, DNA/RNA, etc.)
+        if residueName == "HOH" || residueName == "UNK" { return nil }
 
         // Chain ID (column 22)
         let chainID = String(chars.indices.contains(21) ? chars[21] : " ")

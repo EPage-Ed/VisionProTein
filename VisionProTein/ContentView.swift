@@ -731,7 +731,12 @@ struct ContentView: View {
             }
             
             // Parse PDB to get atom and residue data
-            let (atoms, residues, _, _, _) = PDB.parsePDB(pdb: s, maxChains: 16)
+            let (atoms, allResidues, _, _, _) = PDB.parsePDB(pdb: s, maxChains: 16)
+            
+            // Filter to only include standard amino acid residues (excludes HETATM ligands, water, etc.)
+            let residues = allResidues.filter { $0.aminoAcid != nil }
+            print("Filtered residues: \\(allResidues.count) total -> \\(residues.count) amino acids")
+            
             model.proteinResidues = residues
             
             // Build spatial index entries

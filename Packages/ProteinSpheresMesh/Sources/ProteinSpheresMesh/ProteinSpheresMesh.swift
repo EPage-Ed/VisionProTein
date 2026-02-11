@@ -479,6 +479,10 @@ struct PDBParser {
         let name = paddedLine[12..<16].trimmingCharacters(in: .whitespaces)
         let altLoc = paddedLine[16..<17].trimmingCharacters(in: .whitespaces)
         let resName = paddedLine[17..<20].trimmingCharacters(in: .whitespaces)
+        
+        // Skip water molecules and unknown residues (non-standard amino acids, DNA/RNA, etc.)
+        if resName == "HOH" || resName == "UNK" { return nil }
+        
         let chainID = paddedLine[21..<22].trimmingCharacters(in: .whitespaces)
         
         guard let resSeq = Int(paddedLine[22..<26].trimmingCharacters(in: .whitespaces)) else { return nil }
