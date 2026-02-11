@@ -454,7 +454,9 @@ struct PDBParser {
                 if line.count > 10 {
                     title = String(line.dropFirst(10)).trimmingCharacters(in: .whitespaces)
                 }
-            } else if recordType == "ATOM" || recordType == "HETATM" {
+            } else if recordType == "ATOM" {
+                // Only parse ATOM records, not HETATM (which includes water, ligands, etc.)
+                // This matches the behavior of the main PDB parser which excludes HETATM by default
                 if let atom = parseAtom(line) {
                     atoms.append(atom)
                 }
