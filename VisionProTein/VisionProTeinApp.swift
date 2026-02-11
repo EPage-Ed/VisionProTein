@@ -17,7 +17,8 @@ struct VisionProTeinApp: App {
     MoleculeComponent.registerComponent()
     ProteinComponent.registerComponent()
     GestureComponent.registerComponent()
-//    InstanceAnimationSystem.registerSystem()
+    InstanceAnimationComponent.registerComponent()
+    InstanceAnimationSystem.registerSystem()
     
 //    NotificationCenter.default.post(name: .init("EntityScale"), object: nil, userInfo: ["scale":entity.scale])
     NotificationCenter.default.addObserver(forName: .init("EntityScale"), object: nil, queue: .main) { [self] note in

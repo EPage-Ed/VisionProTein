@@ -138,7 +138,7 @@ struct ContentView: View {
           Spacer()
           Text("Folded")
           Toggle("", isOn: $model.foldedState).labelsHidden()
-            .disabled(true)
+            .disabled(!model.showSpheres)
 //            .disabled(!model.showSpheres || model.modelState != .tagging)
           
           Spacer()
@@ -304,15 +304,28 @@ struct ContentView: View {
     .onChange(of: model.foldedState) { _, folded in
       //      model.tagState = !newValue
       Task { @MainActor in
-        
+
         if folded {
+          // Fold back - reverse animation on all child entities
+          model.spheres?.children.forEach { child in
+            child.reverseInstanceAnimation()
+          }
+
+          /*
           for (i,r) in model.spheres!.children.enumerated() {
             var t = r.transform
             t.translation = model.foldedPositions[i] - r.position
             r.move(to: t, relativeTo: r, duration: 8)
 //            r.move(to: model.foldedPositions[i]!, relativeTo: nil, duration: 8)
           }
+           */
         } else {
+          // Unfold - play animation on all child entities
+          model.spheres?.children.forEach { child in
+            child.playInstanceAnimation()
+          }
+
+          /*
           let tot = Float(model.spheres!.children.count)
           for (i,r) in model.spheres!.children.enumerated() {
             let p : SIMD3<Float> = [(Float(i) - tot/2) * 0.1, 0.5, -0.5]
@@ -321,6 +334,7 @@ struct ContentView: View {
             t.translation = p - r.position
             r.move(to: t, relativeTo: r, duration: 8)
           }
+           */
 
         }
 
@@ -761,6 +775,98 @@ struct ContentView: View {
             rbs.addChild(se)
             model.spheres = se
             print(se.position)
+            
+
+            // Build position-to-residue map for fast lookup
+            var posToResidue: [SIMD3<Float>: Residue] = [:]
+            for residue in residues {
+              for atom in residue.atoms {
+                let pos = SIMD3<Float>(
+                  Float(atom.x) * 0.01,
+                  Float(atom.y) * 0.01,
+                  Float(atom.z) * 0.01
+                )
+                posToResidue[pos] = residue
+              }
+            }
+
+            // Calculate residue centers for structure-preserving animation
+            var residueCenters: [Int: SIMD3<Float>] = [:]  // id -> center
+            for residue in residues {
+              var center = SIMD3<Float>.zero
+              for atom in residue.atoms {
+                center += SIMD3<Float>(
+                  Float(atom.x) * 0.01,
+                  Float(atom.y) * 0.01,
+                  Float(atom.z) * 0.01
+                )
+              }
+              center /= Float(residue.atoms.count)
+              residueCenters[residue.id] = center
+            }
+
+            // Calculate unfolded residue centers (spread residues linearly)
+            var unfoldedResidueCenters: [Int: SIMD3<Float>] = [:]
+            let totalResidues = Float(residues.count)
+            for (idx, residue) in residues.enumerated() {
+              let unfoldedCenter = SIMD3<Float>(
+                (Float(idx) - totalResidues / 2) * 0.1,
+                0.5,
+                -0.5
+              )
+              unfoldedResidueCenters[residue.id] = unfoldedCenter
+            }
+
+            // Setup animation on each child sphere entity (one per element type)
+            for child in se.children {
+              if var meshInstances = child.components[MeshInstancesComponent.self],
+                 var part = meshInstances[partIndex: 0] {
+
+                var startTranslations: [SIMD3<Float>] = []
+                var endTranslations: [SIMD3<Float>] = []
+
+                part.data.withMutableTransforms { transforms in
+                  for i in 0..<transforms.count {
+                    // Get current atom position
+                    let atomPos = SIMD3<Float>(
+                      transforms[i].columns.3.x,
+                      transforms[i].columns.3.y,
+                      transforms[i].columns.3.z
+                    )
+                    startTranslations.append(atomPos)
+
+                    // Find which residue this atom belongs to via position lookup
+                    if let residue = posToResidue[atomPos],
+                       let foldedCenter = residueCenters[residue.id],
+                       let unfoldedCenter = unfoldedResidueCenters[residue.id] {
+                      // Calculate unfolded position: offset from unfolded residue center
+                      let offsetFromCenter = atomPos - foldedCenter
+                      let unfoldedPos = unfoldedCenter + offsetFromCenter
+                      endTranslations.append(unfoldedPos)
+                    } else {
+                      // Fallback: keep same position
+                      endTranslations.append(atomPos)
+                    }
+                  }
+                }
+
+                let animation = InstanceAnimationComponent(
+                  startTranslations: startTranslations,
+                  endTranslations: endTranslations,
+                  duration: 8.0,
+                  easing: .easeInOut
+                )
+                child.components.set(animation)
+
+                // Optional: Add completion callback
+                child.setInstanceAnimationCompletion {
+                  print("\(child.name) unfold complete!")
+                }
+              }
+            }
+            print("Setup structure-preserving animations for \(se.children.count) sphere child entities with \(residues.count) residues")
+            
+
             
             await MainActor.run {
               model.progress = 0.9

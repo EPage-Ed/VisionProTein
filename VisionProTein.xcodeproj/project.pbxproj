@@ -37,6 +37,8 @@
 		D8D19CDD2F30734700B6DBC6 /* ProteinRibbon in Frameworks */ = {isa = PBXBuildFile; productRef = D8D19CDC2F30734700B6DBC6 /* ProteinRibbon */; };
 		D8D19CE22F31D59B00B6DBC6 /* 1ERT.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D8D19CE12F31D59B00B6DBC6 /* 1ERT.pdb */; };
 		D8E3927E2F3AA13A003E2E82 /* 1A3N.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D8E3927D2F3AA13A003E2E82 /* 1A3N.pdb */; };
+		D8E392822F3BECE2003E2E82 /* InstanceAnimationComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E392812F3BECE2003E2E82 /* InstanceAnimationComponent.swift */; };
+		D8E392842F3BED00003E2E82 /* InstanceAnimationSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E392832F3BED00003E2E82 /* InstanceAnimationSystem.swift */; };
 		D8F59B0E2F33FE72009EE16D /* Molecule+BallAndStick.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8F59B0D2F33FE72009EE16D /* Molecule+BallAndStick.swift */; };
 /* End PBXBuildFile section */
 
@@ -76,6 +78,8 @@
 		D8AA5A242BB9EE2100340803 /* ProteinListView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProteinListView.swift; sourceTree = "<group>"; };
 		D8D19CE12F31D59B00B6DBC6 /* 1ERT.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 1ERT.pdb; sourceTree = "<group>"; };
 		D8E3927D2F3AA13A003E2E82 /* 1A3N.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 1A3N.pdb; sourceTree = "<group>"; };
+		D8E392812F3BECE2003E2E82 /* InstanceAnimationComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstanceAnimationComponent.swift; sourceTree = "<group>"; };
+		D8E392832F3BED00003E2E82 /* InstanceAnimationSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstanceAnimationSystem.swift; sourceTree = "<group>"; };
 		D8F59B0D2F33FE72009EE16D /* Molecule+BallAndStick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Molecule+BallAndStick.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -208,6 +212,8 @@
 				D8AA5A052BB7F49000340803 /* Molecule.swift */,
 				D8241D122F2824D6007B32BB /* AminoAcid.swift */,
 				D8F59B0D2F33FE72009EE16D /* Molecule+BallAndStick.swift */,
+				D8E392812F3BECE2003E2E82 /* InstanceAnimationComponent.swift */,
+				D8E392832F3BED00003E2E82 /* InstanceAnimationSystem.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -352,11 +358,13 @@
 			files = (
 				D8AA59FC2BB7B0C500340803 /* ARModel.swift in Sources */,
 				D8AA5A1B2BB90D9F00340803 /* GestureExtensions.swift in Sources */,
+				D8E392842F3BED00003E2E82 /* InstanceAnimationSystem.swift in Sources */,
 				D8AA5A062BB7F49000340803 /* Molecule.swift in Sources */,
 				D8AA59FF2BB7B84600340803 /* PDB.swift in Sources */,
 				D8AA5A252BB9EE2100340803 /* ProteinListView.swift in Sources */,
 				D8474FAE2F2ACBEF0076B827 /* Molecule+ResidueEntity.swift in Sources */,
 				D8AA59EC2BB7AEF000340803 /* ContentView.swift in Sources */,
+				D8E392822F3BECE2003E2E82 /* InstanceAnimationComponent.swift in Sources */,
 				D8AA59EA2BB7AEF000340803 /* VisionProTeinApp.swift in Sources */,
 				D8241D132F2824DD007B32BB /* AminoAcid.swift in Sources */,
 				D8AA59EE2BB7AEF000340803 /* ImmersiveView.swift in Sources */,
