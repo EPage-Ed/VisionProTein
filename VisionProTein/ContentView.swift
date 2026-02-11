@@ -731,7 +731,7 @@ struct ContentView: View {
             }
             
             // Parse PDB to get atom and residue data
-            let (atoms, residues, _, _, _) = PDB.parsePDB(pdb: s, maxChains: 4)
+            let (atoms, residues, _, _, _) = PDB.parsePDB(pdb: s, maxChains: 16)
             model.proteinResidues = residues
             
             // Build spatial index entries
@@ -805,16 +805,39 @@ struct ContentView: View {
               residueCenters[residue.id] = center
             }
 
-            // Calculate unfolded residue centers (spread residues linearly)
+            // Calculate unfolded residue centers (organize chains in parallel)
             var unfoldedResidueCenters: [Int: SIMD3<Float>] = [:]
-            let totalResidues = Float(residues.count)
-            for (idx, residue) in residues.enumerated() {
-              let unfoldedCenter = SIMD3<Float>(
-                (Float(idx) - totalResidues / 2) * 0.1,
-                0.5,
-                -0.5
-              )
-              unfoldedResidueCenters[residue.id] = unfoldedCenter
+            
+            // Group residues by chain
+            var residuesByChain: [String: [Residue]] = [:]
+            for residue in residues {
+              let chainID = residue.chainID ?? "A"  // Default to chain A if no chainID
+              if residuesByChain[chainID] == nil {
+                residuesByChain[chainID] = []
+              }
+              residuesByChain[chainID]?.append(residue)
+            }
+            
+            // Sort chains for consistent ordering
+            let sortedChains = residuesByChain.keys.sorted()
+            let chainCount = Float(sortedChains.count)
+            let chainSpacing: Float = 0.3  // Z-spacing between parallel chains
+            
+            // Position each chain in parallel
+            for (chainIndex, chainID) in sortedChains.enumerated() {
+              guard let chainResidues = residuesByChain[chainID] else { continue }
+              
+              let chainResidueCount = Float(chainResidues.count)
+              let zOffset = (Float(chainIndex) - chainCount / 2) * chainSpacing
+              
+              for (residueIndex, residue) in chainResidues.enumerated() {
+                let unfoldedCenter = SIMD3<Float>(
+                  (Float(residueIndex) - chainResidueCount / 2) * 0.1,  // X: spread along chain
+                  0.5,                                                     // Y: constant height
+                  -0.5 + zOffset                                          // Z: offset per chain
+                )
+                unfoldedResidueCenters[residue.id] = unfoldedCenter
+              }
             }
 
             // Setup animation on each child sphere entity (one per element type)
