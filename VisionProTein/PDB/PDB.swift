@@ -201,7 +201,7 @@ SHEET    3   A 9 ALA A  38  GLU A  44 -1  O  THR A  40   N  THR A  32
         if ccnt <= 0 { break }
       }
       if code == "HELIX" {
-        let chain = String(c[21])
+        let chain = String(c[19])  // Column 20 in PDB format (1-indexed)
         let start = Int(String(c[21...24]).trimmingCharacters(in: .whitespaces)) ?? 0
         let end = Int(String(c[33...36]).trimmingCharacters(in: .whitespaces)) ?? 0
         //        print("HELIX \(chain) \(start)-\(end)")
@@ -209,7 +209,7 @@ SHEET    3   A 9 ALA A  38  GLU A  44 -1  O  THR A  40   N  THR A  32
         helix.append(h)
         continue
       } else if code == "SHEET" {
-        let chain = String(c[21])
+        let chain = String(c[21])  // Column 22 in PDB format (1-indexed)
         let start = Int(String(c[22...25]).trimmingCharacters(in: .whitespaces)) ?? 0
         let end = Int(String(c[33...36]).trimmingCharacters(in: .whitespaces)) ?? 0
         //        print("SHEET \(chain) \(start)-\(end)")
@@ -407,6 +407,13 @@ extension PDB {
         helixClass: 1,
         length: helix.end - helix.start + 1
       )
+    }
+    print("Converting \(pdbHelices.count) helices to PDBStructure")
+    if !pdbHelices.isEmpty {
+      print("First helix: chain '\(pdbHelices[0].startChain)' residues \(pdbHelices[0].startResidue)-\(pdbHelices[0].endResidue)")
+    }
+    if !pdbResidues.isEmpty {
+      print("First residue: chain '\(pdbResidues[0].chainID)' seq \(pdbResidues[0].sequenceNumber)")
     }
 
     // Convert sheets

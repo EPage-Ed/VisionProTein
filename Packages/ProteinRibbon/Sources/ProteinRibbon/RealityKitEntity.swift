@@ -84,11 +84,16 @@ public struct RealityKitEntityBuilder {
         }
 
         // Classify secondary structure
+        let chainID = residues[0].chainID
+        let chainHelices = structure.helices.filter { $0.startChain == chainID }
+        let chainSheets = structure.sheets.filter { $0.startChain == chainID }
+        print("Chain \(chainID): \(chainHelices.count) helices, \(chainSheets.count) sheets, \(residues.count) residues")
         let segments = SecondaryStructureClassifier.classify(
             residues: residues,
-            helices: structure.helices.filter { $0.startChain == residues[0].chainID },
-            sheets: structure.sheets.filter { $0.startChain == residues[0].chainID }
+            helices: chainHelices,
+            sheets: chainSheets
         )
+        print("Chain \(chainID): classified into \(segments.count) segments: \(segments.map { "\($0.type)" }.joined(separator: ", "))")
 
         // Create lookup for residue index -> structure type
         var residueStructureTypes: [SecondaryStructureType] = Array(repeating: .coil, count: residues.count)
