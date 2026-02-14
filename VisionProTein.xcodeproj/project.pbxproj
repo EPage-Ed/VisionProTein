@@ -39,6 +39,7 @@
 		D8E3927E2F3AA13A003E2E82 /* 1A3N.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D8E3927D2F3AA13A003E2E82 /* 1A3N.pdb */; };
 		D8E392822F3BECE2003E2E82 /* InstanceAnimationComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E392812F3BECE2003E2E82 /* InstanceAnimationComponent.swift */; };
 		D8E392842F3BED00003E2E82 /* InstanceAnimationSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E392832F3BED00003E2E82 /* InstanceAnimationSystem.swift */; };
+		D8E392862F3C5660003E2E82 /* Ligand.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E392852F3C5660003E2E82 /* Ligand.swift */; };
 		D8F59B0E2F33FE72009EE16D /* Molecule+BallAndStick.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8F59B0D2F33FE72009EE16D /* Molecule+BallAndStick.swift */; };
 /* End PBXBuildFile section */
 
@@ -80,6 +81,7 @@
 		D8E3927D2F3AA13A003E2E82 /* 1A3N.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 1A3N.pdb; sourceTree = "<group>"; };
 		D8E392812F3BECE2003E2E82 /* InstanceAnimationComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstanceAnimationComponent.swift; sourceTree = "<group>"; };
 		D8E392832F3BED00003E2E82 /* InstanceAnimationSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstanceAnimationSystem.swift; sourceTree = "<group>"; };
+		D8E392852F3C5660003E2E82 /* Ligand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ligand.swift; sourceTree = "<group>"; };
 		D8F59B0D2F33FE72009EE16D /* Molecule+BallAndStick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Molecule+BallAndStick.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -214,6 +216,7 @@
 				D8F59B0D2F33FE72009EE16D /* Molecule+BallAndStick.swift */,
 				D8E392812F3BECE2003E2E82 /* InstanceAnimationComponent.swift */,
 				D8E392832F3BED00003E2E82 /* InstanceAnimationSystem.swift */,
+				D8E392852F3C5660003E2E82 /* Ligand.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -366,6 +369,7 @@
 				D8AA59EC2BB7AEF000340803 /* ContentView.swift in Sources */,
 				D8E392822F3BECE2003E2E82 /* InstanceAnimationComponent.swift in Sources */,
 				D8AA59EA2BB7AEF000340803 /* VisionProTeinApp.swift in Sources */,
+				D8E392862F3C5660003E2E82 /* Ligand.swift in Sources */,
 				D8241D132F2824DD007B32BB /* AminoAcid.swift in Sources */,
 				D8AA59EE2BB7AEF000340803 /* ImmersiveView.swift in Sources */,
 				D8AA5A1C2BB90D9F00340803 /* RealityViewExtensions.swift in Sources */,

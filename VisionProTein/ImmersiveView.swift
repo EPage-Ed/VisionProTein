@@ -31,6 +31,24 @@ struct ImmersiveView: View {
       print("[ImmersiveView] RealityView make closure called")
       print("[ImmersiveView] rootEntity children: \(model.rootEntity.children.count), parent: \(String(describing: model.rootEntity.parent?.name))")
       
+      // Add skybox - Create a simple lighting environment
+      // For a basic skybox, we can use ImageBasedLightComponent or set lighting
+      let skyboxEntity = Entity()
+      skyboxEntity.name = "Skybox"
+      
+      // Create a large sphere to act as skybox
+      let skyboxMesh = MeshResource.generateSphere(radius: 1000)
+      var skyboxMaterial = UnlitMaterial()
+      skyboxMaterial.color = .init(tint: .init(red: 0.05, green: 0.08, blue: 0.25, alpha: 1.0))
+      
+      let skyboxModel = ModelEntity(mesh: skyboxMesh, materials: [skyboxMaterial])
+      skyboxModel.scale *= .init(x: -1, y: 1, z: 1) // Invert to render inside
+      skyboxModel.components.set(OpacityComponent(opacity: model.skyboxOpacity))
+      skyboxEntity.addChild(skyboxModel)
+      content.add(skyboxEntity)
+      
+      print("[ImmersiveView] Skybox created")
+      
       // Check if rootEntity is already in content by checking if it has a scene
       if model.rootEntity.scene == nil {
         print("[ImmersiveView] Adding rootEntity to content (first time)")
@@ -49,6 +67,7 @@ struct ImmersiveView: View {
     } update: { content, attachments in
     } attachments: {
       
+      /*
       Attachment(id: "Panel") {
         VStack {
           HStack {
@@ -193,6 +212,7 @@ struct ImmersiveView: View {
         }
         .glassBackgroundEffect()
       }
+       */
     }
     
     /*

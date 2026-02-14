@@ -18,7 +18,7 @@ struct ContentView: View {
   @ObservedObject var model : ARModel
   
   @State private var showImmersiveSpace = false
-  @State private var immersiveSpaceIsShown = false
+  @State private var immersiveSpaceIsShown = true
   //  @State private var loading = false
   //  @State private var progress : Double = 0
   @State private var rotate : Angle = .zero
@@ -74,21 +74,33 @@ struct ContentView: View {
           .foregroundStyle(.secondary)
       }
       .opacity(model.loading ? 1 : 0)
-      
+
+     
       HStack {
-        if showImmersiveSpace {
-          Button("Close") {
-            //          model.proteinItem = ProteinItem(code: "2P6A", name: "Activin:Follistatin", text: "Follistatin is studied for its role in regulation of muscle growth in mice, as an antagonist to myostatin (also known as GDF-8, a TGF superfamily member) which inhibits         excessive muscle growth.", image: nil, ligand: nil)
-            showImmersiveSpace.toggle()
-            model.showSpheres = false
-            model.showRibbons = false
-            model.showBallAndStick = true
+        if immersiveSpaceIsShown {
+          Spacer()
+          Group {
+            Button("Close") {
+              //          model.proteinItem = ProteinItem(code: "2P6A", name: "Activin:Follistatin", text: "Follistatin is studied for its role in regulation of muscle growth in mice, as an antagonist to myostatin (also known as GDF-8, a TGF superfamily member) which inhibits         excessive muscle growth.", image: nil, ligand: nil)
+              showImmersiveSpace.toggle()
+            }
+            .padding(.trailing)
+            Text(model.pName)
+              .font(.title)
+            Text(model.pDetails)
+              .font(.caption)
+          }
+          Spacer()
+          VStack {
+            Text("Skybox")
+            Slider(
+              value: $model.skyboxOpacity,
+              in: 0.0...1.0
+            )
+            .frame(width: 240)
           }
           .padding(.trailing)
-          Text(model.pName)
-            .font(.title)
-          Text(model.pDetails)
-            .font(.caption)
+
         } else {
           ForEach(pdbFiles, id:\.name) { p in
             VStack {
@@ -100,34 +112,8 @@ struct ContentView: View {
               Text(p.details)
                 .font(.caption)
             }
+            .disabled(showImmersiveSpace)
           }
-          /*
-          // 1hqq Biotin 3nir 1nc9 4HR9 1ERT
-          Button("1ERT") {
-            model.pName = "1ERT"
-            showImmersiveSpace.toggle()
-          }
-          Button("1nc9") {
-            model.pName = "1nc9"
-            showImmersiveSpace.toggle()
-          }
-          Button("5JLH") {
-            model.pName = "5JLH"
-            showImmersiveSpace.toggle()
-          }
-          Button("4HR9") {
-            model.pName = "4HR9"
-            showImmersiveSpace.toggle()
-          }
-          Button("4HHB") {
-            model.pName = "4HHB"
-            showImmersiveSpace.toggle()
-          }
-          Button("5NPO") {
-            model.pName = "5NPO"
-            showImmersiveSpace.toggle()
-          }
-           */
         }
       }
       .font(.title2)
@@ -135,14 +121,8 @@ struct ContentView: View {
       
       if immersiveSpaceIsShown {
         HStack {
-          Spacer()
-          Text("Folded")
-          Toggle("", isOn: $model.foldedState).labelsHidden()
-            .disabled(!model.showSpheres)
 //            .disabled(!model.showSpheres || model.modelState != .tagging)
-          
           Spacer()
-
           VStack(spacing: 20) {
             /*
             Picker("Mode", selection: $model.modelState) {
@@ -154,27 +134,72 @@ struct ContentView: View {
             .frame(width: 300)
              */
 
-            HStack {
-              Text("Tag Extension:")
-              Slider(
-                value: $model.tagExtendDistance,
-                in: 0.0...15.0,
-                step: 1.0 // This creates the "fixed detents"
-              )
-              .frame(width: 300)
-              .padding(.trailing)
-              Text("\(Int(model.tagExtendDistance)) Å")
-                .font(.title)
+            Grid(alignment: .center, horizontalSpacing: 40, verticalSpacing: 0) {
+              GridRow {
+                Toggle("Sphere", isOn: $model.showSpheres)
+                  .toggleStyle(.button)
+                  .padding(.leading, 40)
+                Divider() // Vertical separator
+                  .frame(width:2,height:100)
+                  .overlay(Color.white)
+                  .gridCellUnsizedAxes(.horizontal)
+                Toggle("Ribbon", isOn: $model.showRibbons)
+                  .toggleStyle(.button)
+                Divider() // Vertical separator
+                  .frame(width:2,height:100)
+                  .overlay(Color.white)
+                  .gridCellUnsizedAxes(.horizontal)
+                Toggle("Ball & Stick", isOn: $model.showBallAndStick)
+                  .toggleStyle(.button)
+                Toggle("Tag Mode", isOn: $model.tagMode)
+                  .toggleStyle(.button)
+                  .disabled(!model.showBallAndStick)
+                  .padding(.trailing, 40)
+              }
+              GridRow {
+                HStack {
+                  Text("Folded")
+                    .foregroundColor(model.showSpheres ? .primary : .gray)
+                  Toggle("Folded", isOn: $model.foldedState).labelsHidden()
+                    .disabled(!model.showSpheres)
+                }
+                .padding(.leading, 40)
+                Divider() // Vertical separator
+                  .frame(width:2,height:100)
+                  .overlay(Color.white)
+                  .gridCellUnsizedAxes(.horizontal)
+                Text("")
+                Divider() // Vertical separator
+                  .frame(width:2,height:100)
+                  .overlay(Color.white)
+                  .gridCellUnsizedAxes(.horizontal)
+                HStack {
+                  Toggle("Ligands", isOn: $model.showLigands)
+                    .toggleStyle(.button)
+                    .disabled(!model.showBallAndStick)
+                  Toggle("Bindings", isOn: $model.showBindings)
+                    .toggleStyle(.button)
+                    .disabled(!model.showBallAndStick)
+                }
+                VStack {
+                  HStack {
+                    Text("Tag Extension:")
+                      .padding(.trailing)
+                    Text("\(Int(model.tagExtendDistance)) Å")
+                      .font(.title)
+                  }
+                  Slider(
+                    value: $model.tagExtendDistance,
+                    in: 0.0...15.0,
+                    step: 1.0 // This creates the "fixed detents"
+                  )
+                  .frame(width: 240)
+                }
+                .padding(.trailing, 40)
+
+              }
             }
-            
-            HStack(spacing: 20) {
-              Toggle("Sphere", isOn: $model.showSpheres)
-                .toggleStyle(.button)
-              Toggle("Ribbon", isOn: $model.showRibbons)
-                .toggleStyle(.button)
-              Toggle("Ball-and-Stick", isOn: $model.showBallAndStick)
-                .toggleStyle(.button)
-            }
+            .border(Color.white, width: 2)
             .padding(.top)
           }
 
@@ -200,6 +225,36 @@ struct ContentView: View {
               Text("Tagged Residues")
                 .font(.title2)
             }
+            ScrollView {
+              Grid(horizontalSpacing: 20, verticalSpacing: 20) {
+                let tagged = Array(model.tagged)
+                ForEach(Array(stride(from: 0, to: tagged.count, by: 4)), id:\.self) { row in
+                  GridRow {
+                    ForEach(0..<4, id:\.self) { c in
+                      if row + c < tagged.count {
+                        let r = tagged[row+c]
+                        Text("\(r.resName) \(r.chainID)\(r.serNum)")
+                          .onTapGesture {
+                            if model.selectedResidue == r {
+                              model.selectedResidue = nil
+                            } else {
+                              model.selectedResidue = r
+                            }
+                          }
+                          .background(model.selectedResidue == r ? Color.yellow.opacity(0.3) : Color.clear)
+                      }
+                    }
+                  }
+//                  for c in 0..<4 {
+//                    let r = model.tagged[r+c]
+//                    GridRow {
+//                  }
+                }
+              }
+            }
+            .padding(.horizontal)
+            
+            /*
             List(Array(model.tagged).sorted(by: { $0.serNum < $1.serNum }), id: \.id) { r in
               Text("\(r.resName) \(r.chainID)\(r.serNum)")
                 .onTapGesture {
@@ -211,6 +266,7 @@ struct ContentView: View {
                 }
                 .background(model.selectedResidue == r ? Color.blue.opacity(0.3) : Color.clear)
             }
+             */
           }
           Spacer()
           if let r = model.selectedResidue {
@@ -300,6 +356,22 @@ struct ContentView: View {
     }
     .onChange(of: model.showBallAndStick) { _, newValue in
       model.ballAndStick?.isEnabled = newValue
+      model.ligands.forEach { $0.isEnabled = model.showLigands && newValue }
+      model.bindings.forEach { $0.isEnabled = model.showBindings && newValue }
+    }
+    .onChange(of: model.showLigands) { _, newValue in
+      model.ligands.forEach { $0.isEnabled = newValue }
+    }
+    .onChange(of: model.showBindings) { _, newValue in
+      model.bindings.forEach { $0.isEnabled = newValue }
+      if newValue {
+        model.tagged.formUnion(model.bindingResidues)
+      } else {
+        model.bindingResidues.forEach { model.tagged.remove($0) }
+      }
+    }
+    .onChange(of: model.skyboxOpacity) { _, newValue in
+      model.rootEntity.parent?.findEntity(named: "Skybox")?.components.set(OpacityComponent(opacity: newValue))
     }
     .onChange(of: model.foldedState) { _, folded in
       //      model.tagState = !newValue
@@ -428,10 +500,20 @@ struct ContentView: View {
         model.clearProteinData()
         model.protein?.removeFromParent()
         model.proteinTag?.removeFromParent()
-        model.ligand?.removeFromParent()
+        model.ligands.forEach { $0.removeFromParent() }
+        model.ligands.removeAll()
+        model.bindings.forEach { $0.removeFromParent() }
+        model.bindings.removeAll()
+        model.bindingResidues.removeAll()
         model.protein = nil
         model.proteinTag = nil
-        model.ligand = nil
+        model.tagged.removeAll()
+        model.showSpheres = false
+        model.showRibbons = false
+        model.showBallAndStick = true
+        model.showLigands = false
+        model.showBindings = false
+//        model.ligand = nil
         
         Task {
           await dismissImmersiveSpace()
@@ -765,6 +847,68 @@ struct ContentView: View {
             model.atomSpatialIndex = AtomSpatialIndex(atoms: indexEntries)
             print("Built spatial index with \(indexEntries.count) atoms for \(residues.count) residues")
             
+            
+            await MainActor.run {
+              model.progress = 0.65
+              model.loadingStatus = "Finding binding residues..."
+            }
+            // Load ligands from PDB file
+            let ligands = PDB.parseLigands(pdb: s)  // Hemoglobin with heme groups
+            print("Ligands found: \(ligands.count):\n\(ligands.map(\.resName).joined(separator: "\n"))")
+            // or: let ligands = PDB.parseLigands(named: "1NC9")  // Streptavidin with biotin
+            
+            for ligand in ligands {
+              // Generate glowing sphere entity for each ligand
+              let ligandEntity = ligand.generateSphereEntity(
+                atomScale: 1.0,
+                glowColor: .cyan,
+                glowIntensity: 0.5,
+                opacity: 0.8,
+                useElementColors: true
+              )
+              
+              // Add to scene
+              model.ballAndStick?.addChild(ligandEntity)
+              ligandEntity.isEnabled = false
+              model.ligands.append(ligandEntity)
+              
+              // Also highlight binding residues
+              let bindingResidues = ligand.findBindingResidues(in: model.proteinResidues)
+              model.bindingResidues.append(contentsOf: bindingResidues)
+              
+              print("Ligand: \(ligand.resName), Binding residues: \(bindingResidues.map(\.resName).joined(separator: ", "))")
+              
+              
+              // Highlight the binding pocket in yellow
+              bindingResidues.forEach { residue in
+                // Highlight the selected residue
+                if let entity = model.highlightResidue(residue) {
+                  model.bindings.append(entity)
+                  entity.isEnabled = false
+                }
+              }
+              
+              /*
+              if let bindingsEntity = Molecule.highlightResidues(
+                model.bindingResidues,
+                in: model.ballAndStick!,
+                atomScale: 1.5,
+                color: .yellow,
+                intensity: 0.3,
+                opacity: 0.3
+              ) {
+                rbs.addChild(bindingsEntity)
+                model.bindings = bindingsEntity
+              }
+               */
+
+//              Molecule.highlightResidues(bindingResidues, in: model.ballAndStick!)
+              print("\(ligand.resName): \(bindingResidues.count) binding residues")
+
+
+            }
+
+            
             await MainActor.run {
               model.progress = 0.7
               model.loadingStatus = "Creating sphere representation..."
@@ -895,6 +1039,21 @@ struct ContentView: View {
             print("Setup structure-preserving animations for \(se.children.count) sphere child entities with \(residues.count) residues")
             
 
+            /*
+            // Highlight the binding pocket in yellow
+            if let bindingsEntity = Molecule.highlightResidues(
+              model.bindingResidues,
+              in: model.ballAndStick!,
+              atomScale: 1.5,
+              color: .yellow,
+              intensity: 0.3,
+              opacity: 0.3
+            ) {
+              rbs.addChild(bindingsEntity)
+              model.bindings = bindingsEntity
+            }
+             */
+            
             
             await MainActor.run {
               model.progress = 0.9

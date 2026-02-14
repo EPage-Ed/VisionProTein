@@ -85,6 +85,8 @@ final class ARModel : ObservableObject {
   var spheres : ModelEntity?
   var ribbons : ModelEntity?
   var ballAndStick : ModelEntity?
+  var ligands = [ModelEntity]()
+  var bindings : [ModelEntity] = []
   var proteinCenterOffset: SIMD3<Float> = .zero  // Offset applied to center the protein for rotation
   
   var proteinItem: ProteinItem? {
@@ -224,6 +226,7 @@ final class ARModel : ObservableObject {
   @Published var loadingStatus: String = ""
   @Published var showResidues = true
 //  @Published var modelState : ModelState = .resizing
+  @Published var tagMode = false
   @Published var tagExtendDistance = 0.0
   @Published var tagged = Set<Residue>()
   @Published var selectedResidue: Residue?
@@ -236,6 +239,9 @@ final class ARModel : ObservableObject {
   @Published var showSpheres: Bool = false
   @Published var showRibbons: Bool = false
   @Published var showBallAndStick: Bool = true
+  @Published var showLigands: Bool = false
+  @Published var showBindings: Bool = false
+  @Published var skyboxOpacity: Float = 0.5
 
 
   var planes = [UUID: PlaneAnchor]()
@@ -246,12 +252,13 @@ final class ARModel : ObservableObject {
   var protein : ModelEntity?
   var proteinTag : ModelEntity?
   var ribbon : ModelEntity?
-  var ligand : ModelEntity?
   
   var proteinCollision : CollisionComponent?
   
-  // Track highlighted residue entities for removal
+  // Track highlighted residue entities for removal (keyed by residue.id which is unique across chains)
   var highlightedResidueEntities: [Int: ModelEntity] = [:]
+  
+  var bindingResidues : [Residue] = []
   
   // Cached protein data for tap selection
   var proteinResidues: [Residue] = []
@@ -369,14 +376,15 @@ final class ARModel : ObservableObject {
   
   // Highlight a residue by creating its visual entity
   @MainActor
-  func highlightResidue(_ residue: Residue) {
+  @discardableResult
+  func highlightResidue(_ residue: Residue) -> ModelEntity? {
     // Skip if already highlighted
-    guard highlightedResidueEntities[residue.serNum] == nil else { return }
+    guard highlightedResidueEntities[residue.id] == nil else { return nil }
     
     // Create highlighted residue entity
     guard let residueEntity = Molecule.genBallAndStickResidue(residue: residue, atomScale: 1.5) else {
       print("Failed to create entity for residue \(residue.resName)\(residue.serNum)")
-      return
+      return nil
     }
     
     residueEntity.name = "Selected_\(residue.resName)_\(residue.chainID)\(residue.serNum)"
@@ -392,7 +400,7 @@ final class ARModel : ObservableObject {
     
     // Apply material to all children
     residueEntity.children.forEach { child in
-      if var modelEntity = child as? ModelEntity,
+      if let modelEntity = child as? ModelEntity,
          let model = modelEntity.model {
         modelEntity.model?.materials = model.materials.map { _ in material }
       }
@@ -410,10 +418,13 @@ final class ARModel : ObservableObject {
     }
     
     // Track this highlighted entity
-    highlightedResidueEntities[residue.serNum] = residueEntity
-    tagged.insert(residue)
+    highlightedResidueEntities[residue.id] = residueEntity
+    if showBindings {
+      tagged.insert(residue)
+    }
     
     print("Highlighted residue: \(residue.resName) \(residue.chainID)\(residue.serNum)")
+    return residueEntity
   }
   
   func run() async {
@@ -432,7 +443,7 @@ final class ARModel : ObservableObject {
   }
   
   func ligandScale(scale: SIMD3<Float>) {
-    ligand?.scale = scale
+//    ligand?.scale = scale
   }
   
   var tapAnchor : AnchorEntity?
@@ -496,12 +507,12 @@ final class ARModel : ObservableObject {
             // Only select if within reasonable distance (5cm)
             if result.distance < 0.05 {
               // Check if this residue is already highlighted
-              if let existingEntity = highlightedResidueEntities[residue.serNum] {
+              if let existingEntity = highlightedResidueEntities[residue.id] {
                 print("Removing highlight from residue: \(residue.resName) \(residue.chainID)\(residue.serNum)")
                 
                 playDeselectSound()
                 // Remove from tracking
-                highlightedResidueEntities.removeValue(forKey: residue.serNum)
+                highlightedResidueEntities.removeValue(forKey: residue.id)
                 tagged.remove(residue)
                 
                 // Remove entity from scene

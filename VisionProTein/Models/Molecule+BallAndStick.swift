@@ -258,4 +258,83 @@ extension Molecule {
         
         return (residue: residue, highlightEntity: residueEntity)
     }
+    
+    /// Highlights multiple residues in the ball and stick representation
+    /// - Parameters:
+    ///   - residues: Array of residues to highlight
+    ///   - ballAndStickEntity: The root ball and stick entity to add highlights to
+    ///   - atomScale: Scale factor for highlighted atoms (default: 1.5)
+    ///   - color: Highlight color (default: yellow)
+    ///   - intensity: Emissive intensity (default: 0.3)
+    ///   - opacity: Transparency of highlights (default: 0.3)
+    ///   - groupName: Name for the parent entity containing all highlights (default: "HighlightedResidues")
+    /// - Returns: A parent entity containing all highlighted residue entities, or nil if no residues could be highlighted
+    @MainActor
+    static func highlightResidues(
+        _ residues: [Residue],
+        in ballAndStickEntity: Entity,
+        atomScale: Float = 1.5,
+        color: UIColor = .yellow,
+        intensity: Float = 0.3,
+        opacity: Float = 0.3,
+        groupName: String = "HighlightedResidues"
+    ) -> ModelEntity? {
+        guard !residues.isEmpty else { return nil }
+        
+        let parentEntity = ModelEntity()
+        parentEntity.name = groupName
+        
+        print("[Molecule] Highlighting \(residues.count) residues in ball and stick")
+        
+        var highlightedCount = 0
+        
+        for residue in residues {
+            guard let residueEntity = genBallAndStickResidue(residue: residue, atomScale: atomScale) else {
+                continue
+            }
+            
+            residueEntity.name = "Highlight_\(residue.resName)_\(residue.chainID)\(residue.serNum)"
+            
+            // Create emissive material for highlight
+            var material = PhysicallyBasedMaterial()
+            material.emissiveColor.color = color
+            material.emissiveIntensity = intensity
+            material.blending = .transparent(opacity: .init(floatLiteral: opacity))
+            
+            // Apply material to all children
+            residueEntity.children.forEach { child in
+                if var modelEntity = child as? ModelEntity,
+                   let model = modelEntity.model {
+                    modelEntity.model?.materials = model.materials.map { _ in material }
+                }
+            }
+            
+            parentEntity.addChild(residueEntity)
+            highlightedCount += 1
+        }
+        
+        guard highlightedCount > 0 else {
+            print("[Molecule] Warning: Could not highlight any residues")
+            return nil
+        }
+        
+        print("[Molecule] Successfully highlighted \(highlightedCount) residues")
+        
+        // Add to ball and stick entity
+        ballAndStickEntity.addChild(parentEntity)
+        
+        return parentEntity
+    }
+    
+    /// Removes all highlighted residues from the ball and stick entity
+    /// - Parameters:
+    ///   - ballAndStickEntity: The root ball and stick entity
+    ///   - groupName: Name of the highlight group to remove (default: "HighlightedResidues")
+    @MainActor
+    static func removeHighlights(from ballAndStickEntity: Entity, groupName: String = "HighlightedResidues") {
+        if let highlightEntity = ballAndStickEntity.findEntity(named: groupName) {
+            highlightEntity.removeFromParent()
+            print("[Molecule] Removed highlight group: \(groupName)")
+        }
+    }
 }
