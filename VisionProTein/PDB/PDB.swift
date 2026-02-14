@@ -282,16 +282,244 @@ SHEET    3   A 9 ALA A  38  GLU A  44 -1  O  THR A  40   N  THR A  32
 class ProteinComponent: Component {
   //  var residue: Residue
   //  var outline = false
-  
+
   //  init(player: Player, state: State = .new) {
   init() {
     //    self.residue = residue
   }
-  
+
   func update(entity: Entity, with deltaTime: TimeInterval) {
     //    if popEntity?.parent == nil {
     //      entity.addChild(popEntity!)
     //    }
+  }
+}
+
+// MARK: - Consolidated PDB Parsing
+
+/// Import the PDBStructure types from PDBKit package
+import PDBKit
+
+extension PDB {
+  /// Complete PDB parsing result with all data needed by renderers
+  struct CompleteParseResult {
+    let atoms: [Atom]
+    let residues: [Residue]
+    let ligands: [Ligand]
+    let helices: [HELIX]
+    let sheets: [SHEET]
+    let sequences: [SEQRES]
+    let pdbStructure: PDBStructure  // For ProteinRibbon/ProteinSpheresMesh packages
+  }
+
+  /// Parse PDB once and return all data needed by all renderers
+  /// This eliminates duplicate parsing operations
+  static func parseComplete(pdbString: String) -> CompleteParseResult {
+    // Parse using existing VisionProTein parser
+    let (atoms, residues, helices, sheets, sequences) = parsePDB(pdb: pdbString)
+
+    // Parse ligands
+    let ligands = parseLigands(pdbString)
+
+    // Convert to ProteinRibbon's PDBStructure for packages
+    let pdbStructure = convertToPDBStructure(
+      atoms: atoms,
+      residues: residues,
+      helices: helices,
+      sheets: sheets,
+      pdbString: pdbString
+    )
+
+    return CompleteParseResult(
+      atoms: atoms,
+      residues: residues,
+      ligands: ligands,
+      helices: helices,
+      sheets: sheets,
+      sequences: sequences,
+      pdbStructure: pdbStructure
+    )
+  }
+
+  /// Convert VisionProTein types to ProteinRibbon PDBStructure
+  private static func convertToPDBStructure(
+    atoms: [Atom],
+    residues: [Residue],
+    helices: [HELIX],
+    sheets: [SHEET],
+    pdbString: String
+  ) -> PDBStructure {
+    // Convert atoms
+    let pdbAtoms = atoms.map { atom -> PDBAtom in
+      PDBAtom(
+        serial: atom.serial,
+        name: atom.name,
+        altLoc: atom.altLoc,
+        residueName: atom.resName,
+        chainID: atom.chainID,
+        residueSeq: atom.resSeq,
+        insertionCode: atom.iCode,
+        position: SIMD3<Float>(Float(atom.x), Float(atom.y), Float(atom.z)),
+        occupancy: Float(atom.occupancy),
+        tempFactor: Float(atom.tempFactor),
+        element: atom.element,
+        charge: atom.charge
+      )
+    }
+
+    // Convert residues
+    let pdbResidues = residues.map { residue -> PDBResidue in
+      let residueAtoms = residue.atoms.map { atom -> PDBAtom in
+        PDBAtom(
+          serial: atom.serial,
+          name: atom.name,
+          altLoc: atom.altLoc,
+          residueName: atom.resName,
+          chainID: atom.chainID,
+          residueSeq: atom.resSeq,
+          insertionCode: atom.iCode,
+          position: SIMD3<Float>(Float(atom.x), Float(atom.y), Float(atom.z)),
+          occupancy: Float(atom.occupancy),
+          tempFactor: Float(atom.tempFactor),
+          element: atom.element,
+          charge: atom.charge
+        )
+      }
+      return PDBResidue(
+        sequenceNumber: residue.serNum,
+        name: residue.resName,
+        chainID: residue.chainID,
+        atoms: residueAtoms
+      )
+    }
+
+    // Convert helices
+    let pdbHelices = helices.map { helix -> PDBHelix in
+      PDBHelix(
+        serialNumber: 0,
+        helixID: "",
+        startResidue: helix.start,
+        endResidue: helix.end,
+        startChain: helix.chain,
+        endChain: helix.chain,
+        helixClass: 1,
+        length: helix.end - helix.start + 1
+      )
+    }
+
+    // Convert sheets
+    let pdbSheets = sheets.map { sheet -> PDBSheet in
+      PDBSheet(
+        strandNumber: 0,
+        sheetID: "",
+        startResidue: sheet.start,
+        endResidue: sheet.end,
+        startChain: sheet.chain,
+        endChain: sheet.chain,
+        sense: 0
+      )
+    }
+
+    // Get unique chains
+    let chains = Array(Set(atoms.map { $0.chainID })).sorted()
+
+    return PDBStructure(
+      atoms: pdbAtoms,
+      residues: pdbResidues,
+      helices: pdbHelices,
+      sheets: pdbSheets,
+      chains: chains
+    )
+  }
+
+  /// OLD: Parse ligands from PDB string (kept for reference)
+  /// Use parseComplete() instead for better performance
+  static func parseLigands(_ pdbString: String) -> [Ligand] {
+    var ligands: [Ligand] = []
+    let lines = pdbString.components(separatedBy: .newlines)
+
+    var currentLigand: (resName: String, chainID: String, resSeq: Int, atoms: [LigandAtom])?
+
+    for line in lines {
+      guard line.count >= 6 else { continue }
+
+      let recordType = String(line.prefix(6)).trimmingCharacters(in: .whitespaces)
+
+      if recordType == "HETATM" {
+        let chars = Array(line)
+        guard chars.count >= 54 else { continue }
+
+        // Parse atom data
+        guard let serial = Int(String(chars[6...10]).trimmingCharacters(in: .whitespaces)) else { continue }
+        let name = String(chars[12...15]).trimmingCharacters(in: .whitespaces)
+        let resName = String(chars[17...19]).trimmingCharacters(in: .whitespaces)
+
+        // Skip water molecules
+        if resName == "HOH" { continue }
+
+        let chainID = String(chars[21])
+        guard let resSeq = Int(String(chars[22...25]).trimmingCharacters(in: .whitespaces)) else { continue }
+        guard let x = Double(String(chars[30...37]).trimmingCharacters(in: .whitespaces)),
+              let y = Double(String(chars[38...45]).trimmingCharacters(in: .whitespaces)),
+              let z = Double(String(chars[46...53]).trimmingCharacters(in: .whitespaces)) else { continue }
+
+        let element = chars.count >= 78 ? String(chars[76...77]).trimmingCharacters(in: .whitespaces) : ""
+        let occupancy = chars.count >= 60 ? Float(String(chars[54...59]).trimmingCharacters(in: .whitespaces)) ?? 1.0 : 1.0
+        let tempFactor = chars.count >= 66 ? Double(String(chars[60...65]).trimmingCharacters(in: .whitespaces)) ?? 0.0 : 0.0
+
+        let atom = LigandAtom(
+          serial: serial,
+          name: name,
+          altLoc: "",
+          resName: resName,
+          chainID: chainID,
+          resSeq: resSeq,
+          iCode: "",
+          x: x,
+          y: y,
+          z: z,
+          occupancy: occupancy,
+          tempFactor: tempFactor,
+          element: element,
+          charge: ""
+        )
+
+        // Check if this belongs to current ligand or is a new one
+        if let current = currentLigand,
+           current.resName == resName && current.chainID == chainID && current.resSeq == resSeq {
+          // Same ligand, add atom
+          currentLigand?.atoms.append(atom)
+        } else {
+          // New ligand - save previous if exists
+          if let current = currentLigand {
+            let ligand = Ligand(
+              id: Ligand.makeID(chainID: current.chainID, resSeq: current.resSeq, resName: current.resName),
+              resName: current.resName,
+              chainID: current.chainID,
+              resSeq: current.resSeq,
+              atoms: current.atoms
+            )
+            ligands.append(ligand)
+          }
+          // Start new ligand
+          currentLigand = (resName: resName, chainID: chainID, resSeq: resSeq, atoms: [atom])
+        }
+      }
+    }
+
+    // Don't forget the last ligand
+    if let current = currentLigand {
+      let ligand = Ligand(
+        id: Ligand.makeID(chainID: current.chainID, resSeq: current.resSeq, resName: current.resName),
+        resName: current.resName,
+        chainID: current.chainID,
+        resSeq: current.resSeq,
+        atoms: current.atoms
+      )
+      ligands.append(ligand)
+    }
+
+    return ligands
   }
 }
 

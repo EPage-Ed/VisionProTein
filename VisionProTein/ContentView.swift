@@ -12,6 +12,7 @@ import MolecularRender
 import ProteinRibbon
 import ProteinSpheres
 import ProteinSpheresMesh
+import PDBKit
 
 
 struct ContentView: View {
@@ -772,11 +773,23 @@ struct ContentView: View {
           }
           if let u = Bundle.main.url(forResource: model.pName, withExtension: "pdb"), // 3aid 6uml (Thilidomide) 1a3n (Hemoglobin) 3nir 4HR9 6a5j 1ERT
              let s = try? String(contentsOf: u, encoding: .utf8) {
+
+            // PARSE ONCE - Get all data needed for all renderers
+            await MainActor.run {
+              model.progress = 0.15
+              model.loadingStatus = "Parsing PDB file..."
+            }
+            let parseResult = PDB.parseComplete(pdbString: s)
+//            let atoms = parseResult.atoms
+            let allResidues = parseResult.residues
+            let pdbStructure = parseResult.pdbStructure
+
             await MainActor.run {
               model.progress = 0.2
               model.loadingStatus = "Creating ribbon structure..."
             }
-            let entity = ProteinRibbon.structureColoredEntity(from: s)  // Red helix, blue sheet, green coil
+
+            let entity = ProteinRibbon.structureColoredEntity(from: pdbStructure)  // Red helix, blue sheet, green coil
             entity.name = "Ribbon2"
 //            entity.scale *= [0.1,0.1,0.1]
             entity.isEnabled = false
@@ -784,7 +797,7 @@ struct ContentView: View {
             rbs.addChild(entity)
             model.ribbons = entity
             print(entity.position)
-            
+
             await MainActor.run {
               model.progress = 0.4
               model.loadingStatus = "Creating ball-and-stick model..."
@@ -802,22 +815,19 @@ struct ContentView: View {
             entity.generateCollisionShapes(recursive: true, static: true)
             entity.components.set(GestureComponent(canDrag: true, pivotOnDrag: false, preserveOrientationOnPivotDrag: true, canScale: true, canRotate: true))
             */
-            
-            let bse = ProteinRibbon.ballAndStickCPK(from: s)
+
+            let bse = ProteinRibbon.ballAndStickCPK(from: pdbStructure)
             bse.name = "BallAndStick"
 //            bse.position = [0, 3, -2]
             rbs.addChild(bse)
             model.ballAndStick = bse
             print(bse.position)
-            
+
             // Build spatial index for efficient atom lookup
             await MainActor.run {
               model.progress = 0.6
               model.loadingStatus = "Building spatial index..."
             }
-            
-            // Parse PDB to get atom and residue data
-            let (atoms, allResidues, _, _, _) = PDB.parsePDB(pdb: s, maxChains: 16)
             
             // Filter to only include standard amino acid residues (excludes HETATM ligands, water, etc.)
             let residues = allResidues.filter { $0.aminoAcid != nil }
@@ -856,10 +866,9 @@ struct ContentView: View {
               model.progress = 0.65
               model.loadingStatus = "Finding binding residues..."
             }
-            // Load ligands from PDB file
-            let ligands = PDB.parseLigands(pdb: s)  // Hemoglobin with heme groups
+            // Get ligands from consolidated parse result
+            let ligands = parseResult.ligands
             print("Ligands found: \(ligands.count):\n\(ligands.map(\.resName).joined(separator: "\n"))")
-            // or: let ligands = PDB.parseLigands(named: "1NC9")  // Streptavidin with biotin
             
             for ligand in ligands {
               // Generate glowing sphere entity for each ligand
@@ -917,12 +926,12 @@ struct ContentView: View {
               model.progress = 0.7
               model.loadingStatus = "Creating sphere representation..."
             }
-            
+
             // Enable collision and input for tap gestures
 //            bse.components.set(InputTargetComponent())
 //            bse.generateCollisionShapes(recursive: true, static: true)
-            
-            let se = ProteinSpheresMesh.spheresCPK(from: s, scale: 0.5)
+
+            let se = ProteinSpheresMesh.spheresCPK(from: pdbStructure, scale: 0.5)
             se.name = "Spheres"
             se.isEnabled = false
             rbs.addChild(se)
@@ -1083,6 +1092,7 @@ struct ContentView: View {
             me.position = [0, 4, -3.5]
             model.rootEntity.addChild(me)
              */
+            
           }
 
 //          let pivotEntity = Entity()

@@ -8,6 +8,7 @@
 import Foundation
 import simd
 import RealityKit
+import PDBKit
 
 /// ProteinRibbon generates Richardson diagram (cartoon ribbon) representations
 /// of protein structures for RealityKit visualization.
@@ -98,20 +99,17 @@ public struct ProteinRibbon {
 
     // MARK: - Public API
 
-    /// Generates a RealityKit ModelEntity from a PDB format string
+    /// Generates a RealityKit ModelEntity from a pre-parsed PDBStructure
     /// - Parameters:
-    ///   - pdbString: The raw PDB file content
+    ///   - structure: Pre-parsed PDB structure
     ///   - options: Rendering options (uses defaults if not specified)
     /// - Returns: A ModelEntity containing the protein ribbon visualization
-  @MainActor public static func entity(
-        from pdbString: String,
+    @MainActor public static func entity(
+        from structure: PDBStructure,
         options: Options = Options()
     ) -> ModelEntity {
-        // Parse the PDB string
-        let structure = PDBParser.parse(pdbString)
-
         guard !structure.residues.isEmpty else {
-            print("ProteinRibbon: No residues found in PDB string")
+            print("ProteinRibbon: No residues found in structure")
             return ModelEntity()
         }
 
@@ -135,6 +133,22 @@ public struct ProteinRibbon {
             // Build as single combined mesh
             return RealityKitEntityBuilder.buildEntity(from: structure, options: options)
         }
+    }
+
+    /// OLD: Generates a RealityKit ModelEntity from a PDB format string
+    /// This method is kept for backwards compatibility but parses the PDB string each time.
+    /// For better performance, use parseComplete() and pass the PDBStructure directly.
+    /// - Parameters:
+    ///   - pdbString: The raw PDB file content
+    ///   - options: Rendering options (uses defaults if not specified)
+    /// - Returns: A ModelEntity containing the protein ribbon visualization
+    @MainActor public static func entity(
+        from pdbString: String,
+        options: Options = Options()
+    ) -> ModelEntity {
+        // Parse the PDB string
+        let structure = PDBParser.parse(pdbString)
+        return entity(from: structure, options: options)
     }
 
     /// Generates a RealityKit Entity hierarchy from a PDB format string
@@ -178,8 +192,29 @@ public struct ProteinRibbon {
 
     // MARK: - Ball-and-Stick Rendering
 
-    /// Generates a ball-and-stick ModelEntity from a PDB format string
+    /// Generates a ball-and-stick ModelEntity from a pre-parsed PDBStructure
     /// Shows atoms as spheres and bonds as cylinders
+    /// - Parameters:
+    ///   - structure: Pre-parsed PDB structure
+    ///   - options: Ball-and-stick rendering options (uses defaults if not specified)
+    /// - Returns: A ModelEntity containing the ball-and-stick visualization
+    @available(visionOS 26.0, *)
+    public static func ballAndStickEntity(
+        from structure: PDBStructure,
+        options: BallAndStickOptions = BallAndStickOptions()
+    ) -> ModelEntity {
+        print("ProteinRibbon BallAndStick: Using parsed structure with \(structure.atoms.count) atoms")
+        guard !structure.atoms.isEmpty else {
+            print("ProteinRibbon: No atoms found in structure")
+            return ModelEntity()
+        }
+
+        return BallAndStickBuilder.buildEntity(from: structure, options: options)
+    }
+
+    /// OLD: Generates a ball-and-stick ModelEntity from a PDB format string
+    /// This method is kept for backwards compatibility but parses the PDB string each time.
+    /// For better performance, use parseComplete() and pass the PDBStructure directly.
     /// - Parameters:
     ///   - pdbString: The raw PDB file content
     ///   - options: Ball-and-stick rendering options (uses defaults if not specified)
@@ -190,14 +225,7 @@ public struct ProteinRibbon {
         options: BallAndStickOptions = BallAndStickOptions()
     ) -> ModelEntity {
         let structure = PDBParser.parse(pdbString)
-
-      print("ProteinRibbon BallAndStick: Parsed \(structure.atoms.count) atoms")
-        guard !structure.atoms.isEmpty else {
-            print("ProteinRibbon: No atoms found in PDB string")
-            return ModelEntity()
-        }
-
-        return BallAndStickBuilder.buildEntity(from: structure, options: options)
+        return ballAndStickEntity(from: structure, options: options)
     }
 }
 
@@ -207,28 +235,41 @@ extension ProteinRibbon {
     // MARK: Ribbon Convenience Methods
 
     /// Creates an entity with default structure coloring (red helix, blue sheet, green coil)
-  @MainActor public static func structureColoredEntity(from pdbString: String) -> ModelEntity {
-        return entity(from: pdbString, options: Options(colorScheme: .byStructure))
+    @MainActor public static func structureColoredEntity(from structure: PDBStructure) -> ModelEntity {
+        return entity(from: structure, options: Options(colorScheme: .byStructure))
     }
 
     /// Creates an entity with chain coloring
-  @MainActor public static func chainColoredEntity(from pdbString: String) -> ModelEntity {
-        return entity(from: pdbString, options: Options(colorScheme: .byChain))
+    @MainActor public static func chainColoredEntity(from structure: PDBStructure) -> ModelEntity {
+        return entity(from: structure, options: Options(colorScheme: .byChain))
     }
 
     /// Creates an entity with rainbow gradient coloring
-  @MainActor public static func rainbowEntity(from pdbString: String) -> ModelEntity {
-        return entity(from: pdbString, options: Options(colorScheme: .byResidue))
+    @MainActor public static func rainbowEntity(from structure: PDBStructure) -> ModelEntity {
+        return entity(from: structure, options: Options(colorScheme: .byResidue))
     }
 
     /// Creates an entity with residue type coloring (hydrophobic, polar, charged)
-  @MainActor public static func typeColoredEntity(from pdbString: String) -> ModelEntity {
-        return entity(from: pdbString, options: Options(colorScheme: .byResidueType))
+    @MainActor public static func typeColoredEntity(from structure: PDBStructure) -> ModelEntity {
+        return entity(from: structure, options: Options(colorScheme: .byResidueType))
     }
 
     // MARK: Ball-and-Stick Convenience Methods
 
     /// Creates a ball-and-stick entity with CPK element coloring
+    @available(visionOS 26.0, *)
+    public static func ballAndStickCPK(from structure: PDBStructure) -> ModelEntity {
+        return ballAndStickEntity(from: structure, options: BallAndStickOptions(colorScheme: .byElement))
+    }
+
+    // MARK: OLD Convenience Methods (backwards compatibility)
+
+    /// OLD: Creates an entity with default structure coloring
+    @MainActor public static func structureColoredEntity(from pdbString: String) -> ModelEntity {
+        return entity(from: pdbString, options: Options(colorScheme: .byStructure))
+    }
+
+    /// OLD: Creates a ball-and-stick entity with CPK element coloring
     @available(visionOS 26.0, *)
     public static func ballAndStickCPK(from pdbString: String) -> ModelEntity {
         return ballAndStickEntity(from: pdbString, options: BallAndStickOptions(colorScheme: .byElement))

@@ -36,6 +36,7 @@
 		D8AA5A252BB9EE2100340803 /* ProteinListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8AA5A242BB9EE2100340803 /* ProteinListView.swift */; };
 		D8D19CDD2F30734700B6DBC6 /* ProteinRibbon in Frameworks */ = {isa = PBXBuildFile; productRef = D8D19CDC2F30734700B6DBC6 /* ProteinRibbon */; };
 		D8D19CE22F31D59B00B6DBC6 /* 1ERT.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D8D19CE12F31D59B00B6DBC6 /* 1ERT.pdb */; };
+		D8D8C8D12F4063AA006127AE /* PDBKit in Frameworks */ = {isa = PBXBuildFile; productRef = D8D8C8D02F4063AA006127AE /* PDBKit */; };
 		D8E3927E2F3AA13A003E2E82 /* 1A3N.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D8E3927D2F3AA13A003E2E82 /* 1A3N.pdb */; };
 		D8E392822F3BECE2003E2E82 /* InstanceAnimationComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E392812F3BECE2003E2E82 /* InstanceAnimationComponent.swift */; };
 		D8E392842F3BED00003E2E82 /* InstanceAnimationSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E392832F3BED00003E2E82 /* InstanceAnimationSystem.swift */; };
@@ -94,6 +95,7 @@
 				D80E63D72F37F952007DB605 /* ProteinSpheresMesh in Frameworks */,
 				D80E63CC2F3695F2007DB605 /* ProteinSpheres in Frameworks */,
 				D8D19CDD2F30734700B6DBC6 /* ProteinRibbon in Frameworks */,
+				D8D8C8D12F4063AA006127AE /* PDBKit in Frameworks */,
 				D8AA59E82BB7AEF000340803 /* RealityKitContent in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -288,6 +290,7 @@
 				D8D19CDC2F30734700B6DBC6 /* ProteinRibbon */,
 				D80E63CB2F3695F2007DB605 /* ProteinSpheres */,
 				D80E63D62F37F952007DB605 /* ProteinSpheresMesh */,
+				D8D8C8D02F4063AA006127AE /* PDBKit */,
 			);
 			productName = VisionProTein;
 			productReference = D8AA59E22BB7AEF000340803 /* VisionProTein.app */;
@@ -322,6 +325,7 @@
 				D8D19CDB2F30734700B6DBC6 /* XCLocalSwiftPackageReference "Packages/ProteinRibbon" */,
 				D80E63CA2F3695F2007DB605 /* XCLocalSwiftPackageReference "Packages/ProteinSpheres" */,
 				D80E63D52F37F952007DB605 /* XCLocalSwiftPackageReference "Packages/ProteinSpheresMesh" */,
+				D8D8C8CF2F4063AA006127AE /* XCLocalSwiftPackageReference "Packages/PDBKit" */,
 			);
 			productRefGroup = D8AA59E32BB7AEF000340803 /* Products */;
 			projectDirPath = "";
@@ -519,7 +523,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.epage.VisionProTein2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.epage.VisionProTein;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "xros xrsimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -547,7 +551,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.epage.VisionProTein2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.epage.VisionProTein;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "xros xrsimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -597,6 +601,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/ProteinRibbon;
 		};
+		D8D8C8CF2F4063AA006127AE /* XCLocalSwiftPackageReference "Packages/PDBKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/PDBKit;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -619,6 +627,10 @@
 		D8D19CDC2F30734700B6DBC6 /* ProteinRibbon */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = ProteinRibbon;
+		};
+		D8D8C8D02F4063AA006127AE /* PDBKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PDBKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

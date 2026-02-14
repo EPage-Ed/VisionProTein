@@ -10,6 +10,7 @@ import Foundation
 import RealityKit
 import UIKit
 import simd
+import PDBKit  // For PDBStructure type
 
 // MARK: - Public API
 
@@ -60,27 +61,50 @@ public struct ProteinSpheresMesh {
         case byChain
     }
     
-    /// Creates a sphere representation entity with CPK element coloring
-  public static func spheresCPK(from pdbString: String, scale: Float = 1.0) -> ModelEntity {
-    return spheresEntity(from: pdbString, options: Options(atomScale: scale, colorScheme: .byElement))
-  }
-    
-    /// Creates a sphere representation entity with larger atoms
-    public static func spheresLarge(from pdbString: String) -> ModelEntity {
+    /// Creates a sphere representation entity with CPK element coloring from a pre-parsed structure
+    public static func spheresCPK(from structure: PDBStructure, scale: Float = 1.0) -> ModelEntity {
+        return spheresEntity(from: structure, options: Options(atomScale: scale, colorScheme: .byElement))
+    }
+
+    /// Creates a sphere representation entity with larger atoms from a pre-parsed structure
+    public static func spheresLarge(from structure: PDBStructure) -> ModelEntity {
         return spheresEntity(
-            from: pdbString,
+            from: structure,
             options: Options(
                 atomScale: 1.5,
                 colorScheme: .byElement
             )
         )
     }
-    
-    /// Creates a sphere representation entity with custom options
-    public static func spheresEntity(from pdbString: String, options: Options) -> ModelEntity {
-        let structure = PDBParser.parse(pdbString)
+
+    /// Creates a sphere representation entity with custom options from a pre-parsed structure
+    public static func spheresEntity(from structure: PDBStructure, options: Options) -> ModelEntity {
         return SpheresBuilder.buildEntity(from: structure, options: options)
     }
+
+    // MARK: - OLD API (backwards compatibility)
+
+    /// OLD: Creates a sphere representation entity with CPK element coloring
+    /// This method is kept for backwards compatibility but parses the PDB string each time.
+    /// For better performance, use parseComplete() and pass the PDBStructure directly.
+    /*
+    public static func spheresCPK(from pdbString: String, scale: Float = 1.0) -> ModelEntity {
+        let structure = PDBParser.parse(pdbString)
+        return spheresCPK(from: structure, scale: scale)
+    }
+
+    /// OLD: Creates a sphere representation entity with larger atoms
+    public static func spheresLarge(from pdbString: String) -> ModelEntity {
+        let structure = PDBParser.parse(pdbString)
+        return spheresLarge(from: structure)
+    }
+
+    /// OLD: Creates a sphere representation entity with custom options
+    public static func spheresEntity(from pdbString: String, options: Options) -> ModelEntity {
+        let structure = PDBParser.parse(pdbString)
+        return spheresEntity(from: structure, options: options)
+    }
+     */
 }
 
 // MARK: - Element Colors
@@ -383,7 +407,7 @@ struct SpheresBuilder {
 // MARK: - PDB Parser
 
 /// Simplified PDB structure
-public struct PDBStructure {
+public struct PDBStructureSimple {
     public var atoms: [PDBAtom]
     public var title: String
     
@@ -393,6 +417,7 @@ public struct PDBStructure {
     }
 }
 
+/*
 /// PDB atom record
 public struct PDBAtom {
     public var serial: Int
@@ -437,7 +462,7 @@ public struct PDBAtom {
 /// Simple PDB parser
 struct PDBParser {
     
-    static func parse(_ pdbString: String) -> PDBStructure {
+    static func parse(_ pdbString: String) -> PDBStructureSimple {
         var atoms: [PDBAtom] = []
         var title = ""
         
@@ -465,7 +490,7 @@ struct PDBParser {
         
         print("[PDBParser] Finished parsing: \(atoms.count) atoms total")
         
-        return PDBStructure(atoms: atoms, title: title)
+        return PDBStructureSimple(atoms: atoms, title: title)
     }
     
     private static func parseAtom(_ line: String) -> PDBAtom? {
@@ -552,6 +577,7 @@ struct PDBParser {
         return String(trimmed.prefix(1))
     }
 }
+ */
 
 // MARK: - String Extension for Subscripting
 

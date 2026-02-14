@@ -11,8 +11,14 @@ let package = Package(
     products: [
         .library(name: "ProteinRibbon", targets: ["ProteinRibbon"])
     ],
+    dependencies: [
+        .package(path: "../PDBKit")
+    ],
     targets: [
-        .target(name: "ProteinRibbon"),
+        .target(
+            name: "ProteinRibbon",
+            dependencies: ["PDBKit"]
+        ),
         .testTarget(name: "ProteinRibbonTests", dependencies: ["ProteinRibbon"])
     ]
 )
