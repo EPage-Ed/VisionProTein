@@ -156,6 +156,16 @@ public struct RealityKitEntityBuilder {
                 options: options
             ) else { continue }
 
+            // Generate colors for residues based on the selected color scheme
+            // Pass full chain list to ensure consistent chain coloring across all chains
+            let residueColors = ColorSchemes.generateColors(
+                for: chainResidues,
+                segments: backbone.segments,
+                scheme: options.colorScheme,
+                uniformColor: options.uniformColor,
+                allChains: structure.chains
+            )
+
             // Build mesh for each segment using the shared backbone frames
             for segment in backbone.segments {
                 guard let range = frameRange(
@@ -171,24 +181,41 @@ public struct RealityKitEntityBuilder {
 
                 guard segmentFrames.count >= 2 else { continue }
 
-                // Get the color for this segment type
-                let segmentColor = ColorSchemes.color(for: segment.type)
-                let colors = Array(repeating: segmentColor, count: segmentFrames.count)
+                // Get segment spline points to interpolate colors
+                let segmentSplinePoints = backbone.splinePoints.filter { point in
+                    point.residueIndex >= segment.startIndex && point.residueIndex <= segment.endIndex
+                }
+
+                // Get colors for segment residues
+                let segmentResidueColors = (segment.startIndex...segment.endIndex).map { i in
+                    i < residueColors.count ? residueColors[i] : ColorSchemes.coilColor
+                }
+
+                // Interpolate colors for spline points
+                let colors = ColorSchemes.interpolateColors(
+                    residueColors: segmentResidueColors,
+                    splinePoints: segmentSplinePoints
+                )
+
+                // Pad colors array if needed to match frame count
+                let paddedColors = colors.count >= segmentFrames.count
+                    ? Array(colors.prefix(segmentFrames.count))
+                    : colors + Array(repeating: colors.last ?? ColorSchemes.coilColor, count: segmentFrames.count - colors.count)
 
                 // Build appropriate mesh for segment type
                 let segmentMesh: MeshData
                 switch segment.type {
                 case .helix:
-                    segmentMesh = buildHelixMesh(frames: segmentFrames, colors: colors, options: options)
+                    segmentMesh = buildHelixMesh(frames: segmentFrames, colors: paddedColors, options: options)
                 case .sheet:
                     segmentMesh = buildSheetMeshWithArrow(
                         frames: segmentFrames,
-                        colors: colors,
+                        colors: paddedColors,
                         options: options,
                         isAtChainEnd: range.end >= backbone.frames.count - 2
                     )
                 case .coil:
-                    segmentMesh = buildCoilMesh(frames: segmentFrames, colors: colors, options: options)
+                    segmentMesh = buildCoilMesh(frames: segmentFrames, colors: paddedColors, options: options)
                 }
 
                 combinedMesh.append(segmentMesh)
@@ -468,6 +495,16 @@ public struct RealityKitEntityBuilder {
                 options: options
             ) else { continue }
 
+            // Generate colors for residues based on the selected color scheme
+            // Pass full chain list to ensure consistent chain coloring across all chains
+            let residueColors = ColorSchemes.generateColors(
+                for: chainResidues,
+                segments: backbone.segments,
+                scheme: options.colorScheme,
+                uniformColor: options.uniformColor,
+                allChains: structure.chains
+            )
+
             // Build separate entity for each segment
             for segment in backbone.segments {
                 guard let range = frameRange(
@@ -483,24 +520,41 @@ public struct RealityKitEntityBuilder {
 
                 guard segmentFrames.count >= 2 else { continue }
 
-                // Get the color for this segment type
-                let segmentColor = ColorSchemes.color(for: segment.type)
-                let colors = Array(repeating: segmentColor, count: segmentFrames.count)
+                // Get segment spline points to interpolate colors
+                let segmentSplinePoints = backbone.splinePoints.filter { point in
+                    point.residueIndex >= segment.startIndex && point.residueIndex <= segment.endIndex
+                }
+
+                // Get colors for segment residues
+                let segmentResidueColors = (segment.startIndex...segment.endIndex).map { i in
+                    i < residueColors.count ? residueColors[i] : ColorSchemes.coilColor
+                }
+
+                // Interpolate colors for spline points
+                let colors = ColorSchemes.interpolateColors(
+                    residueColors: segmentResidueColors,
+                    splinePoints: segmentSplinePoints
+                )
+
+                // Pad colors array if needed to match frame count
+                let paddedColors = colors.count >= segmentFrames.count
+                    ? Array(colors.prefix(segmentFrames.count))
+                    : colors + Array(repeating: colors.last ?? ColorSchemes.coilColor, count: segmentFrames.count - colors.count)
 
                 // Build appropriate mesh for segment type
                 let segmentMesh: MeshData
                 switch segment.type {
                 case .helix:
-                    segmentMesh = buildHelixMesh(frames: segmentFrames, colors: colors, options: options)
+                    segmentMesh = buildHelixMesh(frames: segmentFrames, colors: paddedColors, options: options)
                 case .sheet:
                     segmentMesh = buildSheetMeshWithArrow(
                         frames: segmentFrames,
-                        colors: colors,
+                        colors: paddedColors,
                         options: options,
                         isAtChainEnd: range.end >= backbone.frames.count - 2
                     )
                 case .coil:
-                    segmentMesh = buildCoilMesh(frames: segmentFrames, colors: colors, options: options)
+                    segmentMesh = buildCoilMesh(frames: segmentFrames, colors: paddedColors, options: options)
                 }
 
                 if !segmentMesh.positions.isEmpty {
@@ -508,7 +562,8 @@ public struct RealityKitEntityBuilder {
                         meshData: segmentMesh,
                         type: segment.type,
                         chainID: chainID,
-                        options: options
+                        options: options,
+                        residueColors: segmentResidueColors
                     )
                     entities.append(entity)
                 }
@@ -524,7 +579,8 @@ public struct RealityKitEntityBuilder {
         meshData: MeshData,
         type: SecondaryStructureType,
         chainID: String,
-        options: ProteinRibbon.Options
+        options: ProteinRibbon.Options,
+        residueColors: [SIMD4<Float>]
     ) -> ModelEntity {
         guard !meshData.positions.isEmpty else {
             return ModelEntity()
@@ -534,13 +590,23 @@ public struct RealityKitEntityBuilder {
             let scaledMeshData = scaleMeshData(meshData, scale: options.scale)
             let meshResource = try scaledMeshData.toMeshResource()
 
-            // Create material with structure-based color
-            let color = ColorSchemes.color(for: type)
+            // Calculate average color from residue colors
+            var avgColor = SIMD4<Float>.zero
+            if !residueColors.isEmpty {
+                for color in residueColors {
+                    avgColor += color
+                }
+                avgColor /= Float(residueColors.count)
+            } else {
+                // Fallback to structure-based color if no residue colors provided
+                avgColor = ColorSchemes.color(for: type)
+            }
+
             let platformColor = PlatformColor(
-                red: CGFloat(color.x),
-                green: CGFloat(color.y),
-                blue: CGFloat(color.z),
-                alpha: CGFloat(color.w)
+                red: CGFloat(avgColor.x),
+                green: CGFloat(avgColor.y),
+                blue: CGFloat(avgColor.z),
+                alpha: CGFloat(avgColor.w)
             )
 
             var material = SimpleMaterial()

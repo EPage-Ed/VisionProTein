@@ -172,18 +172,26 @@ public struct ColorSchemes {
     // MARK: - Batch Color Generation
 
     /// Generates colors for all residues in a structure using the specified scheme
+    /// - Parameters:
+    ///   - residues: Residues to color (may be a subset like a single chain)
+    ///   - segments: Secondary structure segments for the residues
+    ///   - scheme: Color scheme to use
+    ///   - uniformColor: Color to use for uniform scheme
+    ///   - allChains: Optional list of all chains in the structure (needed for byChain scheme to assign consistent colors)
     public static func generateColors(
         for residues: [PDBResidue],
         segments: [SecondaryStructureSegment],
         scheme: ColorScheme,
-        uniformColor: SIMD4<Float> = SIMD4<Float>(0.7, 0.7, 0.7, 1.0)
+        uniformColor: SIMD4<Float> = SIMD4<Float>(0.7, 0.7, 0.7, 1.0),
+        allChains: [String]? = nil
     ) -> [SIMD4<Float>] {
         switch scheme {
         case .byStructure:
             return colorsByStructure(residues: residues, segments: segments)
 
         case .byChain:
-            let chains = Array(Set(residues.map { $0.chainID })).sorted()
+            // Use provided chain list if available, otherwise derive from residues
+            let chains = allChains ?? Array(Set(residues.map { $0.chainID })).sorted()
             return residues.map { color(forChain: $0.chainID, chainList: chains) }
 
         case .byResidue:

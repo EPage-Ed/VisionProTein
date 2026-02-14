@@ -159,6 +159,13 @@ struct ContentView: View {
                   .frame(width:2,height:100)
                   .overlay(Color.white)
                   .gridCellUnsizedAxes(.horizontal)
+                /*
+                 • Structure: Red helices, blue sheets, green coils
+                 • Chain: Different color per chain
+                 • Residue: Blue-to-red gradient (N-terminus to C-terminus)
+                 • Type: Colors based on amino acid properties (hydrophobic=yellow, polar=cyan, charged=red/blue, etc.)
+                 • Uniform: Single gray color
+                 */
                 Picker("Coloring", selection: $model.ribbonColorScheme) {
                   Text("Structure").tag(ColorScheme.byStructure)
                   Text("Chain").tag(ColorScheme.byChain)
