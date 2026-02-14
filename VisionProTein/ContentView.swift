@@ -8,9 +8,9 @@
 import SwiftUI
 import RealityKit
 import RealityKitContent
-import MolecularRender
+//import MolecularRender
 import ProteinRibbon
-import ProteinSpheres
+//import ProteinSpheres
 import ProteinSpheresMesh
 import PDBKit
 

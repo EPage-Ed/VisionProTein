@@ -236,6 +236,8 @@ public struct PDBParser {
     }
 
     // MARK: - Private Parsing Methods
+  static let rnaNucleotides = ["A", "U", "G", "C", "I", "PSU", "5MU", "1MA", "2MG", "M2G", "7MG", "OMC", "OMG", "YG"]
+  static let dnaNucleotides = ["DA", "DT", "DG", "DC", "DU", "DI"]
 
     private static func parseAtom(line: String, isHetAtm: Bool) -> PDBAtom? {
         guard line.count >= 54 else { return nil }
@@ -256,6 +258,12 @@ public struct PDBParser {
 
         // Skip water molecules and unknown residues (non-standard amino acids, DNA/RNA, etc.)
         if residueName == "HOH" || residueName == "UNK" { return nil }
+
+        // Skip RNA nucleotides
+        if rnaNucleotides.contains(residueName) { return nil }
+
+        // Skip DNA nucleotides
+        if dnaNucleotides.contains(residueName) { return nil }
 
         // Chain ID (column 22)
         let chainID = String(chars.indices.contains(21) ? chars[21] : " ")

@@ -229,6 +229,8 @@ SHEET    3   A 9 ALA A  38  GLU A  44 -1  O  THR A  40   N  THR A  32
       let name = String(c[12...15]).trimmingCharacters(in: .whitespaces)
       let res = String(c[17...19]).trimmingCharacters(in: .whitespaces)
       if (!water && res == "HOH") { continue }
+      // Skip unknown residues (UNK) - these are non-standard amino acids, modified residues, or unidentified molecules
+      if (res == "UNK") { continue }
       let chain = String(c[21])
       let rs = Int(String(c[22...25]).trimmingCharacters(in: .whitespaces))
       let x = Double(String(c[30...37]).trimmingCharacters(in: .whitespaces))
