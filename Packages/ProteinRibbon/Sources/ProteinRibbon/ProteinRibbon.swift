@@ -104,7 +104,7 @@ public struct ProteinRibbon {
     ///   - structure: Pre-parsed PDB structure
     ///   - options: Rendering options (uses defaults if not specified)
     /// - Returns: A ModelEntity containing the protein ribbon visualization
-    @MainActor public static func entity(
+    @MainActor public static func ribbonEntity(
         from structure: PDBStructure,
         options: Options = Options()
     ) -> ModelEntity {
@@ -148,7 +148,7 @@ public struct ProteinRibbon {
     ) -> ModelEntity {
         // Parse the PDB string
         let structure = PDBParser.parse(pdbString)
-        return entity(from: structure, options: options)
+        return ribbonEntity(from: structure, options: options)
     }
 
     /// Generates a RealityKit Entity hierarchy from a PDB format string
@@ -236,22 +236,22 @@ extension ProteinRibbon {
 
     /// Creates an entity with default structure coloring (red helix, blue sheet, green coil)
     @MainActor public static func structureColoredEntity(from structure: PDBStructure) -> ModelEntity {
-        return entity(from: structure, options: Options(colorScheme: .byStructure))
+        return ribbonEntity(from: structure, options: Options(colorScheme: .byStructure))
     }
 
     /// Creates an entity with chain coloring
     @MainActor public static func chainColoredEntity(from structure: PDBStructure) -> ModelEntity {
-        return entity(from: structure, options: Options(colorScheme: .byChain))
+        return ribbonEntity(from: structure, options: Options(colorScheme: .byChain))
     }
 
     /// Creates an entity with rainbow gradient coloring
     @MainActor public static func rainbowEntity(from structure: PDBStructure) -> ModelEntity {
-        return entity(from: structure, options: Options(colorScheme: .byResidue))
+        return ribbonEntity(from: structure, options: Options(colorScheme: .byResidue))
     }
 
     /// Creates an entity with residue type coloring (hydrophobic, polar, charged)
     @MainActor public static func typeColoredEntity(from structure: PDBStructure) -> ModelEntity {
-        return entity(from: structure, options: Options(colorScheme: .byResidueType))
+        return ribbonEntity(from: structure, options: Options(colorScheme: .byResidueType))
     }
 
     // MARK: Ball-and-Stick Convenience Methods

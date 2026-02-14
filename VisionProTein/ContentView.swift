@@ -159,7 +159,14 @@ struct ContentView: View {
                   .frame(width:2,height:100)
                   .overlay(Color.white)
                   .gridCellUnsizedAxes(.horizontal)
-                Text("")
+                Picker("Coloring", selection: $model.ribbonColorScheme) {
+                  Text("Structure").tag(ColorScheme.byStructure)
+                  Text("Chain").tag(ColorScheme.byChain)
+                  Text("Residue").tag(ColorScheme.byResidue)
+                  Text("Type").tag(ColorScheme.byResidueType)
+                  Text("Uniform").tag(ColorScheme.uniform)
+                }
+                .pickerStyle(MenuPickerStyle())
                 Divider() // Vertical separator
                   .frame(width:2,height:100)
                   .overlay(Color.white)
@@ -190,9 +197,17 @@ struct ContentView: View {
 
               }
             }
-            .border(Color.white, width: 2)
+            .overlay {
+              RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.white, lineWidth: 2)
+            }
+            .background {
+              RoundedRectangle(cornerRadius: 20)
+                .fill(Color.white.opacity(0.1))
+            }
             .padding(.top)
           }
+          .transform3DEffect(AffineTransform3D(translation: Vector3D(x: 0, y: 0, z: 50)))
 
           Spacer()
         }
@@ -200,8 +215,11 @@ struct ContentView: View {
         .padding(.horizontal)
         
         HStack {
+          Spacer()
           VStack {
-            HStack {
+            HStack(spacing: 20) {
+              Text("Tagged Residues")
+                .font(.title2)
               Button("Clear", role: .destructive) {
                 // Remove all highlight entities
                 withAnimation {
@@ -211,9 +229,8 @@ struct ContentView: View {
               .buttonStyle(.borderedProminent)
               .opacity(model.tagged.isEmpty ? 0.3 : 1.0)
               .disabled(model.tagged.isEmpty)
-              Text("Tagged Residues")
-                .font(.title2)
             }
+            .padding(.horizontal)
             ScrollView {
               Grid(horizontalSpacing: 20, verticalSpacing: 20) {
                 let tagged = Array(model.tagged)
@@ -240,7 +257,17 @@ struct ContentView: View {
             .padding(.horizontal)
             
           }
-          Spacer()
+          .padding()
+          .overlay {
+            RoundedRectangle(cornerRadius: 20)
+              .stroke(Color.white, lineWidth: 2)
+          }
+          .background {
+            RoundedRectangle(cornerRadius: 20)
+              .fill(Color.white.opacity(0.1))
+          }
+          .padding(.trailing, 40)
+
           if let r = model.selectedResidue {
             ScrollView {
               VStack(alignment: .leading) {
@@ -255,13 +282,25 @@ struct ContentView: View {
                 Text(r.aminoAcid?.details ?? "No description available.")
               }
             }
+            .padding()
+            .overlay {
+              RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.white, lineWidth: 2)
+            }
+            .background {
+              RoundedRectangle(cornerRadius: 20)
+                .fill(Color.white.opacity(0.1))
+            }
             .frame(maxWidth: 400, alignment: .leading)
+            Spacer()
           } else {
             Text("Select a residue to see details")
               .italic()
+            Spacer()
           }
         }
-        .frame(height: 300)
+        .frame(minHeight: 200)
+        .padding()
 
       }
       
@@ -272,6 +311,9 @@ struct ContentView: View {
     }
     .onChange(of: model.showRibbons) { _, newValue in
       model.ribbons?.isEnabled = newValue
+    }
+    .onChange(of: model.ribbonColorScheme) { _, newValue in
+      model.changeRibbonColorScheme(to: newValue)
     }
     .onChange(of: model.showBallAndStick) { _, newValue in
       model.ballAndStick?.isEnabled = newValue
@@ -358,310 +400,12 @@ struct ContentView: View {
     .onChange(of: immersiveSpaceIsShown) { _, newValue in
       
       if newValue {
-        model.loading = true
-        model.progress = 0.0
-        model.loadingStatus = "Initializing..."
-        
-        Task { // @MainActor in
-
-          let rbs = ModelEntity()
-          rbs.name = "RibbonAndStick"
-          model.protein = rbs
-                    
-          await MainActor.run {
-            model.progress = 0.1
-            model.loadingStatus = "Loading PDB..."
-          }
-          if let u = Bundle.main.url(forResource: model.pName, withExtension: "pdb"), // 3aid 6uml (Thilidomide) 1a3n (Hemoglobin) 3nir 4HR9 6a5j 1ERT
-             let s = try? String(contentsOf: u, encoding: .utf8) {
-
-            // PARSE ONCE - Get all data needed for all renderers
-            await MainActor.run {
-              model.progress = 0.15
-              model.loadingStatus = "Parsing PDB file..."
-            }
-            let parseResult = PDB.parseComplete(pdbString: s)
-//            let atoms = parseResult.atoms
-            let allResidues = parseResult.residues
-            let pdbStructure = parseResult.pdbStructure
-
-            await MainActor.run {
-              model.progress = 0.2
-              model.loadingStatus = "Creating ribbon structure..."
-            }
-
-            let entity = ProteinRibbon.structureColoredEntity(from: pdbStructure)  // Red helix, blue sheet, green coil
-            entity.name = "Ribbon2"
-//            entity.scale *= [0.1,0.1,0.1]
-            entity.isEnabled = false
-//            entity.position = [0, 2, -1.5]
-            rbs.addChild(entity)
-            model.ribbons = entity
-            print(entity.position)
-
-            await MainActor.run {
-              model.progress = 0.4
-              model.loadingStatus = "Creating ball-and-stick model..."
-            }
-
-            let bse = ProteinRibbon.ballAndStickCPK(from: pdbStructure)
-            bse.name = "BallAndStick"
-//            bse.position = [0, 3, -2]
-            rbs.addChild(bse)
-            model.ballAndStick = bse
-            print(bse.position)
-
-            // Build spatial index for efficient atom lookup
-            await MainActor.run {
-              model.progress = 0.6
-              model.loadingStatus = "Building spatial index..."
-            }
-            
-            // Filter to only include standard amino acid residues (excludes HETATM ligands, water, etc.)
-            let residues = allResidues.filter { $0.aminoAcid != nil }
-            print("Filtered residues: \\(allResidues.count) total -> \\(residues.count) amino acids")
-            
-            model.proteinResidues = residues
-            
-            // Build spatial index entries
-            var indexEntries: [AtomSpatialIndex.AtomEntry] = []
-            var atomIndex = 0
-            for residue in residues {
-              for atom in residue.atoms {
-                // Use 0.01 scale to match ball and stick representation
-                let atomPos = SIMD3<Float>(
-                  Float(atom.x) * 0.01,
-                  Float(atom.y) * 0.01,
-                  Float(atom.z) * 0.01
-                )
-                model.atomPositions.append(atomPos)
-                model.atomRadii.append(Float(atom.radius))
-                model.atomToResidueMap[atomIndex] = residue
-                
-                indexEntries.append(AtomSpatialIndex.AtomEntry(
-                  position: atomPos,
-                  atomIndex: atomIndex,
-                  residue: residue
-                ))
-                atomIndex += 1
-              }
-            }
-            model.atomSpatialIndex = AtomSpatialIndex(atoms: indexEntries)
-            print("Built spatial index with \(indexEntries.count) atoms for \(residues.count) residues")
-            
-            
-            await MainActor.run {
-              model.progress = 0.65
-              model.loadingStatus = "Finding binding residues..."
-            }
-            // Get ligands from consolidated parse result
-            let ligands = parseResult.ligands
-            print("Ligands found: \(ligands.count):\n\(ligands.map(\.resName).joined(separator: "\n"))")
-            
-            for ligand in ligands {
-              // Generate glowing sphere entity for each ligand
-              let ligandEntity = ligand.generateSphereEntity(
-                atomScale: 1.0,
-                glowColor: .cyan,
-                glowIntensity: 0.5,
-                opacity: 0.8,
-                useElementColors: true
-              )
-              
-              // Add to scene
-              model.ballAndStick?.addChild(ligandEntity)
-              ligandEntity.isEnabled = false
-              model.ligands.append(ligandEntity)
-              
-              // Also highlight binding residues
-              let bindingResidues = ligand.findBindingResidues(in: model.proteinResidues)
-              model.bindingResidues.append(contentsOf: bindingResidues)
-              
-              print("Ligand: \(ligand.resName), Binding residues: \(bindingResidues.map(\.resName).joined(separator: ", "))")
-              
-              
-              // Highlight the binding pocket in yellow
-              bindingResidues.forEach { residue in
-                // Highlight the selected residue
-                if let entity = model.highlightResidue(residue) {
-                  model.bindings.append(entity)
-                  entity.isEnabled = false
-                }
-              }
-              
-              print("\(ligand.resName): \(bindingResidues.count) binding residues")
-
-            }
-
-            
-            await MainActor.run {
-              model.progress = 0.7
-              model.loadingStatus = "Creating sphere representation..."
-            }
-
-
-            let se = ProteinSpheresMesh.spheresCPK(from: pdbStructure, scale: 0.5)
-            se.name = "Spheres"
-            se.isEnabled = false
-            rbs.addChild(se)
-            model.spheres = se
-            print(se.position)
-            
-
-            // Build position-to-residue map for fast lookup
-            var posToResidue: [SIMD3<Float>: Residue] = [:]
-            for residue in residues {
-              for atom in residue.atoms {
-                let pos = SIMD3<Float>(
-                  Float(atom.x) * 0.01,
-                  Float(atom.y) * 0.01,
-                  Float(atom.z) * 0.01
-                )
-                posToResidue[pos] = residue
-              }
-            }
-
-            // Calculate residue centers for structure-preserving animation
-            var residueCenters: [Int: SIMD3<Float>] = [:]  // id -> center
-            for residue in residues {
-              var center = SIMD3<Float>.zero
-              for atom in residue.atoms {
-                center += SIMD3<Float>(
-                  Float(atom.x) * 0.01,
-                  Float(atom.y) * 0.01,
-                  Float(atom.z) * 0.01
-                )
-              }
-              center /= Float(residue.atoms.count)
-              residueCenters[residue.id] = center
-            }
-
-            // Calculate unfolded residue centers (organize chains in parallel)
-            var unfoldedResidueCenters: [Int: SIMD3<Float>] = [:]
-            
-            // Group residues by chain
-            var residuesByChain: [String: [Residue]] = [:]
-            for residue in residues {
-              let chainID = residue.chainID ?? "A"  // Default to chain A if no chainID
-              if residuesByChain[chainID] == nil {
-                residuesByChain[chainID] = []
-              }
-              residuesByChain[chainID]?.append(residue)
-            }
-            
-            // Sort chains for consistent ordering
-            let sortedChains = residuesByChain.keys.sorted()
-            let chainCount = Float(sortedChains.count)
-            let chainSpacing: Float = 0.3  // Z-spacing between parallel chains
-            
-            // Position each chain in parallel
-            for (chainIndex, chainID) in sortedChains.enumerated() {
-              guard let chainResidues = residuesByChain[chainID] else { continue }
-              
-              let chainResidueCount = Float(chainResidues.count)
-              let zOffset = (Float(chainIndex) - chainCount / 2) * chainSpacing
-              
-              for (residueIndex, residue) in chainResidues.enumerated() {
-                let unfoldedCenter = SIMD3<Float>(
-                  (Float(residueIndex) - chainResidueCount / 2) * 0.1,  // X: spread along chain
-                  0.5,                                                     // Y: constant height
-                  -0.5 + zOffset                                          // Z: offset per chain
-                )
-                unfoldedResidueCenters[residue.id] = unfoldedCenter
-              }
-            }
-
-            // Setup animation on each child sphere entity (one per element type)
-            for child in se.children {
-              if var meshInstances = child.components[MeshInstancesComponent.self],
-                 var part = meshInstances[partIndex: 0] {
-
-                var startTranslations: [SIMD3<Float>] = []
-                var endTranslations: [SIMD3<Float>] = []
-
-                part.data.withMutableTransforms { transforms in
-                  for i in 0..<transforms.count {
-                    // Get current atom position
-                    let atomPos = SIMD3<Float>(
-                      transforms[i].columns.3.x,
-                      transforms[i].columns.3.y,
-                      transforms[i].columns.3.z
-                    )
-                    startTranslations.append(atomPos)
-
-                    // Find which residue this atom belongs to via position lookup
-                    if let residue = posToResidue[atomPos],
-                       let foldedCenter = residueCenters[residue.id],
-                       let unfoldedCenter = unfoldedResidueCenters[residue.id] {
-                      // Calculate unfolded position: offset from unfolded residue center
-                      let offsetFromCenter = atomPos - foldedCenter
-                      let unfoldedPos = unfoldedCenter + offsetFromCenter
-                      endTranslations.append(unfoldedPos)
-                    } else {
-                      // Fallback: keep same position
-                      endTranslations.append(atomPos)
-                    }
-                  }
-                }
-
-                let animation = InstanceAnimationComponent(
-                  startTranslations: startTranslations,
-                  endTranslations: endTranslations,
-                  duration: 8.0,
-                  easing: .easeInOut
-                )
-                child.components.set(animation)
-
-                // Optional: Add completion callback
-                child.setInstanceAnimationCompletion {
-                  print("\(child.name) unfold complete!")
-                }
-              }
-            }
-            print("Setup structure-preserving animations for \(se.children.count) sphere child entities with \(residues.count) residues")
-                        
-            await MainActor.run {
-              model.progress = 0.9
-              model.loadingStatus = "Finalizing..."
-            }
-
-          }
-
-          
-          model.rootEntity.addChild(rbs)
-          rbs.position = [0, 1, -1.85]
-          
-          let rvb = rbs.visualBounds(recursive: true, relativeTo: rbs, excludeInactive: false)
-          print(rvb.extents, rvb.center)
-          
-
-          // Offset all children so the visual center becomes the pivot point
-          let centerOffset = -rvb.center
-          model.proteinCenterOffset = centerOffset
-          for child in rbs.children {
-            child.position = child.position + centerOffset
-          }
-
-          
-          ManipulationComponent.configureEntity(rbs)
-          rbs.components[ManipulationComponent.self]!.releaseBehavior = .stay
-          rbs.components[ManipulationComponent.self]!.dynamics.translationBehavior = .unconstrained
-        
-          await MainActor.run {
-            model.progress = 1.0
-            model.loadingStatus = "Complete!"
-          }
-          try? await Task.sleep(for: .milliseconds(300))
-          await MainActor.run {
-            model.loading = false
-            model.progress = 0.0
-            model.loadingStatus = ""
-          }
-        }
+        model.buildImmersive()
       }
     }
     
   }
+  
 }
 
 #Preview(windowStyle: .automatic) {
