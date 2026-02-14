@@ -38,5 +38,7 @@ struct VisionProTeinApp: App {
     ImmersiveSpace(id: "ImmersiveSpace") {
       ImmersiveView(model: model)
     }
+    .immersionStyle(selection: .constant(.mixed), in: .mixed)
+    .immersiveEnvironmentBehavior(.coexist)
   }
 }
