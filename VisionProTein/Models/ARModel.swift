@@ -89,6 +89,10 @@ final class ARModel : ObservableObject {
   var bindings : [ModelEntity] = []
   var proteinCenterOffset: SIMD3<Float> = .zero  // Offset applied to center the protein for rotation
   
+  // Finger tip indicators for tag mode
+  var leftThumbIndicator: ModelEntity?
+  var leftMiddleFingerIndicator: ModelEntity?
+  
   var proteinItem: ProteinItem? {
     didSet {
       if proteinItem != nil {
@@ -449,19 +453,61 @@ final class ARModel : ObservableObject {
 //    ligand?.scale = scale
   }
   
-  var tapAnchor : AnchorEntity?
-  var tapEntity : Entity?
+//  var tapAnchor : AnchorEntity?
+//  var tapEntity : Entity?
   var tapActive = false
   
   @MainActor
   func processHandAnchorUpdate(_ update: AnchorUpdate<HandAnchor>) async {
     //            print(update.description)
+    if !tagMode { return }
     if let leftHand = handTracker.latestAnchors.leftHand,
        let indexTip = leftHand.handSkeleton?.joint(.middleFingerTip),
        let thumbTip = leftHand.handSkeleton?.joint(.thumbTip),
        indexTip.isTracked && thumbTip.isTracked {
       
       let distance = distance(indexTip.anchorFromJointTransform.columns.3, thumbTip.anchorFromJointTransform.columns.3)
+      
+      // Update finger tip indicators based on tagMode
+      if tagMode {
+        // Create indicators if they don't exist
+        if leftThumbIndicator == nil {
+          let thumbSphere = ModelEntity(
+            mesh: .generateSphere(radius: 0.01),
+            materials: [SimpleMaterial(color: .red, isMetallic: true)]
+          )
+          thumbSphere.name = "LeftThumbIndicator"
+          rootEntity.addChild(thumbSphere)
+          leftThumbIndicator = thumbSphere
+        }
+        
+        if leftMiddleFingerIndicator == nil {
+          let fingerSphere = ModelEntity(
+            mesh: .generateSphere(radius: 0.01),
+            materials: [SimpleMaterial(color: .red, isMetallic: true)]
+          )
+          fingerSphere.name = "LeftMiddleFingerIndicator"
+          rootEntity.addChild(fingerSphere)
+          leftMiddleFingerIndicator = fingerSphere
+        }
+        
+        // Update positions - convert to world space
+        let thumbWorldMatrix = leftHand.originFromAnchorTransform * thumbTip.anchorFromJointTransform
+        let thumbWorldPos = SIMD3<Float>(thumbWorldMatrix.columns.3.x, thumbWorldMatrix.columns.3.y, thumbWorldMatrix.columns.3.z)
+        leftThumbIndicator?.position = thumbWorldPos
+        
+        let fingerWorldMatrix = leftHand.originFromAnchorTransform * indexTip.anchorFromJointTransform
+        let fingerWorldPos = SIMD3<Float>(fingerWorldMatrix.columns.3.x, fingerWorldMatrix.columns.3.y, fingerWorldMatrix.columns.3.z)
+        leftMiddleFingerIndicator?.position = fingerWorldPos
+        
+        // Make sure they're visible
+        leftThumbIndicator?.isEnabled = true
+        leftMiddleFingerIndicator?.isEnabled = true
+      } else {
+        // Hide indicators when tagMode is false
+        leftThumbIndicator?.isEnabled = false
+        leftMiddleFingerIndicator?.isEnabled = false
+      }
 
       if !tapActive {
         // 3. Calculate distance to detect pinch
@@ -469,14 +515,15 @@ final class ARModel : ObservableObject {
         if distance < 0.005 {
           print("Pinch detected")
           tapActive = true
-          tapEntity?.removeFromParent()
-          tapEntity = nil
-          tapAnchor = nil
+//          tapEntity?.removeFromParent()
+//          tapEntity = nil
+//          tapAnchor = nil
           
           // Multiply hand anchor by joint transform to get World Space
           let worldMatrix = leftHand.originFromAnchorTransform * indexTip.anchorFromJointTransform
           let pinchWorldPos = SIMD3<Float>(worldMatrix.columns.3.x, worldMatrix.columns.3.y, worldMatrix.columns.3.z)
           
+          /*
           // Debug sphere at pinch location
           let sphere = ModelEntity(
             mesh: .generateSphere(radius: 0.01),
@@ -485,6 +532,7 @@ final class ARModel : ObservableObject {
           sphere.position = pinchWorldPos
           rootEntity.addChild(sphere)
           tapEntity = sphere
+           */
           
           // Find nearest atom using spatial index
           guard let ballAndStick = ballAndStick,
@@ -528,12 +576,14 @@ final class ARModel : ObservableObject {
                 
                 // Highlight the selected residue
                 highlightResidue(residue)
+                tagged.insert(residue)
                 
                 // Find and highlight nearby residues if tagExtendDistance > 0
                 if tagExtendDistance > 0 {
                   let nearbyResidues = findNearbyResidues(from: residue, withinDistance: tagExtendDistance)
                   for nearbyResidue in nearbyResidues {
                     highlightResidue(nearbyResidue)
+                    tagged.insert(nearbyResidue)
                   }
                 }
               }

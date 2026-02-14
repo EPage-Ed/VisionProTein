@@ -42,6 +42,7 @@ struct ImmersiveView: View {
       skyboxMaterial.color = .init(tint: .init(red: 0.05, green: 0.08, blue: 0.25, alpha: 1.0))
       
       let skyboxModel = ModelEntity(mesh: skyboxMesh, materials: [skyboxMaterial])
+      skyboxModel.name = "SkyboxModel"
       skyboxModel.scale *= .init(x: -1, y: 1, z: 1) // Invert to render inside
       skyboxModel.components.set(OpacityComponent(opacity: model.skyboxOpacity))
       skyboxEntity.addChild(skyboxModel)

@@ -371,7 +371,11 @@ struct ContentView: View {
       }
     }
     .onChange(of: model.skyboxOpacity) { _, newValue in
-      model.rootEntity.parent?.findEntity(named: "Skybox")?.components.set(OpacityComponent(opacity: newValue))
+      model.rootEntity.parent?.findEntity(named: "SkyboxModel")?.components.set(OpacityComponent(opacity: newValue))
+    }
+    .onChange(of: model.tagMode) { _, newValue in
+      model.leftThumbIndicator?.isEnabled = newValue
+      model.leftMiddleFingerIndicator?.isEnabled = newValue
     }
     .onChange(of: model.foldedState) { _, folded in
       //      model.tagState = !newValue
