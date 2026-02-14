@@ -18,7 +18,7 @@ struct ContentView: View {
   @ObservedObject var model : ARModel
   
   @State private var showImmersiveSpace = false
-  @State private var immersiveSpaceIsShown = true
+  @State private var immersiveSpaceIsShown = false
   //  @State private var loading = false
   //  @State private var progress : Double = 0
   @State private var rotate : Angle = .zero

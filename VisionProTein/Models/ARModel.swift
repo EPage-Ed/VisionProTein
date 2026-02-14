@@ -290,11 +290,14 @@ final class ARModel : ObservableObject {
   // Play tap sound feedback
   func playTapSound() {
     // Use system sound for tap feedback (1104 is a gentle tap)
-    AudioServicesPlaySystemSound(1104)
+    AudioServicesPlaySystemSound(1105)
   }
   func playDeselectSound() {
     // Use system sound for deselect feedback
     AudioServicesPlaySystemSound(1103)
+  }
+  func playMissSound() {
+    AudioServicesPlaySystemSound(1104)
   }
   
   // Clear cached protein data
@@ -536,6 +539,7 @@ final class ARModel : ObservableObject {
               }
             } else {
               print("Atom too far away (\(result.distance)m), not selecting")
+              playMissSound()
             }
           } else {
             print("No atoms found in spatial index")
