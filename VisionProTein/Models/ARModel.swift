@@ -460,6 +460,28 @@ final class ARModel : ObservableObject {
     return residueEntity
   }
   
+  // Update the highlight color of a residue entity
+  @MainActor
+  func updateResidueHighlightColor(_ residue: Residue, isSelected: Bool) {
+    guard let residueEntity = highlightedResidueEntities[residue.id] else { return }
+    
+    // Create material with appropriate color
+    var material = PhysicallyBasedMaterial()
+    material.emissiveColor.color = isSelected ? .orange : .yellow
+    material.emissiveIntensity = isSelected ? 0.8 : 0.3
+    material.blending = .transparent(opacity: isSelected ? 0.5 : 0.3)
+    
+    // Apply material to all children
+    residueEntity.children.forEach { child in
+      if let modelEntity = child as? ModelEntity,
+         let model = modelEntity.model {
+        modelEntity.model?.materials = model.materials.map { _ in material }
+      }
+    }
+    
+    print("Updated highlight color for \(residue.resName) \(residue.chainID)\(residue.serNum) to \(isSelected ? "orange" : "yellow")")
+  }
+  
   func run() async {
     do {
 //      try await arSession.run([worldTracker])

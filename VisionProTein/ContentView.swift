@@ -254,8 +254,14 @@ struct ContentView: View {
                               model.selectedResidue = r
                             }
                           }
+                          .hoverEffect(.lift)
                           .padding(4)
-                          .background(model.selectedResidue == r ? Color.yellow.opacity(0.3) : Color.clear)
+                          .padding(.horizontal, 2)
+                          .background(
+                            Capsule()
+                              .fill(model.selectedResidue == r ? Color.pink.opacity(0.3) : Color.clear)
+                          )
+//                          .background(model.selectedResidue == r ? Color.yellow.opacity(0.3) : Color.clear)
                       }
                     }
                   }
@@ -410,6 +416,15 @@ struct ContentView: View {
       
       if newValue {
         model.buildImmersive()
+      }
+    }
+    .onChange(of: model.selectedResidue) { oldValue, newValue in
+      // Update highlight colors when selection changes
+      if let old = oldValue {
+        model.updateResidueHighlightColor(old, isSelected: false)
+      }
+      if let new = newValue {
+        model.updateResidueHighlightColor(new, isSelected: true)
       }
     }
     
