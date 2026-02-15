@@ -66,12 +66,22 @@ struct SHEET : Codable {
   let chain : String
 }
 
-struct Residue : Codable, Equatable, Hashable {
+struct Residue : Codable, Equatable, Hashable, Comparable {
   static func == (lhs: Residue, rhs: Residue) -> Bool {
     lhs.id == rhs.id
   }
   func hash(into hasher: inout Hasher) {
     hasher.combine(id)
+  }
+  
+  static func < (lhs: Residue, rhs: Residue) -> Bool {
+    return lhs.id < rhs.id
+    /*
+    if lhs.chainID != rhs.chainID {
+      return lhs.chainID < rhs.chainID
+    }
+    return lhs.serNum < rhs.serNum
+     */
   }
   
   let id: Int
@@ -531,5 +541,6 @@ extension PDB {
     return ligands
   }
 }
+
 
 

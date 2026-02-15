@@ -9,6 +9,7 @@ import RealityKit
 import ARKit
 import Accelerate
 import AVFoundation
+import OrderedCollections
 import PDBKit
 import ProteinRibbon
 import ProteinSpheresMesh
@@ -235,7 +236,7 @@ final class ARModel : ObservableObject {
 //  @Published var modelState : ModelState = .resizing
   @Published var tagMode = false
   @Published var tagExtendDistance = 0.0
-  @Published var tagged = Set<Residue>()
+  @Published var tagged = OrderedSet<Residue>()
   @Published var selectedResidue: Residue?
   @Published var showRibbon: Bool = false
   @Published var foldedState = true
@@ -451,7 +452,8 @@ final class ARModel : ObservableObject {
     // Track this highlighted entity
     highlightedResidueEntities[residue.id] = residueEntity
     if showBindings {
-      tagged.insert(residue)
+      tagged.append(residue)
+      tagged.sort()
     }
     
     print("Highlighted residue: \(residue.resName) \(residue.chainID)\(residue.serNum)")
@@ -600,14 +602,14 @@ final class ARModel : ObservableObject {
                 
                 // Highlight the selected residue
                 highlightResidue(residue)
-                tagged.insert(residue)
+                tagged.append(residue)
                 
                 // Find and highlight nearby residues if tagExtendDistance > 0
                 if tagExtendDistance > 0 {
                   let nearbyResidues = findNearbyResidues(from: residue, withinDistance: tagExtendDistance)
                   for nearbyResidue in nearbyResidues {
                     highlightResidue(nearbyResidue)
-                    tagged.insert(nearbyResidue)
+                    tagged.append(nearbyResidue)
                   }
                 }
               }

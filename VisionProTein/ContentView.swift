@@ -254,6 +254,7 @@ struct ContentView: View {
                               model.selectedResidue = r
                             }
                           }
+                          .padding(4)
                           .background(model.selectedResidue == r ? Color.yellow.opacity(0.3) : Color.clear)
                       }
                     }
@@ -393,6 +394,7 @@ struct ContentView: View {
         model.showBallAndStick = true
         model.showLigands = false
         model.showBindings = false
+        model.selectedResidue = nil
 //        model.ligand = nil
         
         Task {
