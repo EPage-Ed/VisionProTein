@@ -361,12 +361,21 @@ struct ContentView: View {
           model.spheres?.children.forEach { child in
             child.reverseInstanceAnimation()
           }
+          
+          // Remove chain labels when folding
+          model.removeChainLabels()
 
         } else {
           // Unfold - play animation on all child entities
           model.spheres?.children.forEach { child in
             child.playInstanceAnimation()
           }
+          
+          // Create chain labels when unfolding
+          model.createChainLabels(
+            residuesByChain: model.residuesByChain,
+            unfoldedResidueCenters: model.unfoldedResidueCenters
+          )
 
         }
 

@@ -91,6 +91,7 @@ final class ARModel : ObservableObject {
   var ballAndStick : ModelEntity?
   var ligands = [ModelEntity]()
   var bindings : [ModelEntity] = []
+  var chainLabels : [ModelEntity] = []  // Chain label text entities for unfolded spheres
   var proteinCenterOffset: SIMD3<Float> = .zero  // Offset applied to center the protein for rotation
   
   // Finger tip indicators for tag mode
@@ -277,6 +278,10 @@ final class ARModel : ObservableObject {
   var atomRadii: [Float] = []  // Visual radii (scaled by 0.3)
   var atomToResidueMap: [Int: Residue] = [:]  // Maps atom index to its residue
   var atomSpatialIndex: AtomSpatialIndex?  // Spatial index for efficient nearest atom search
+  
+  // Chain data for unfolded spheres animation
+  var residuesByChain: [String: [Residue]] = [:]
+  var unfoldedResidueCenters: [Int: SIMD3<Float>] = [:]
 
   var initialHandRotation : simd_quatf = .init(vector: [0,0,0,0])
   var initialHandTranslation : SIMD3<Float> = .zero
@@ -321,6 +326,10 @@ final class ARModel : ObservableObject {
     highlightedResidueEntities.values.forEach { $0.removeFromParent() }
     highlightedResidueEntities.removeAll()
     tagged.removeAll()
+    chainLabels.forEach { $0.removeFromParent() }
+    chainLabels.removeAll()
+    residuesByChain.removeAll()
+    unfoldedResidueCenters.removeAll()
     proteinCenterOffset = .zero
   }
   
@@ -480,6 +489,75 @@ final class ARModel : ObservableObject {
     }
     
     print("Updated highlight color for \(residue.resName) \(residue.chainID)\(residue.serNum) to \(isSelected ? "orange" : "yellow")")
+  }
+  
+  // Create chain label entities for the unfolded spheres view
+  @MainActor
+  func createChainLabels(residuesByChain: [String: [Residue]], unfoldedResidueCenters: [Int: SIMD3<Float>]) {
+    // Remove any existing chain labels
+    chainLabels.forEach { $0.removeFromParent() }
+    chainLabels.removeAll()
+    
+    // Create a label for each chain
+    for (chainID, chainResidues) in residuesByChain {
+      guard !chainResidues.isEmpty else { continue }
+      
+      // Calculate the center position of the chain in the unfolded state
+      var chainCenter = SIMD3<Float>.zero
+      var count = 0
+      for residue in chainResidues {
+        if let center = unfoldedResidueCenters[residue.id] {
+          chainCenter += center
+          count += 1
+        }
+      }
+      
+      if count > 0 {
+        chainCenter /= Float(count)
+        
+        // Position label above the chain center
+        let labelPosition = chainCenter + SIMD3<Float>(0, 0.15, 0)
+        
+        // Create 3D text mesh
+        let textMesh = MeshResource.generateText(
+          chainID,
+          extrusionDepth: 0.02,
+          font: .systemFont(ofSize: 0.08),
+          containerFrame: .zero,
+          alignment: .center,
+          lineBreakMode: .byWordWrapping
+        )
+        
+        // Create red material
+        var material = PhysicallyBasedMaterial()
+        material.baseColor.tint = .red
+        material.emissiveColor.color = .red
+        material.emissiveIntensity = 0.5
+        
+        // Create the text entity
+        let textEntity = ModelEntity(mesh: textMesh, materials: [material])
+        textEntity.name = "ChainLabel_\(chainID)"
+        textEntity.position = labelPosition
+        
+        // Add billboard component so it always faces the user
+        textEntity.components.set(BillboardComponent())
+        
+        // Add to spheres entity
+        if let spheres = spheres {
+          spheres.addChild(textEntity)
+          chainLabels.append(textEntity)
+          print("Created chain label '\(chainID)' at position \(labelPosition)")
+        }
+      }
+    }
+  }
+  
+  // Remove all chain labels
+  @MainActor
+  func removeChainLabels() {
+    chainLabels.forEach { $0.removeFromParent() }
+    chainLabels.removeAll()
+    print("Removed all chain labels")
   }
   
   func run() async {
@@ -927,6 +1005,9 @@ final class ARModel : ObservableObject {
           residuesByChain[chainID]?.append(residue)
         }
         
+        // Store for chain label creation
+        self.residuesByChain = residuesByChain
+        
         // Sort chains for consistent ordering
         let sortedChains = residuesByChain.keys.sorted()
         let chainCount = Float(sortedChains.count)
@@ -948,6 +1029,9 @@ final class ARModel : ObservableObject {
             unfoldedResidueCenters[residue.id] = unfoldedCenter
           }
         }
+        
+        // Store for chain label creation
+        self.unfoldedResidueCenters = unfoldedResidueCenters
         
         // Setup animation on each child sphere entity (one per element type)
         for child in se.children {
