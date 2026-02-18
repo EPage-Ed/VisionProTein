@@ -14,312 +14,457 @@ import ProteinRibbon
 import ProteinSpheresMesh
 import PDBKit
 
+struct ContentHeaderView: View {
+  @ObservedObject var model : ARModel
+  var body: some View {
+    VStack(spacing: 2) {
+      Text("Vision \(Text("ProTein").foregroundStyle(Color.green))")
+        .font(.largeTitle)
+      
+      HStack {
+        Spacer()
+        Text(model.pName)
+          .font(.largeTitle)
+        Text(model.pDetails)
+          .font(.caption)
+        Spacer()
+      }
+      .font(.title2)
+      .padding()
+      .overlay {
+        VStack(spacing: 4) {
+          HStack {
+            ProgressView(value: model.progress)
+              .frame(width: 400)
+            Text(model.progress.formatted(.percent.precision(.fractionLength(0))))
+              .font(.caption)
+          }
+          Text(model.loadingStatus)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+        .padding()
+        .background {
+          RoundedRectangle(cornerRadius: 12)
+            .fill(Color.clear)
+            .glassBackgroundEffect()
+        }
+        .opacity(model.loading ? 1 : 0)
+        .transform3DEffect(AffineTransform3D(translation: Vector3D(x: 0, y: 0, z: 20)))
+      }
+    }
+  }
+}
+
+struct ContentPanelView: View {
+  @ObservedObject var model : ARModel
+  @State private var showExtension: Bool = false
+  
+  var body: some View {
+    VStack(spacing: 20) {
+      
+      Grid(alignment: .center, horizontalSpacing: 40, verticalSpacing: 0) {
+        GridRow {
+          Toggle("Sphere", isOn: $model.showSpheres)
+            .toggleStyle(.button)
+            .padding(.leading, 40)
+          Divider() // Vertical separator
+            .frame(width:2,height:100)
+            .overlay(Color.white)
+            .gridCellUnsizedAxes(.horizontal)
+          Toggle("Ribbon", isOn: $model.showRibbons)
+            .toggleStyle(.button)
+          Divider() // Vertical separator
+            .frame(width:2,height:100)
+            .overlay(Color.white)
+            .gridCellUnsizedAxes(.horizontal)
+          Toggle("Ball & Stick", isOn: $model.showBallAndStick)
+            .toggleStyle(.button)
+          Toggle("Tag Mode", isOn: $model.tagMode)
+//            .toggleStyle(.button)
+            .labelIconToTitleSpacing(8)
+            .disabled(!model.showBallAndStick)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.trailing, 40)
+        }
+        GridRow {
+          HStack {
+            Text("Folded")
+              .foregroundColor(model.showSpheres ? .primary : .gray)
+            Toggle("Folded", isOn: $model.foldedState).labelsHidden()
+              .disabled(!model.showSpheres)
+          }
+          .padding(.leading, 40)
+          Divider() // Vertical separator
+            .frame(width:2,height:100)
+            .overlay(Color.white)
+            .gridCellUnsizedAxes(.horizontal)
+          /*
+           • Structure: Red helices, blue sheets, green coils
+           • Chain: Different color per chain
+           • Residue: Blue-to-red gradient (N-terminus to C-terminus)
+           • Type: Colors based on amino acid properties (hydrophobic=yellow, polar=cyan, charged=red/blue, etc.)
+           • Uniform: Single gray color
+           */
+          Picker("Coloring", selection: $model.ribbonColorScheme) {
+            Text("Structure").tag(ColorScheme.byStructure)
+            Text("Chain").tag(ColorScheme.byChain)
+            Text("Residue").tag(ColorScheme.byResidue)
+            Text("Type").tag(ColorScheme.byResidueType)
+            Text("Uniform").tag(ColorScheme.uniform)
+          }
+          .pickerStyle(MenuPickerStyle())
+          Divider() // Vertical separator
+            .frame(width:2,height:100)
+            .overlay(Color.white)
+            .gridCellUnsizedAxes(.horizontal)
+          HStack {
+            Toggle("Ligands", isOn: $model.showLigands)
+              .toggleStyle(.button)
+              .disabled(!model.showBallAndStick)
+            Toggle("Bindings", isOn: $model.showBindings)
+              .toggleStyle(.button)
+              .disabled(!model.showBallAndStick)
+          }
+          VStack {
+            HStack {
+              Text("Extension:")
+                .padding(.trailing)
+              Button {
+                withAnimation {
+                  showExtension.toggle()
+                }
+              } label: {
+                Text("\(Int(model.tagExtendDistance)) Å")
+                  .font(.title)
+              }
+            }
+            if showExtension {
+              Slider(
+                value: $model.tagExtendDistance,
+                in: 0.0...15.0,
+                step: 1.0 // This creates the "fixed detents"
+              ) { editing in
+                if !editing {
+                  withAnimation {
+                    showExtension.toggle()
+                  }
+                }
+              }
+              .frame(width: 240)
+            }
+          }
+          .padding(.trailing, 40)
+          
+        }
+      }
+      .overlay {
+        RoundedRectangle(cornerRadius: 20)
+          .stroke(Color.white, lineWidth: 2)
+      }
+      .background {
+        RoundedRectangle(cornerRadius: 20)
+          .fill(Color.white.opacity(0.1))
+      }
+    }
+  }
+}
+
+struct ContentDetailsView: View {
+  @ObservedObject var model : ARModel
+  
+  var body: some View {
+    HStack {
+      VStack {
+        ScrollView {
+          Grid(horizontalSpacing: 20, verticalSpacing: 20) {
+            let tagged = Array(model.tagged)
+            ForEach(Array(stride(from: 0, to: tagged.count, by: 4)), id:\.self) { row in
+              GridRow {
+                ForEach(0..<4, id:\.self) { c in
+                  if row + c < tagged.count {
+                    let r = tagged[row+c]
+                    Text("\(r.resName) \(r.chainID)\(r.serNum)")
+                      .onTapGesture {
+                        withAnimation {
+                          if model.selectedResidue == r {
+                            model.selectedResidue = nil
+                          } else {
+                            model.selectedResidue = r
+                          }
+                        }
+                      }
+                      .fixedSize()
+                      .hoverEffect(.lift)
+                      .padding(4)
+                      .padding(.horizontal, 2)
+                      .background(
+                        Capsule()
+                          .fill(model.selectedResidue == r ? Color.pink.opacity(0.3) : Color.clear)
+                      )
+                    //                          .background(model.selectedResidue == r ? Color.yellow.opacity(0.3) : Color.clear)
+                  }
+                }
+              }
+            }
+          }
+        }
+        .padding(.horizontal)
+        .padding(.top, 30)
+      }
+      .padding()
+      .frame(minWidth: 400)
+      .overlay {
+        RoundedRectangle(cornerRadius: 20)
+          .stroke(Color.white, lineWidth: 2)
+      }
+      .background {
+        RoundedRectangle(cornerRadius: 20)
+          .fill(Color.white.opacity(0.1))
+      }
+      .overlay(alignment: .top) {
+        HStack(spacing: 20) {
+          Text("Tagged Residues")
+            .font(.title2)
+          Button("Clear", role: .destructive) {
+            // Remove all highlight entities
+            withAnimation {
+              model.clearAllSelections()
+              model.showBindings = false
+            }
+          }
+          .buttonStyle(.borderedProminent)
+          .opacity(model.tagged.isEmpty ? 0.3 : 1.0)
+          .disabled(model.tagged.isEmpty)
+        }
+        .fixedSize()
+        .padding(.horizontal, 20)
+        .padding(.vertical, 4)
+        .overlay {
+          Capsule()
+//          RoundedRectangle(cornerRadius: 20)
+            .stroke(Color.white, lineWidth: 2)
+        }
+        .background {
+          Capsule()
+//          RoundedRectangle(cornerRadius: 20)
+            .fill(Color.gray)
+        }
+        .offset(x: 0, y: -20)
+
+      }
+      .padding(.trailing, 40)
+      .frame(maxHeight: model.tagged.count > 0 ? .infinity : 80)
+      
+      if let r = model.selectedResidue {
+        ScrollView {
+          VStack(alignment: .leading) {
+            Text("Residue Details")
+              .font(.title2)
+            Text("Name: \(r.resName)")
+            Text("Chain: \(r.chainID)")
+            Text("Sequence Number: \(r.serNum)")
+            Text("Number of Atoms: \(r.atoms.count)")
+            Text("Amino Acid: \(r.aminoAcid?.fullName ?? "Unknown")")
+            Text("Details:")
+            Text(r.aminoAcid?.details ?? "No description available.")
+          }
+        }
+        .padding()
+        .overlay {
+          RoundedRectangle(cornerRadius: 20)
+            .stroke(Color.white, lineWidth: 2)
+        }
+        .background {
+          RoundedRectangle(cornerRadius: 20)
+            .fill(Color.white.opacity(0.1))
+        }
+        .frame(maxWidth: 400, alignment: .leading)
+      } else {
+        Text("Select a residue to see details")
+          .italic()
+          .padding()
+          .background {
+            RoundedRectangle(cornerRadius: 20)
+              .fill(Color.white.opacity(0.1))
+          }
+          .opacity(model.tagged.count > 0 ? 1 : 0)
+      }
+      
+    }
+  }
+}
 
 struct ContentView: View {
   @ObservedObject var model : ARModel
   
-  @State private var showImmersiveSpace = false
-  @State private var immersiveSpaceIsShown = false
+//  @State private var showImmersiveSpace = false
+//  @State private var immersiveSpaceIsShown = true
   //  @State private var loading = false
   //  @State private var progress : Double = 0
   @State private var rotate : Angle = .zero
+  @State private var showSkybox : Bool = false
+  @State private var showPDBList : Bool = false
 //  let arb = AdvancedRibbonBuilder()
 
-  @Environment(\.openImmersiveSpace) var openImmersiveSpace
-  @Environment(\.dismissImmersiveSpace) var dismissImmersiveSpace
+//  @Environment(\.openImmersiveSpace) var openImmersiveSpace
+//  @Environment(\.dismissImmersiveSpace) var dismissImmersiveSpace
   
   struct PDBFile {
+    let code: String
     let name: String
     let details: String
   }
   let pdbFiles : [PDBFile] = [
-    .init(name: "1ERT", details: "Human Thioredoxin"),
-    .init(name: "1NC9", details: "Streptavidin - Biotin binding"),
-    .init(name: "4HR9", details: "Human InterLeukin 17"),
-    .init(name: "5JLH", details: "Human Cytoplasmic Actomyosin"),
-    .init(name: "4HHB", details: "Human Haemoglobin"),
-    .init(name: "5NP0", details: "Human ATM"),
-    .init(name: "1A3N", details: "Human Hemoglobin"),
+    .init(code: "1A3N", name: "Hemoglobin", details: "Hemoglobin is a protein containing iron that facilitates the transportation of oxygen in red blood cells. Almost all vertebrates contain hemoglobin, with the sole exception of the fish family Channichthyidae."),
+    .init(code: "1QQW", name: "Catalase", details: "Catalase is a common enzyme found in nearly all living organisms exposed to oxygen which catalyzes the decomposition of hydrogen peroxide to water and oxygen. It is a very important enzyme in protecting the cell from oxidative damage by reactive oxygen species."),
+    .init(code: "1KLN", name: "DNA Polymerase", details: "DNA polymerase is a member of a family of enzymes that catalyze the synthesis of DNA molecules from nucleoside triphosphates, the molecular precursors of DNA. These enzymes are essential for DNA replication and usually work in groups to create two identical DNA duplexes from a single original DNA duplex."),
+
+    /*
+    .init(code: "1ERT", name: "Human Thioredoxin"),
+    .init(code: "1NC9", name: "Streptavidin - Biotin binding"),
+    .init(code: "4HR9", name: "Human InterLeukin 17"),
+    .init(code: "5JLH", name: "Human Cytoplasmic Actomyosin"),
+    .init(code: "4HHB", name: "Human Haemoglobin"),
+    .init(code: "5NP0", name: "Human ATM"),
+     */
   ]
   
   var body: some View {
     VStack {
       /*
-      Model3D(named: "protein") { model in
-        model
-          .resizable()
-          .aspectRatio(contentMode: .fit)
-          .rotation3DEffect(rotate, axis: .y, anchor: .bottomBack)
-        
-      } placeholder: {
-        VStack {
-          Text("Loading...")
-          ProgressView()
-        }
-      }
-      .frame(height: 160)
+       Model3D(named: "protein") { model in
+       model
+       .resizable()
+       .aspectRatio(contentMode: .fit)
+       .rotation3DEffect(rotate, axis: .y, anchor: .bottomBack)
+       
+       } placeholder: {
+       VStack {
+       Text("Loading...")
+       ProgressView()
+       }
+       }
+       .frame(height: 160)
        */
-      
-      Text("Vision \(Text("ProTein").foregroundStyle(Color.green))")
-        .font(.largeTitle)
-      
-      VStack(spacing: 4) {
-        HStack {
-          ProgressView(value: model.progress)
-            .frame(width: 400)
-          Text(model.progress.formatted(.percent.precision(.fractionLength(0))))
-            .font(.caption)
-        }
-        Text(model.loadingStatus)
-          .font(.caption)
-          .foregroundStyle(.secondary)
-      }
-      .opacity(model.loading ? 1 : 0)
+      ContentHeaderView(model: model)
+        .padding(.top)
+            
+      ContentPanelView(model: model)
+        .fixedSize(horizontal: true, vertical: true)
+        .padding(.horizontal)
+        .transform3DEffect(AffineTransform3D(translation: Vector3D(x: 0, y: 0, z: 10)))
 
-     
+      
       HStack {
-        if immersiveSpaceIsShown {
-          Spacer()
-          Group {
-            Button("Close") {
-              //          model.proteinItem = ProteinItem(code: "2P6A", name: "Activin:Follistatin", text: "Follistatin is studied for its role in regulation of muscle growth in mice, as an antagonist to myostatin (also known as GDF-8, a TGF superfamily member) which inhibits         excessive muscle growth.", image: nil, ligand: nil)
-              showImmersiveSpace.toggle()
-            }
-            .padding(.trailing)
-            Text(model.pName)
-              .font(.title)
-            Text(model.pDetails)
-              .font(.caption)
-          }
-          Spacer()
+        Spacer()
+        ContentDetailsView(model: model)
+        Spacer()
+      }
+      .frame(minHeight: 200)
+      .padding()
+      .padding(.top, 30)
+      .transform3DEffect(AffineTransform3D(translation: Vector3D(x: 0, y: 0, z: 10)))
+      .opacity(model.tagged.count > 0 ? 1 : 0)
+      
+      Spacer()
+        
+    }
+    
+
+    .ornament(
+      visibility: .visible,
+      attachmentAnchor: .scene(.topTrailing),
+      contentAlignment: .top
+    ) {
+      VStack(spacing: 20) {
+        Button("Load", systemImage: "document") {
+          // new action
+          showPDBList.toggle()
+        }
+        .popover(isPresented: $showPDBList,
+                 attachmentAnchor: .point(.bottom),
+                 arrowEdge: .top,
+                 content: {
           VStack {
-            Text("Skybox")
+            ForEach(pdbFiles, id:\.code) { p in
+              VStack {
+                Button(p.code) {
+                  Task { @MainActor in
+                    withAnimation {
+                      model.loading = true
+                    }
+                  }
+                  model.clearProteinData()
+                  model.pName = p.code
+                  model.pDetails = p.name
+                  model.buildImmersive()
+//                  Task { @MainActor in
+//                    withAnimation {
+//                      model.loading = false
+//                    }
+//                  }
+                  showPDBList.toggle()
+//                  showImmersiveSpace.toggle()
+                }
+                Text(p.name)
+                  .font(.caption)
+              }
+//              .disabled(showImmersiveSpace)
+            }
+          }
+          .padding()
+          // Crucial for the native visionOS look
+          .glassBackgroundEffect()
+          .presentationCompactAdaptation(.none)
+          .transform3DEffect(AffineTransform3D(translation: Vector3D(x: 0, y: 0, z: 15)))
+        })
+
+        
+        Button("Skybox", systemImage: "fossil.shell") {
+          showSkybox.toggle()
+        }
+        .popover(isPresented: $showSkybox,
+                 attachmentAnchor: .point(.bottom),
+                 arrowEdge: .top,
+                 content: {
+          VStack {
+            Text("Skybox: \(model.skyboxOpacity.formatted(.percent.precision(.fractionLength(0))))")
             Slider(
               value: $model.skyboxOpacity,
               in: 0.0...1.0
-            )
+            ) { editing in
+              if !editing {
+                withAnimation {
+                  showSkybox.toggle()
+                }
+              }
+            }
             .frame(width: 240)
           }
-          .padding(.trailing)
-
-        } else {
-          ForEach(pdbFiles, id:\.name) { p in
-            VStack {
-              Button(p.name) {
-                model.pName = p.name
-                model.pDetails = p.details
-                showImmersiveSpace.toggle()
-              }
-              Text(p.details)
-                .font(.caption)
-            }
-            .disabled(showImmersiveSpace)
-          }
-        }
-      }
-      .font(.title2)
-      .padding()
-      
-      if immersiveSpaceIsShown {
-        HStack {
-          Spacer()
-          VStack(spacing: 20) {
-
-            Grid(alignment: .center, horizontalSpacing: 40, verticalSpacing: 0) {
-              GridRow {
-                Toggle("Sphere", isOn: $model.showSpheres)
-                  .toggleStyle(.button)
-                  .padding(.leading, 40)
-                Divider() // Vertical separator
-                  .frame(width:2,height:100)
-                  .overlay(Color.white)
-                  .gridCellUnsizedAxes(.horizontal)
-                Toggle("Ribbon", isOn: $model.showRibbons)
-                  .toggleStyle(.button)
-                Divider() // Vertical separator
-                  .frame(width:2,height:100)
-                  .overlay(Color.white)
-                  .gridCellUnsizedAxes(.horizontal)
-                Toggle("Ball & Stick", isOn: $model.showBallAndStick)
-                  .toggleStyle(.button)
-                Toggle("Tag Mode", isOn: $model.tagMode)
-                  .toggleStyle(.button)
-                  .disabled(!model.showBallAndStick)
-                  .padding(.trailing, 40)
-              }
-              GridRow {
-                HStack {
-                  Text("Folded")
-                    .foregroundColor(model.showSpheres ? .primary : .gray)
-                  Toggle("Folded", isOn: $model.foldedState).labelsHidden()
-                    .disabled(!model.showSpheres)
-                }
-                .padding(.leading, 40)
-                Divider() // Vertical separator
-                  .frame(width:2,height:100)
-                  .overlay(Color.white)
-                  .gridCellUnsizedAxes(.horizontal)
-                /*
-                 • Structure: Red helices, blue sheets, green coils
-                 • Chain: Different color per chain
-                 • Residue: Blue-to-red gradient (N-terminus to C-terminus)
-                 • Type: Colors based on amino acid properties (hydrophobic=yellow, polar=cyan, charged=red/blue, etc.)
-                 • Uniform: Single gray color
-                 */
-                Picker("Coloring", selection: $model.ribbonColorScheme) {
-                  Text("Structure").tag(ColorScheme.byStructure)
-                  Text("Chain").tag(ColorScheme.byChain)
-                  Text("Residue").tag(ColorScheme.byResidue)
-                  Text("Type").tag(ColorScheme.byResidueType)
-                  Text("Uniform").tag(ColorScheme.uniform)
-                }
-                .pickerStyle(MenuPickerStyle())
-                Divider() // Vertical separator
-                  .frame(width:2,height:100)
-                  .overlay(Color.white)
-                  .gridCellUnsizedAxes(.horizontal)
-                HStack {
-                  Toggle("Ligands", isOn: $model.showLigands)
-                    .toggleStyle(.button)
-                    .disabled(!model.showBallAndStick)
-                  Toggle("Bindings", isOn: $model.showBindings)
-                    .toggleStyle(.button)
-                    .disabled(!model.showBallAndStick)
-                }
-                VStack {
-                  HStack {
-                    Text("Tag Extension:")
-                      .padding(.trailing)
-                    Text("\(Int(model.tagExtendDistance)) Å")
-                      .font(.title)
-                  }
-                  Slider(
-                    value: $model.tagExtendDistance,
-                    in: 0.0...15.0,
-                    step: 1.0 // This creates the "fixed detents"
-                  )
-                  .frame(width: 240)
-                }
-                .padding(.trailing, 40)
-
-              }
-            }
-            .overlay {
-              RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.white, lineWidth: 2)
-            }
-            .background {
-              RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.1))
-            }
-            .padding(.top)
-          }
-          .transform3DEffect(AffineTransform3D(translation: Vector3D(x: 0, y: 0, z: 50)))
-
-          Spacer()
-        }
-        .frame(maxWidth: .infinity, alignment: .center)
-        .padding(.horizontal)
-        
-        HStack {
-          Spacer()
-          VStack {
-            HStack(spacing: 20) {
-              Text("Tagged Residues")
-                .font(.title2)
-              Button("Clear", role: .destructive) {
-                // Remove all highlight entities
-                withAnimation {
-                  model.clearAllSelections()
-                }
-              }
-              .buttonStyle(.borderedProminent)
-              .opacity(model.tagged.isEmpty ? 0.3 : 1.0)
-              .disabled(model.tagged.isEmpty)
-            }
-            .padding(.horizontal)
-            ScrollView {
-              Grid(horizontalSpacing: 20, verticalSpacing: 20) {
-                let tagged = Array(model.tagged)
-                ForEach(Array(stride(from: 0, to: tagged.count, by: 4)), id:\.self) { row in
-                  GridRow {
-                    ForEach(0..<4, id:\.self) { c in
-                      if row + c < tagged.count {
-                        let r = tagged[row+c]
-                        Text("\(r.resName) \(r.chainID)\(r.serNum)")
-                          .onTapGesture {
-                            if model.selectedResidue == r {
-                              model.selectedResidue = nil
-                            } else {
-                              model.selectedResidue = r
-                            }
-                          }
-                          .hoverEffect(.lift)
-                          .padding(4)
-                          .padding(.horizontal, 2)
-                          .background(
-                            Capsule()
-                              .fill(model.selectedResidue == r ? Color.pink.opacity(0.3) : Color.clear)
-                          )
-//                          .background(model.selectedResidue == r ? Color.yellow.opacity(0.3) : Color.clear)
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            .padding(.horizontal)
-            
-          }
           .padding()
-          .overlay {
-            RoundedRectangle(cornerRadius: 20)
-              .stroke(Color.white, lineWidth: 2)
-          }
-          .background {
-            RoundedRectangle(cornerRadius: 20)
-              .fill(Color.white.opacity(0.1))
-          }
-          .padding(.trailing, 40)
-
-          if let r = model.selectedResidue {
-            ScrollView {
-              VStack(alignment: .leading) {
-                Text("Residue Details")
-                  .font(.title2)
-                Text("Name: \(r.resName)")
-                Text("Chain: \(r.chainID)")
-                Text("Sequence Number: \(r.serNum)")
-                Text("Number of Atoms: \(r.atoms.count)")
-                Text("Amino Acid: \(r.aminoAcid?.fullName ?? "Unknown")")
-                Text("Details:")
-                Text(r.aminoAcid?.details ?? "No description available.")
-              }
-            }
-            .padding()
-            .overlay {
-              RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.white, lineWidth: 2)
-            }
-            .background {
-              RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.1))
-            }
-            .frame(maxWidth: 400, alignment: .leading)
-            Spacer()
-          } else {
-            Text("Select a residue to see details")
-              .italic()
-            Spacer()
-          }
-        }
-        .frame(minHeight: 200)
-        .padding()
-
+          // Crucial for the native visionOS look
+          .glassBackgroundEffect()
+          .presentationCompactAdaptation(.none)
+        })
       }
-      
+      .labelStyle(.iconOnly)
+      .padding()
+      .glassBackgroundEffect()
     }
-    .padding()
+
+    /*
+    .task {
+      model.pName = pdbFiles[0].code
+      model.pDetails = pdbFiles[0].name
+//      showImmersiveSpace.toggle()
+    }
+     */
+//    Text("Skybox: \(model.skyboxOpacity.formatted(.percent.precision(.fractionLength(0))))")
+//      .onTapGesture {
+//        showSkybox.toggle()
+//      }
+    //          }
     .onChange(of: model.showSpheres) { _, newValue in
       model.spheres?.isEnabled = newValue
     }
@@ -327,7 +472,21 @@ struct ContentView: View {
       model.ribbons?.isEnabled = newValue
     }
     .onChange(of: model.ribbonColorScheme) { _, newValue in
+      Task { @MainActor in
+        withAnimation {
+          model.loading = true
+          model.progress = 0.1
+          model.loadingStatus = "Updating ribbon colors..."
+        }
+      }
       model.changeRibbonColorScheme(to: newValue)
+      Task { @MainActor in
+        withAnimation {
+          model.loading = false
+          model.progress = 1.0
+          model.loadingStatus = "Updated ribbon colors"
+        }
+      }
     }
     .onChange(of: model.showBallAndStick) { _, newValue in
       model.ballAndStick?.isEnabled = newValue
@@ -339,10 +498,12 @@ struct ContentView: View {
     }
     .onChange(of: model.showBindings) { _, newValue in
       model.bindings.forEach { $0.isEnabled = newValue }
-      if newValue {
-        model.tagged.formUnion(model.bindingResidues)
-      } else {
-        model.bindingResidues.forEach { model.tagged.remove($0) }
+      withAnimation {
+        if newValue {
+          model.tagged.formUnion(model.bindingResidues)
+        } else {
+          model.bindingResidues.forEach { model.tagged.remove($0) }
+        }
       }
     }
     .onChange(of: model.skyboxOpacity) { _, newValue in
@@ -381,6 +542,7 @@ struct ContentView: View {
 
       }
     }
+    /*
     .onChange(of: showImmersiveSpace) { _, newValue in
       if newValue {
         model.loading = true
@@ -420,13 +582,15 @@ struct ContentView: View {
       }
       
     }
-
+     */
+    /*
     .onChange(of: immersiveSpaceIsShown) { _, newValue in
       
       if newValue {
         model.buildImmersive()
       }
     }
+     */
     .onChange(of: model.selectedResidue) { oldValue, newValue in
       // Update highlight colors when selection changes
       if let old = oldValue {

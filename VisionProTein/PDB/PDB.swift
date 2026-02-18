@@ -326,12 +326,14 @@ extension PDB {
 
   /// Parse PDB once and return all data needed by all renderers
   /// This eliminates duplicate parsing operations
-  static func parseComplete(pdbString: String) -> CompleteParseResult {
+  static func parseComplete(pdbString: String, progress: ((Double)->())? = nil) -> CompleteParseResult {
     // Parse using existing VisionProTein parser
     let (atoms, residues, helices, sheets, sequences) = parsePDB(pdb: pdbString)
+    progress?(0.5)
 
     // Parse ligands
     let ligands = parseLigands(pdbString)
+    progress?(0.55)
 
     // Convert to ProteinRibbon's PDBStructure for packages
     let pdbStructure = convertToPDBStructure(
@@ -341,6 +343,7 @@ extension PDB {
       sheets: sheets,
       pdbString: pdbString
     )
+    progress?(0.6)
 
     return CompleteParseResult(
       atoms: atoms,

@@ -226,8 +226,11 @@ final class ARModel : ObservableObject {
 
   }
    */
+  @Published var showImmersiveSpace = false
+  @Published var immersiveSpaceIsShown = false
+
   
-  var pName = "1ERT" // 1hqq Biotin 3nir 1nc9 4HR9 1ERT
+  var pName = "Building..." // 1hqq Biotin 3nir 1nc9 4HR9 1ERT
   var pDetails = ""
   let rootEntity = Entity()
   @Published var loading = false
@@ -331,6 +334,24 @@ final class ARModel : ObservableObject {
     residuesByChain.removeAll()
     unfoldedResidueCenters.removeAll()
     proteinCenterOffset = .zero
+    
+    
+    protein?.removeFromParent()
+//    proteinTag?.removeFromParent()
+    ligands.forEach { $0.removeFromParent() }
+    ligands.removeAll()
+    bindings.forEach { $0.removeFromParent() }
+    bindings.removeAll()
+    bindingResidues.removeAll()
+    protein = nil
+//    proteinTag = nil
+    showSpheres = false
+    showRibbons = false
+    showBallAndStick = true
+    showLigands = false
+    showBindings = false
+    selectedResidue = nil
+
   }
   
   // Clear all selected residues and remove highlights
@@ -338,6 +359,7 @@ final class ARModel : ObservableObject {
     highlightedResidueEntities.values.forEach { $0.removeFromParent() }
     highlightedResidueEntities.removeAll()
     tagged.removeAll()
+    selectedResidue = nil
   }
 
   @MainActor
@@ -345,6 +367,10 @@ final class ARModel : ObservableObject {
     guard let pdbStructure else { return }
     print("New scheme: \(newScheme)")
     let entity = ProteinRibbon.ribbonEntity(from: pdbStructure, options: ProteinRibbon.Options(colorScheme: newScheme))
+    Task { @MainActor in
+      progress = 0.5
+      loadingStatus = "Created ribbon..."
+    }
     entity.name = "Ribbon2"
     entity.transform = ribbons?.transform ?? .identity
     entity.isEnabled = showRibbons
@@ -575,9 +601,11 @@ final class ARModel : ObservableObject {
     }
   }
   
+  /*
   func ligandScale(scale: SIMD3<Float>) {
 //    ligand?.scale = scale
   }
+   */
   
 //  var tapAnchor : AnchorEntity?
 //  var tapEntity : Entity?
@@ -829,23 +857,57 @@ final class ARModel : ObservableObject {
         progress = 0.1
         loadingStatus = "Loading PDB..."
       }
-      if let u = Bundle.main.url(forResource: pName, withExtension: "pdb"), // 3aid 6uml (Thilidomide) 1a3n (Hemoglobin) 3nir 4HR9 6a5j 1ERT
-         let s = try? String(contentsOf: u, encoding: .utf8) {
+      if let u = Bundle.main.url(forResource: pName, withExtension: "pdb") { //, // 3aid 6uml (Thilidomide) 1a3n (Hemoglobin) 3nir 4HR9 6a5j 1ERT
+//         let s = try? String(contentsOf: u, encoding: .utf8) {
+//        var s = ""
+        let (bytes, response) = try await URLSession.shared.bytes(for: URLRequest(url: u))
+//        guard let httpResponse = response as? URLResponse, httpResponse.statusCode == 200 else {
+//          Logger.main.error("Network response error")
+//          return
+//        }
+        let length = Int(response.expectedContentLength)
+        var data = Data(capacity: length)
+
+        var bytesAccumulator = 0
+        let bytesForUpdate = length / 100
+        
+        for try await byte in bytes {
+          data.append(byte)
+          bytesAccumulator += 1
+          
+          if bytesAccumulator > bytesForUpdate {
+            let progress = Double(data.count) / Double(length)
+//            print(progress)
+            await MainActor.run {
+              self.progress = progress * 0.35 + 0.1
+            }
+            bytesAccumulator = 0
+          }
+        }
+        guard let s = try? String(contentsOf: u, encoding: .utf8) else { return }
+
+        
+        
+//        let task = URLSession.shared.dataTask(with: u) { data, response, error in
+//          if let data = data, let content = String(data: data, encoding: .utf8) {
+//            print(content)
+//            s = content
+//          }
+//        }
+//        task.resume() // Start the task
         
         // PARSE ONCE - Get all data needed for all renderers
         await MainActor.run {
-          progress = 0.15
+          progress = 0.45
           loadingStatus = "Parsing PDB file..."
         }
-        let parseResult = PDB.parseComplete(pdbString: s)
+        let parseResult = PDB.parseComplete(pdbString: s) { progress in
+          self.progress = progress
+        }
         //            let atoms = parseResult.atoms
         let allResidues = parseResult.residues
         pdbStructure = parseResult.pdbStructure
         
-        await MainActor.run {
-          progress = 0.2
-          loadingStatus = "Creating ribbon structure..."
-        }
         
         //        let entity = ProteinRibbon.structureColoredEntity(from: pdbStructure)  // Red helix, blue sheet, green coil
         let entity = ProteinRibbon.ribbonEntity(from: pdbStructure!, options: ProteinRibbon.Options(colorScheme: .byStructure))
@@ -856,7 +918,7 @@ final class ARModel : ObservableObject {
         print(entity.position)
         
         await MainActor.run {
-          progress = 0.4
+          progress = 0.7
           loadingStatus = "Creating ball-and-stick model..."
         }
         
@@ -869,7 +931,7 @@ final class ARModel : ObservableObject {
         
         // Build spatial index for efficient atom lookup
         await MainActor.run {
-          progress = 0.6
+          progress = 0.8
           loadingStatus = "Building spatial index..."
         }
         
@@ -907,7 +969,7 @@ final class ARModel : ObservableObject {
         
         
         await MainActor.run {
-          progress = 0.65
+          progress = 0.9
           loadingStatus = "Finding binding residues..."
         }
         // Get ligands from consolidated parse result
@@ -951,7 +1013,7 @@ final class ARModel : ObservableObject {
         
         
         await MainActor.run {
-          progress = 0.7
+          progress = 0.95
           loadingStatus = "Creating sphere representation..."
         }
         
@@ -1083,7 +1145,7 @@ final class ARModel : ObservableObject {
         print("Setup structure-preserving animations for \(se.children.count) sphere child entities with \(residues.count) residues")
         
         await MainActor.run {
-          progress = 0.9
+          progress = 0.99
           loadingStatus = "Finalizing..."
         }
         
@@ -1113,7 +1175,7 @@ final class ARModel : ObservableObject {
         progress = 1.0
         loadingStatus = "Complete!"
       }
-      try? await Task.sleep(for: .milliseconds(300))
+      try? await Task.sleep(for: .milliseconds(200))
       await MainActor.run {
         loading = false
         progress = 0.0

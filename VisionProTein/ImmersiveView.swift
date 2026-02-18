@@ -24,6 +24,10 @@ struct ImmersiveView: View {
       }
     })
     */
+//    MainView(model: model)
+//      .frame(minWidth: 1024, minHeight: 600)
+//      .transform3DEffect(AffineTransform3D(translation: .init(x: 0, y: 1, z: -5)))
+
 
     RealityView { content, attachments in
       // CRITICAL FIX: Only add rootEntity if it's not already in the scene
@@ -64,6 +68,8 @@ struct ImmersiveView: View {
       }
       model.loading = false
        */
+      
+      model.pName = model.protein == nil ? "Select a Protein" : model.pName
 
     } update: { content, attachments in
     } attachments: {
