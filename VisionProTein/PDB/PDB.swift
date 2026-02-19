@@ -235,6 +235,32 @@ extension String {
   var condensed: String {
     return replacingOccurrences(of: "[\\s\n]+", with: " ", options: .regularExpression, range: nil)
   }
+
+  /// Extract a fixed-column PDB substring without allocating a Character array.
+  /// Columns are 0-based, end is exclusive.
+  func pdbColumn(_ start: Int, _ end: Int) -> Substring {
+    guard start < count else { return Substring("") }
+    let clampedEnd = min(end, count)
+    let startIdx = index(startIndex, offsetBy: start)
+    let endIdx = index(startIndex, offsetBy: clampedEnd)
+    return self[startIdx..<endIdx]
+  }
+
+  func pdbInt(_ start: Int, _ end: Int) -> Int? {
+    let sub = pdbColumn(start, end)
+    guard !sub.isEmpty else { return nil }
+    return Int(sub.trimmingCharacters(in: .whitespaces))
+  }
+
+  func pdbDouble(_ start: Int, _ end: Int) -> Double? {
+    let sub = pdbColumn(start, end)
+    guard !sub.isEmpty else { return nil }
+    return Double(sub.trimmingCharacters(in: .whitespaces))
+  }
+
+  func pdbString(_ start: Int, _ end: Int) -> String {
+    return String(pdbColumn(start, end)).trimmingCharacters(in: .whitespaces)
+  }
 }
 
 
@@ -311,70 +337,50 @@ SHEET    3   A 9 ALA A  38  GLU A  44 -1  O  THR A  40   N  THR A  32
     var sheet = [SHEET]()
     var seqres = [SEQRES]()
     var ccnt = maxChains
-    let lines = s.components(separatedBy: .newlines).filter{(atom && ($0.hasPrefix("ATOM") || $0.hasPrefix("HELIX") || $0.hasPrefix("SHEET") || $0.hasPrefix("SEQRES"))) || (hexatm && $0.hasPrefix("HETATM")) || $0.hasPrefix("ENDMDL") || $0.hasPrefix("TER")}
-    for l in lines {
-      //      print(l)
-      //    lines.forEach { l in
-      let c = Array(l)
-      let code = String(c[0...5]).trimmingCharacters(in: .whitespaces)
-      if code == "ENDMDL" { break }
+    var stop = false
+    s.enumerateLines { l, stopFlag in
+      guard !stop, l.count >= 6 else { return }
+      let code = l.pdbString(0, 6)
+      if code == "ENDMDL" { stop = true; stopFlag = true; return }
       if code == "TER" {
         ccnt -= 1
-        if ccnt <= 0 { break }
+        if ccnt <= 0 { stop = true; stopFlag = true }
+        return
       }
       if code == "HELIX" {
-        let chain = String(c[19])  // Column 20 in PDB format (1-indexed)
-        let start = Int(String(c[21...24]).trimmingCharacters(in: .whitespaces)) ?? 0
-        let end = Int(String(c[33...36]).trimmingCharacters(in: .whitespaces)) ?? 0
-        //        print("HELIX \(chain) \(start)-\(end)")
-        let h = HELIX(start: start, end: end, chain: chain)
-        helix.append(h)
-        continue
+        let chain = l.count > 19 ? String(l.pdbColumn(19, 20)) : " "
+        let start = l.pdbInt(21, 25) ?? 0
+        let end = l.pdbInt(33, 37) ?? 0
+        helix.append(HELIX(start: start, end: end, chain: chain))
+        return
       } else if code == "SHEET" {
-        let chain = String(c[21])  // Column 22 in PDB format (1-indexed)
-        let start = Int(String(c[22...25]).trimmingCharacters(in: .whitespaces)) ?? 0
-        let end = Int(String(c[33...36]).trimmingCharacters(in: .whitespaces)) ?? 0
-        //        print("SHEET \(chain) \(start)-\(end)")
-        let sh = SHEET(start: start, end: end, chain: chain)
-        sheet.append(sh)
-        continue
+        let chain = l.count > 21 ? String(l.pdbColumn(21, 22)) : " "
+        let start = l.pdbInt(22, 26) ?? 0
+        let end = l.pdbInt(33, 37) ?? 0
+        sheet.append(SHEET(start: start, end: end, chain: chain))
+        return
       } else if code == "SEQRES" {
-        let chain = String(c[11])
-        let resStr = String(c[19...]).trimmingCharacters(in: .whitespaces)
-        let residues = resStr.components(separatedBy: .whitespaces)
-        let s = SEQRES(chainID: chain, residues: residues)
-        seqres.append(s)
-        continue
+        let chain = l.count > 11 ? String(l.pdbColumn(11, 12)) : " "
+        let resStr = l.count > 19 ? l.pdbString(19, l.count) : ""
+        let residues = resStr.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
+        seqres.append(SEQRES(chainID: chain, residues: residues))
+        return
       }
-                  
-      let ser = Int(String(c[6...10]).trimmingCharacters(in: .whitespaces))
-      let name = String(c[12...15]).trimmingCharacters(in: .whitespaces)
-      let res = String(c[17...19]).trimmingCharacters(in: .whitespaces)
-      if (!water && res == "HOH") { continue }
-      // Skip unknown residues (UNK) - these are non-standard amino acids, modified residues, or unidentified molecules
-      if (skipUNK && res == "UNK") { continue }
-      let chain = String(c[21])
-      let rs = Int(String(c[22...25]).trimmingCharacters(in: .whitespaces))
-      let x = Double(String(c[30...37]).trimmingCharacters(in: .whitespaces))
-      let y = Double(String(c[38...45]).trimmingCharacters(in: .whitespaces))
-      let z = Double(String(c[46...53]).trimmingCharacters(in: .whitespaces))
-      let ele = String(c[76...77]).trimmingCharacters(in: .whitespaces)
-      guard let ser, let x, let y, let z, let rs else { continue }
-      let a = Atom(serial: ser, name: name, altLoc: "", resName: res, chainID: chain, resSeq: rs, iCode: "", x: x, y:y, z: z, occupancy: 0, tempFactor: 0, element: ele, charge: "")
+      guard atom && (l.hasPrefix("ATOM") || (hexatm && l.hasPrefix("HETATM"))) else { return }
+
+      let res = l.pdbString(17, 20)
+      if (!water && res == "HOH") { return }
+      if (skipUNK && res == "UNK") { return }
+      guard let ser = l.pdbInt(6, 11),
+            let rs  = l.pdbInt(22, 26),
+            let x   = l.pdbDouble(30, 38),
+            let y   = l.pdbDouble(38, 46),
+            let z   = l.pdbDouble(46, 54) else { return }
+      let name  = l.pdbString(12, 16)
+      let chain = l.count > 21 ? String(l.pdbColumn(21, 22)) : " "
+      let ele   = l.count >= 78 ? l.pdbString(76, 78) : ""
+      let a = Atom(serial: ser, name: name, altLoc: "", resName: res, chainID: chain, resSeq: rs, iCode: "", x: x, y: y, z: z, occupancy: 0, tempFactor: 0, element: ele, charge: "")
       atoms.append(a)
-      //      print(ser,ele)
-      
-      /*
-       let c = l.condensed.components(separatedBy: .whitespaces)
-       if c[0] == "ENDMDL" { break }
-       guard let x = Double(c[6]),
-       let y = Double(c[7]),
-       let z = Double(c[8]),
-       let rs = Int(c[5])
-       else { continue }
-       let a = Atom(serial: Int(c[1])!, name: c[2], altLoc: "", resName: c[3], chainID: c[4], resSeq: rs, iCode: "", x: x, y:y, z: z, occupancy: 0, tempFactor: 0, element: c[11], charge: "")
-       atoms.append(a)
-       */
     }
     print("Found \(atoms.count) atoms\n    \(helix.count) helices\n    \(sheet.count) sheets")
     
@@ -433,35 +439,115 @@ extension PDB {
     let pdbStructure: PDBStructure  // For ProteinRibbon/ProteinSpheresMesh packages
   }
 
-  /// Parse PDB once and return all data needed by all renderers
-  /// This eliminates duplicate parsing operations
-  static func parseComplete(pdbString: String, progress: ((Double)->())? = nil) -> CompleteParseResult {
-    // Parse using existing VisionProTein parser
-    let (atoms, residues, helices, sheets, sequences) = parsePDB(pdb: pdbString)
-    progress?(0.7)
+  /// Parse PDB once and return all data needed by all renderers.
+  /// A single enumerateLines pass extracts ATOM, HETATM, HELIX, SHEET, and SEQRES records
+  /// simultaneously, eliminating redundant file iteration.
+  static func parseComplete(pdbString: String, skipUNK: Bool = true, progress: ((Double)->())? = nil) -> CompleteParseResult {
+    var atoms   = [Atom]()
+    var helix   = [HELIX]()
+    var sheet   = [SHEET]()
+    var seqres  = [SEQRES]()
 
-    // Parse ligands
-    let ligands = parseLigands(pdbString)
+    // Accumulate HETATM atoms grouped by (resName, chainID, resSeq)
+    struct LigandKey: Hashable { let resName: String; let chainID: String; let resSeq: Int }
+    var ligandAtomsByKey = [LigandKey: [LigandAtom]]()
+    var ligandKeyOrder   = [LigandKey]()   // preserve insertion order
+
+    var stop = false
+    pdbString.enumerateLines { l, stopFlag in
+      guard !stop, l.count >= 6 else { return }
+      let code = l.pdbString(0, 6)
+      switch code {
+      case "ENDMDL":
+        stop = true; stopFlag = true; return
+      case "TER":
+        return
+      case "HELIX":
+        let chain = l.count > 19 ? String(l.pdbColumn(19, 20)) : " "
+        let start = l.pdbInt(21, 25) ?? 0
+        let end   = l.pdbInt(33, 37) ?? 0
+        helix.append(HELIX(start: start, end: end, chain: chain))
+        return
+      case "SHEET":
+        let chain = l.count > 21 ? String(l.pdbColumn(21, 22)) : " "
+        let start = l.pdbInt(22, 26) ?? 0
+        let end   = l.pdbInt(33, 37) ?? 0
+        sheet.append(SHEET(start: start, end: end, chain: chain))
+        return
+      case "SEQRES":
+        let chain   = l.count > 11 ? String(l.pdbColumn(11, 12)) : " "
+        let resStr  = l.count > 19 ? l.pdbString(19, l.count) : ""
+        let residues = resStr.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
+        seqres.append(SEQRES(chainID: chain, residues: residues))
+        return
+      case "ATOM":
+        let res = l.pdbString(17, 20)
+        if res == "HOH" || (skipUNK && res == "UNK") { return }
+        guard let ser = l.pdbInt(6, 11),
+              let rs  = l.pdbInt(22, 26),
+              let x   = l.pdbDouble(30, 38),
+              let y   = l.pdbDouble(38, 46),
+              let z   = l.pdbDouble(46, 54) else { return }
+        let name  = l.pdbString(12, 16)
+        let chain = l.count > 21 ? String(l.pdbColumn(21, 22)) : " "
+        let ele   = l.count >= 78 ? l.pdbString(76, 78) : ""
+        atoms.append(Atom(serial: ser, name: name, altLoc: "", resName: res, chainID: chain,
+                          resSeq: rs, iCode: "", x: x, y: y, z: z,
+                          occupancy: 0, tempFactor: 0, element: ele, charge: ""))
+        return
+      case "HETATM":
+        guard l.count >= 54 else { return }
+        let resName = l.pdbString(17, 20)
+        if resName == "HOH" { return }
+        let chain = l.count > 21 ? String(l.pdbColumn(21, 22)) : " "
+        guard let serial = l.pdbInt(6, 11),
+              let resSeq  = l.pdbInt(22, 26),
+              let x       = l.pdbDouble(30, 38),
+              let y       = l.pdbDouble(38, 46),
+              let z       = l.pdbDouble(46, 54) else { return }
+        let name      = l.pdbString(12, 16)
+        let ele       = l.count >= 78 ? l.pdbString(76, 78) : ""
+        let occupancy = l.count >= 60 ? Float(l.pdbString(54, 60)) ?? 1.0 : 1.0
+        let tempFactor = l.count >= 66 ? Double(l.pdbString(60, 66)) ?? 0.0 : 0.0
+        let ligAtom   = LigandAtom(serial: serial, name: name, altLoc: "", resName: resName,
+                                   chainID: chain, resSeq: resSeq, iCode: "", x: x, y: y, z: z,
+                                   occupancy: occupancy, tempFactor: tempFactor, element: ele, charge: "")
+        let key = LigandKey(resName: resName, chainID: chain, resSeq: resSeq)
+        if ligandAtomsByKey[key] == nil {
+          ligandKeyOrder.append(key)
+          ligandAtomsByKey[key] = [ligAtom]
+        } else {
+          ligandAtomsByKey[key]!.append(ligAtom)
+        }
+        return
+      default:
+        return
+      }
+    }
     progress?(0.75)
 
-    // Convert to ProteinRibbon's PDBStructure for packages
-    let pdbStructure = convertToPDBStructure(
-      atoms: atoms,
-      residues: residues,
-      helices: helices,
-      sheets: sheets,
-      pdbString: pdbString
-    )
+    let residues = atoms.residues
+
+    // Build Ligand objects in original order
+    let ligands: [Ligand] = ligandKeyOrder.compactMap { key in
+      guard let ligAtoms = ligandAtomsByKey[key], !ligAtoms.isEmpty else { return nil }
+      return Ligand(
+        id: Ligand.makeID(chainID: key.chainID, resSeq: key.resSeq, resName: key.resName),
+        resName: key.resName, chainID: key.chainID, resSeq: key.resSeq, atoms: ligAtoms
+      )
+    }
     progress?(0.8)
 
+    let pdbStructure = convertToPDBStructure(
+      atoms: atoms, residues: residues, helices: helix, sheets: sheet, pdbString: pdbString
+    )
+    progress?(0.85)
+
+    print("Found \(atoms.count) atoms, \(residues.count) residues, \(ligands.count) ligands, \(helix.count) helices, \(sheet.count) sheets")
+
     return CompleteParseResult(
-      atoms: atoms,
-      residues: residues,
-      ligands: ligands,
-      helices: helices,
-      sheets: sheets,
-      sequences: sequences,
-      pdbStructure: pdbStructure
+      atoms: atoms, residues: residues, ligands: ligands,
+      helices: helix, sheets: sheet, sequences: seqres, pdbStructure: pdbStructure
     )
   }
 

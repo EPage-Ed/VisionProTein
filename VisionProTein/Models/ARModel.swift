@@ -859,47 +859,36 @@ final class ARModel : ObservableObject {
         loadingStatus = "Loading PDB..."
       }
       if let u = Bundle.main.url(forResource: pName, withExtension: "pdb") { //, // 3aid 6uml (Thilidomide) 1a3n (Hemoglobin) 3nir 4HR9 6a5j 1ERT
-//         let s = try? String(contentsOf: u, encoding: .utf8) {
-//        var s = ""
         let (bytes, response) = try await URLSession.shared.bytes(for: URLRequest(url: u))
-//        guard let httpResponse = response as? URLResponse, httpResponse.statusCode == 200 else {
-//          Logger.main.error("Network response error")
-//          return
-//        }
         let length = Int(response.expectedContentLength)
-        var data = Data(capacity: length)
+        var data = Data(capacity: length > 0 ? length : 1024 * 1024)
 
         var bytesAccumulator = 0
-        let bytesForUpdate = length / 100
-        
+        let bytesForUpdate = max(length / 100, 1)
+
         for try await byte in bytes {
           data.append(byte)
           bytesAccumulator += 1
-          
-          if bytesAccumulator > bytesForUpdate {
-            let progress = Double(data.count) / Double(length)
-//            print(progress)
+
+          if bytesAccumulator >= bytesForUpdate {
+            let p = Double(data.count) / Double(length)
             await MainActor.run {
-              self.progress = progress * 0.55 + 0.1
+              self.progress = p * 0.55 + 0.1
             }
             bytesAccumulator = 0
           }
         }
-        guard let s = try? String(contentsOf: u, encoding: .utf8) else { return }
 
-        
-        
-//        let task = URLSession.shared.dataTask(with: u) { data, response, error in
-//          if let data = data, let content = String(data: data, encoding: .utf8) {
-//            print(content)
-//            s = content
-//          }
-//        }
-//        task.resume() // Start the task
-        
+        await MainActor.run {
+          progress = 0.7
+          loadingStatus = "Converting PDB file..."
+        }
+        // Convert the already-loaded Data to String — no second file read needed
+        guard let s = String(data: data, encoding: .utf8) else { return }
+
         // PARSE ONCE - Get all data needed for all renderers
         await MainActor.run {
-          progress = 0.65
+          progress = 0.75
           loadingStatus = "Parsing PDB file..."
         }
         let parseResult = PDB.parseComplete(pdbString: s) { progress in
