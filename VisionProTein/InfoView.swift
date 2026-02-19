@@ -194,15 +194,21 @@ struct InfoView: View {
   
   // CPK atom colors (matching ElementColors in BallAndStick.swift)
   private let atomColors: [(element: String, name: String, color: Color, description: String)] = [
-    ("H",  "Hydrogen",  Color(red: 1.0, green: 1.0, blue: 1.0), "Most abundant element in proteins"),
-    ("C",  "Carbon",    Color(red: 0.5, green: 0.5, blue: 0.5), "The backbone of all organic molecules"),
-    ("N",  "Nitrogen",  Color(red: 0.2, green: 0.3, blue: 1.0), "Found in the peptide backbone and side chains"),
-    ("O",  "Oxygen",    Color(red: 1.0, green: 0.2, blue: 0.2), "Highly electronegative; key in hydrogen bonding"),
-    ("S",  "Sulfur",    Color(red: 1.0, green: 1.0, blue: 0.2), "Present in cysteine and methionine"),
-    ("P",  "Phosphorus",Color(red: 1.0, green: 0.5, blue: 0.0), "Found in nucleic acids and some ligands"),
-    ("FE", "Iron",      Color(red: 0.9, green: 0.5, blue: 0.0), "Metal cofactor, e.g. in hemoglobin heme groups"),
-    ("ZN", "Zinc",      Color(red: 0.5, green: 0.5, blue: 0.7), "Structural metal in zinc-finger proteins"),
-    ("CA", "Calcium",   Color(red: 0.5, green: 0.5, blue: 0.5), "Signaling ion and structural cofactor"),
+    ("H",  "Hydrogen",   Color(red: 1.000, green: 1.000, blue: 1.000), "Most abundant element in proteins"),
+    ("C",  "Carbon",     Color(red: 0.565, green: 0.565, blue: 0.565), "The backbone of all organic molecules"),
+    ("N",  "Nitrogen",   Color(red: 0.188, green: 0.314, blue: 0.973), "Found in the peptide backbone and side chains"),
+    ("O",  "Oxygen",     Color(red: 1.000, green: 0.051, blue: 0.051), "Highly electronegative; key in hydrogen bonding"),
+    ("S",  "Sulfur",     Color(red: 1.000, green: 1.000, blue: 0.188), "Present in cysteine and methionine"),
+    ("P",  "Phosphorus", Color(red: 1.000, green: 0.502, blue: 0.000), "Found in nucleic acids and some ligands"),
+    ("FE", "Iron",       Color(red: 0.878, green: 0.400, blue: 0.200), "Metal cofactor, e.g. in hemoglobin heme groups"),
+    ("ZN", "Zinc",       Color(red: 0.490, green: 0.502, blue: 0.690), "Structural metal in zinc-finger proteins"),
+    ("CA", "Calcium",    Color(red: 0.239, green: 1.000, blue: 0.000), "Signaling ion and structural cofactor"),
+    ("MG", "Magnesium",  Color(red: 0.541, green: 1.000, blue: 0.000), "Cofactor in enzymes and chlorophyll"),
+    ("MN", "Manganese",  Color(red: 0.612, green: 0.478, blue: 0.780), "Structural metal in certain proteins"),
+    ("CU", "Copper",     Color(red: 0.784, green: 0.502, blue: 0.200), "Redox-active metal in electron transfer proteins"),
+    ("NA", "Sodium",     Color(red: 0.671, green: 0.361, blue: 0.949), "Physiological ion; common in crystal structures"),
+    ("CL", "Chlorine",   Color(red: 0.122, green: 0.941, blue: 0.122), "Physiological anion"),
+    ("SE", "Selenium",   Color(red: 1.000, green: 0.631, blue: 0.000), "Found in selenocysteine residues"),
   ]
   
   var body: some View {
