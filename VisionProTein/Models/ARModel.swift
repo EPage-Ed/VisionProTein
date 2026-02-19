@@ -230,6 +230,7 @@ final class ARModel : ObservableObject {
   @Published var immersiveSpaceIsShown = false
 
   
+  @Published var pdbFile : PDBFile?
   var pName = "Building..." // 1hqq Biotin 3nir 1nc9 4HR9 1ERT
   var pDetails = ""
   let rootEntity = Entity()
@@ -449,7 +450,7 @@ final class ARModel : ObservableObject {
     guard highlightedResidueEntities[residue.id] == nil else { return nil }
     
     // Create highlighted residue entity
-    guard let residueEntity = Molecule.genBallAndStickResidue(residue: residue, atomScale: 1.5) else {
+    guard let residueEntity = Molecule.genBallAndStickResidue(residue: residue, atomScale: 1.5, unify: true, targetable: false) else {
       print("Failed to create entity for residue \(residue.resName)\(residue.serNum)")
       return nil
     }
@@ -474,8 +475,8 @@ final class ARModel : ObservableObject {
     }
     
     // Add collision shapes and input target
-    residueEntity.components.set(InputTargetComponent())
-    residueEntity.generateCollisionShapes(recursive: true, static: true)
+//    residueEntity.components.set(InputTargetComponent())
+//    residueEntity.generateCollisionShapes(recursive: true, static: true)
     
     // Add to same parent as ball and stick
     if let ballAndStick = ballAndStick, let parent = ballAndStick.parent {
@@ -879,7 +880,7 @@ final class ARModel : ObservableObject {
             let progress = Double(data.count) / Double(length)
 //            print(progress)
             await MainActor.run {
-              self.progress = progress * 0.35 + 0.1
+              self.progress = progress * 0.55 + 0.1
             }
             bytesAccumulator = 0
           }
@@ -898,7 +899,7 @@ final class ARModel : ObservableObject {
         
         // PARSE ONCE - Get all data needed for all renderers
         await MainActor.run {
-          progress = 0.45
+          progress = 0.65
           loadingStatus = "Parsing PDB file..."
         }
         let parseResult = PDB.parseComplete(pdbString: s) { progress in
@@ -918,7 +919,7 @@ final class ARModel : ObservableObject {
         print(entity.position)
         
         await MainActor.run {
-          progress = 0.7
+          progress = 0.85
           loadingStatus = "Creating ball-and-stick model..."
         }
         
@@ -931,7 +932,7 @@ final class ARModel : ObservableObject {
         
         // Build spatial index for efficient atom lookup
         await MainActor.run {
-          progress = 0.8
+          progress = 0.9
           loadingStatus = "Building spatial index..."
         }
         
@@ -969,7 +970,7 @@ final class ARModel : ObservableObject {
         
         
         await MainActor.run {
-          progress = 0.9
+          progress = 0.93
           loadingStatus = "Finding binding residues..."
         }
         // Get ligands from consolidated parse result
@@ -1013,7 +1014,7 @@ final class ARModel : ObservableObject {
         
         
         await MainActor.run {
-          progress = 0.95
+          progress = 0.96
           loadingStatus = "Creating sphere representation..."
         }
         

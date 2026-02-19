@@ -16,17 +16,30 @@ import PDBKit
 
 struct ContentHeaderView: View {
   @ObservedObject var model : ARModel
+  @Binding var showProteinInfo : Bool
+
   var body: some View {
     VStack(spacing: 2) {
       Text("Vision \(Text("ProTein").foregroundStyle(Color.green))")
         .font(.largeTitle)
       
-      HStack {
+      HStack(spacing: 12) {
         Spacer()
+        if model.pdbFile != nil {
+          Button {
+            withAnimation {
+              showProteinInfo.toggle()
+            }
+          } label: {
+            Text("?")
+              .font(.largeTitle)
+          }
+//          .opacity(model.pdbFile != nil ? 1 : 0)
+        }
         Text(model.pName)
           .font(.largeTitle)
         Text(model.pDetails)
-          .font(.caption)
+          .font(.footnote)
         Spacer()
       }
       .font(.title2)
@@ -305,20 +318,18 @@ struct ContentView: View {
   @State private var rotate : Angle = .zero
   @State private var showSkybox : Bool = false
   @State private var showPDBList : Bool = false
+  @State private var showProteinInfo : Bool = false
 //  let arb = AdvancedRibbonBuilder()
 
 //  @Environment(\.openImmersiveSpace) var openImmersiveSpace
 //  @Environment(\.dismissImmersiveSpace) var dismissImmersiveSpace
   
-  struct PDBFile {
-    let code: String
-    let name: String
-    let details: String
-  }
   let pdbFiles : [PDBFile] = [
-    .init(code: "1A3N", name: "Hemoglobin", details: "Hemoglobin is a protein containing iron that facilitates the transportation of oxygen in red blood cells. Almost all vertebrates contain hemoglobin, with the sole exception of the fish family Channichthyidae."),
-    .init(code: "1QQW", name: "Catalase", details: "Catalase is a common enzyme found in nearly all living organisms exposed to oxygen which catalyzes the decomposition of hydrogen peroxide to water and oxygen. It is a very important enzyme in protecting the cell from oxidative damage by reactive oxygen species."),
-    .init(code: "1KLN", name: "DNA Polymerase", details: "DNA polymerase is a member of a family of enzymes that catalyze the synthesis of DNA molecules from nucleoside triphosphates, the molecular precursors of DNA. These enzymes are essential for DNA replication and usually work in groups to create two identical DNA duplexes from a single original DNA duplex."),
+    .init(code: "1A3N", name: "Hemoglobin", details: "Hemoglobin is a protein containing iron that facilitates the transportation of oxygen in red blood cells. Almost all vertebrates contain hemoglobin, with the sole exception of the fish family Channichthyidae.", skipUNK: true),
+    .init(code: "1QQW", name: "Catalase", details: "Catalase is a common enzyme found in nearly all living organisms exposed to oxygen which catalyzes the decomposition of hydrogen peroxide to water and oxygen. It is a very important enzyme in protecting the cell from oxidative damage by reactive oxygen species.", skipUNK: true),
+    .init(code: "1BMF", name: "Mitochondrial F1-ATPase", details: "F1 is an ATPase that hydrolyzes ATP to rotate its rotor part counterclockwise, thereby driving the synthesis of adenosine triphosphate from inorganic phosphate and adenosine diphosphate. It is a key enzyme in cellular respiration.", skipUNK: true),
+    .init(code: "2GLS", name: "Glutamine Synthetase", details: "Glutamine synthetase monitors the levels of nitrogen-rich amino acids and decides when to make more. It is a key enzyme controlling the use of nitrogen inside cells by catalyzing the ATP-dependent synthesis of glutamine from glutamate and ammonia, acting as a primary mechanism for nitrogen metabolism, ammonium detoxification, and neurotransmitter regulation in both animals and plants. It plays a key role in the brain, liver, and nitrogen assimilation in plants.", skipUNK: true)
+//    .init(code: "1KLN", name: "DNA Polymerase", details: "DNA polymerase is a member of a family of enzymes that catalyze the synthesis of DNA molecules from nucleoside triphosphates, the molecular precursors of DNA. These enzymes are essential for DNA replication and usually work in groups to create two identical DNA duplexes from a single original DNA duplex.", skipUNK: false),
 
     /*
     .init(code: "1ERT", name: "Human Thioredoxin"),
@@ -347,12 +358,32 @@ struct ContentView: View {
        }
        .frame(height: 160)
        */
-      ContentHeaderView(model: model)
+      ContentHeaderView(model: model, showProteinInfo: $showProteinInfo)
         .padding(.top)
-            
+
       ContentPanelView(model: model)
         .fixedSize(horizontal: true, vertical: true)
         .padding(.horizontal)
+        .overlay {
+          ScrollView {
+            Text(model.pdbFile?.details ?? "No Information")
+              .padding()
+              .background {
+                RoundedRectangle(cornerRadius: 12)
+                  .fill(Color.gray)
+                  .stroke(Color.white, lineWidth: 2)
+              }
+              .hoverEffect()
+              .onTapGesture {
+                withAnimation {
+                  showProteinInfo.toggle()
+                }
+              }
+          }
+          .frame(maxWidth: 500)
+          .transform3DEffect(AffineTransform3D(translation: Vector3D(x: 0, y: 0, z: 15)))
+          .opacity(showProteinInfo ? 1 : 0)
+        }
         .transform3DEffect(AffineTransform3D(translation: Vector3D(x: 0, y: 0, z: 10)))
 
       
@@ -393,11 +424,12 @@ struct ContentView: View {
                   Task { @MainActor in
                     withAnimation {
                       model.loading = true
+                      model.pdbFile = p
+                      model.pName = p.code
+                      model.pDetails = p.name
                     }
                   }
                   model.clearProteinData()
-                  model.pName = p.code
-                  model.pDetails = p.name
                   model.buildImmersive()
 //                  Task { @MainActor in
 //                    withAnimation {

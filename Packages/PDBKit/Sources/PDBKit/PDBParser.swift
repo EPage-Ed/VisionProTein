@@ -165,7 +165,7 @@ public struct PDBParser {
     /// Parses a PDB format string and returns a PDBStructure
     /// - Parameter pdbString: The raw PDB file content
     /// - Returns: Parsed PDBStructure containing atoms, residues, and secondary structure
-    public static func parse(_ pdbString: String) -> PDBStructure {
+  public static func parse(_ pdbString: String, skipUNK: Bool = true) -> PDBStructure {
         var atoms: [PDBAtom] = []
         var helices: [PDBHelix] = []
         var sheets: [PDBSheet] = []
@@ -182,7 +182,7 @@ public struct PDBParser {
             case "ATOM":
                 // Only parse ATOM records, not HETATM (which includes ligands, water, ions, etc.)
                 // This matches the behavior of the sphere representation
-                if let atom = parseAtom(line: line, isHetAtm: false) {
+              if let atom = parseAtom(line: line, isHetAtm: false, skipUNK: skipUNK) {
                     atoms.append(atom)
                     chains.insert(atom.chainID)
                 }
@@ -239,7 +239,7 @@ public struct PDBParser {
   static let rnaNucleotides = ["A", "U", "G", "C", "I", "PSU", "5MU", "1MA", "2MG", "M2G", "7MG", "OMC", "OMG", "YG"]
   static let dnaNucleotides = ["DA", "DT", "DG", "DC", "DU", "DI"]
 
-    private static func parseAtom(line: String, isHetAtm: Bool) -> PDBAtom? {
+  private static func parseAtom(line: String, isHetAtm: Bool, skipUNK: Bool = true) -> PDBAtom? {
         guard line.count >= 54 else { return nil }
 
         let chars = Array(line)
@@ -257,7 +257,7 @@ public struct PDBParser {
         let residueName = substring(chars, 17, 20).trimmingCharacters(in: .whitespaces)
 
         // Skip water molecules and unknown residues (non-standard amino acids, DNA/RNA, etc.)
-        if residueName == "HOH" || residueName == "UNK" { return nil }
+        if residueName == "HOH" || (skipUNK && residueName == "UNK") { return nil }
 
         // Skip RNA nucleotides
         if rnaNucleotides.contains(residueName) { return nil }

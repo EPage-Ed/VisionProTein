@@ -42,6 +42,8 @@ extension ProteinRibbon {
 
         /// Whether to show hydrogen atoms
         public var showHydrogens: Bool
+      
+      public var skipUNK: Bool
 
         /// Creates default ball-and-stick options
         public init(
@@ -53,7 +55,8 @@ extension ProteinRibbon {
             bondTolerance: Float = 1.3,
             maxBondLength: Float = 2.0,
             backboneOnly: Bool = false,
-            showHydrogens: Bool = false
+            showHydrogens: Bool = false,
+            skipUNK: Bool = true
         ) {
             self.atomScale = atomScale
             self.bondRadius = bondRadius
@@ -64,6 +67,7 @@ extension ProteinRibbon {
             self.maxBondLength = maxBondLength
             self.backboneOnly = backboneOnly
             self.showHydrogens = showHydrogens
+          self.skipUNK = skipUNK
         }
     }
 

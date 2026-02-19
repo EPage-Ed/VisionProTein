@@ -66,6 +66,8 @@ public struct ProteinRibbon {
         /// Number of smoothing iterations for positions and frames (reduces kinks and twisting)
         /// Default: 5
         public var frameSmoothingIterations: Int
+      
+      public var skipUNK: Bool
 
         /// Creates default rendering options
         public init(
@@ -80,7 +82,8 @@ public struct ProteinRibbon {
             sheetArrowLength: Float = 2.4,
             sheetArrowWingExtension: Float = 0.8,
             smoothSegments: Int = 20,
-            frameSmoothingIterations: Int = 5
+            frameSmoothingIterations: Int = 5,
+            skipUNK: Bool = true
         ) {
             self.colorScheme = colorScheme
             self.helixWidth = helixWidth
@@ -94,6 +97,7 @@ public struct ProteinRibbon {
             self.sheetArrowWingExtension = sheetArrowWingExtension
             self.smoothSegments = smoothSegments
             self.frameSmoothingIterations = frameSmoothingIterations
+          self.skipUNK = skipUNK
         }
     }
 
@@ -147,7 +151,7 @@ public struct ProteinRibbon {
         options: Options = Options()
     ) -> ModelEntity {
         // Parse the PDB string
-        let structure = PDBParser.parse(pdbString)
+      let structure = PDBParser.parse(pdbString, skipUNK: options.skipUNK)
         return ribbonEntity(from: structure, options: options)
     }
 
@@ -161,7 +165,7 @@ public struct ProteinRibbon {
         from pdbString: String,
         options: Options = Options()
     ) -> Entity {
-        let structure = PDBParser.parse(pdbString)
+        let structure = PDBParser.parse(pdbString, skipUNK: options.skipUNK)
 
         guard !structure.residues.isEmpty else {
             print("ProteinRibbon: No residues found in PDB string")
@@ -224,7 +228,7 @@ public struct ProteinRibbon {
         from pdbString: String,
         options: BallAndStickOptions = BallAndStickOptions()
     ) -> ModelEntity {
-        let structure = PDBParser.parse(pdbString)
+      let structure = PDBParser.parse(pdbString, skipUNK: options.skipUNK)
         return ballAndStickEntity(from: structure, options: options)
     }
 }

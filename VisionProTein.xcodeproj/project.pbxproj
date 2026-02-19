@@ -12,7 +12,8 @@
 		D8474FAE2F2ACBEF0076B827 /* Molecule+ResidueEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8474FAD2F2ACBEF0076B827 /* Molecule+ResidueEntity.swift */; };
 		D84C18F12F451C1E004CC098 /* InfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D84C18F02F451B8D004CC098 /* InfoView.swift */; };
 		D84C18F32F4536FB004CC098 /* 1QQW.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D84C18F22F4536FB004CC098 /* 1QQW.pdb */; };
-		D84C18F52F45398C004CC098 /* 1KLN.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D84C18F42F45398C004CC098 /* 1KLN.pdb */; };
+		D84C18F72F467F38004CC098 /* 1BMF.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D84C18F62F467F38004CC098 /* 1BMF.pdb */; };
+		D84C18F92F469532004CC098 /* 2GLS.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D84C18F82F469532004CC098 /* 2GLS.pdb */; };
 		D8AA59E82BB7AEF000340803 /* RealityKitContent in Frameworks */ = {isa = PBXBuildFile; productRef = D8AA59E72BB7AEF000340803 /* RealityKitContent */; };
 		D8AA59EA2BB7AEF000340803 /* VisionProTeinApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8AA59E92BB7AEF000340803 /* VisionProTeinApp.swift */; };
 		D8AA59EC2BB7AEF000340803 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8AA59EB2BB7AEF000340803 /* ContentView.swift */; };
@@ -46,7 +47,8 @@
 		D8474FAD2F2ACBEF0076B827 /* Molecule+ResidueEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Molecule+ResidueEntity.swift"; sourceTree = "<group>"; };
 		D84C18F02F451B8D004CC098 /* InfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoView.swift; sourceTree = "<group>"; };
 		D84C18F22F4536FB004CC098 /* 1QQW.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 1QQW.pdb; sourceTree = "<group>"; };
-		D84C18F42F45398C004CC098 /* 1KLN.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 1KLN.pdb; sourceTree = "<group>"; };
+		D84C18F62F467F38004CC098 /* 1BMF.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 1BMF.pdb; sourceTree = "<group>"; };
+		D84C18F82F469532004CC098 /* 2GLS.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2GLS.pdb; sourceTree = "<group>"; };
 		D8AA59E22BB7AEF000340803 /* VisionProTein.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VisionProTein.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8AA59E62BB7AEF000340803 /* RealityKitContent */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = RealityKitContent; sourceTree = "<group>"; };
 		D8AA59E92BB7AEF000340803 /* VisionProTeinApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisionProTeinApp.swift; sourceTree = "<group>"; };
@@ -195,7 +197,8 @@
 				D8AA5A002BB7C63100340803 /* protein.usdz */,
 				D8E3927D2F3AA13A003E2E82 /* 1A3N.pdb */,
 				D84C18F22F4536FB004CC098 /* 1QQW.pdb */,
-				D84C18F42F45398C004CC098 /* 1KLN.pdb */,
+				D84C18F62F467F38004CC098 /* 1BMF.pdb */,
+				D84C18F82F469532004CC098 /* 2GLS.pdb */,
 			);
 			path = PDB;
 			sourceTree = "<group>";
@@ -389,10 +392,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				D8AA59F32BB7AEF100340803 /* Preview Assets.xcassets in Resources */,
+				D84C18F92F469532004CC098 /* 2GLS.pdb in Resources */,
 				D8AA59F02BB7AEF100340803 /* Assets.xcassets in Resources */,
 				D84C18F32F4536FB004CC098 /* 1QQW.pdb in Resources */,
 				D8E3927E2F3AA13A003E2E82 /* 1A3N.pdb in Resources */,
-				D84C18F52F45398C004CC098 /* 1KLN.pdb in Resources */,
+				D84C18F72F467F38004CC098 /* 1BMF.pdb in Resources */,
 				D8AA5A012BB7C63100340803 /* protein.usdz in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

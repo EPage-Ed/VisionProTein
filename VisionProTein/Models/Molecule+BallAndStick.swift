@@ -24,7 +24,7 @@ extension Molecule {
     ///   - basePosition: Optional base position to offset from (if nil, uses residue's first atom position)
     ///   - atomScale: Scale factor for atom spheres (default 1.0)
     /// - Returns: A ModelEntity representing the residue in ball and stick format
-    static func genBallAndStickResidue(residue: Residue, basePosition: SIMD3<Float>? = nil, atomScale: Float = 1.0) -> ModelEntity? {
+  static func genBallAndStickResidue(residue: Residue, basePosition: SIMD3<Float>? = nil, atomScale: Float = 1.0, unify: Bool = false, targetable: Bool = true) -> ModelEntity? {
         guard !residue.atoms.isEmpty else { return nil }
         
         print("[Memory] Creating ball-and-stick for residue \(residue.resName)\(residue.serNum) with \(residue.atoms.count) atoms")
@@ -43,7 +43,7 @@ extension Molecule {
         parent.position = basePos
         
         // Group atoms by element for efficient rendering
-        let atomGroups = Dictionary(grouping: residue.atoms, by: { $0.element })
+    let atomGroups = unify ? ["X" : residue.atoms] : Dictionary(grouping: residue.atoms, by: { $0.element })
         
         for (element, atoms) in atomGroups {
             guard let firstAtom = atoms.first else { continue }
@@ -122,8 +122,10 @@ extension Molecule {
         // For now, we'll just render the atoms
         
         // Add collision shapes and input target to make it interactive
-        parent.components.set(InputTargetComponent())
-        parent.generateCollisionShapes(recursive: true, static: true)
+    if targetable {
+      parent.components.set(InputTargetComponent())
+      parent.generateCollisionShapes(recursive: true, static: true)
+    }
         
         return parent
     }
@@ -232,7 +234,7 @@ extension Molecule {
         }
         
         // Create a highlighted version of this residue with larger atom radius
-        guard let residueEntity = genBallAndStickResidue(residue: residue, atomScale: 1.5) else {
+        guard let residueEntity = genBallAndStickResidue(residue: residue, atomScale: 1.5, unify: true, targetable: false) else {
             return nil
         }
         
@@ -289,7 +291,7 @@ extension Molecule {
         var highlightedCount = 0
         
         for residue in residues {
-            guard let residueEntity = genBallAndStickResidue(residue: residue, atomScale: atomScale) else {
+            guard let residueEntity = genBallAndStickResidue(residue: residue, atomScale: atomScale, unify: true, targetable: false) else {
                 continue
             }
             
