@@ -368,17 +368,17 @@ struct ContentView: View {
           ScrollView {
             Text(model.pdbFile?.details ?? "No Information")
               .padding()
-              .background {
-                RoundedRectangle(cornerRadius: 12)
-                  .fill(Color.gray)
-                  .stroke(Color.white, lineWidth: 2)
-              }
-              .hoverEffect()
-              .onTapGesture {
-                withAnimation {
-                  showProteinInfo.toggle()
-                }
-              }
+          }
+          .background {
+            RoundedRectangle(cornerRadius: 12)
+              .fill(Color.gray)
+              .stroke(Color.white, lineWidth: 2)
+          }
+          .hoverEffect()
+          .onTapGesture {
+            withAnimation {
+              showProteinInfo.toggle()
+            }
           }
           .frame(maxWidth: 500)
           .transform3DEffect(AffineTransform3D(translation: Vector3D(x: 0, y: 0, z: 15)))

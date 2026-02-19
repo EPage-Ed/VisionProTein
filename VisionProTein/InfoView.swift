@@ -176,6 +176,8 @@ private struct RibbonColorLegendRow: View {
 struct InfoView: View {
   // Glossary terms
   private let glossaryItems: [(term: String, definition: String)] = [
+    ("PDB",
+     "Protein Data Bank — the worldwide archive of 3D structural data for biological macromolecules. PDB files use a fixed-column text format to record atom positions, secondary structure, and sequence information for proteins, nucleic acids, and ligands."),
     ("Protein",
      "A large biological molecule made of one or more chains of amino acids. Proteins perform nearly every function in living cells — from structural support to catalyzing chemical reactions."),
     ("Ligand",

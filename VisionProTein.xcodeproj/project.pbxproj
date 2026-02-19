@@ -49,6 +49,7 @@
 		D84C18F22F4536FB004CC098 /* 1QQW.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 1QQW.pdb; sourceTree = "<group>"; };
 		D84C18F62F467F38004CC098 /* 1BMF.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 1BMF.pdb; sourceTree = "<group>"; };
 		D84C18F82F469532004CC098 /* 2GLS.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2GLS.pdb; sourceTree = "<group>"; };
+		D84C18FA2F46A620004CC098 /* ElementData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElementData.swift; sourceTree = "<group>"; };
 		D8AA59E22BB7AEF000340803 /* VisionProTein.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VisionProTein.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8AA59E62BB7AEF000340803 /* RealityKitContent */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = RealityKitContent; sourceTree = "<group>"; };
 		D8AA59E92BB7AEF000340803 /* VisionProTeinApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisionProTeinApp.swift; sourceTree = "<group>"; };
@@ -274,6 +275,7 @@
 			isa = PBXGroup;
 			children = (
 				D8D8C8D82F4072CF006127AE /* PDBParser.swift */,
+				D84C18FA2F46A620004CC098 /* ElementData.swift */,
 			);
 			path = PDBKit;
 			sourceTree = "<group>";

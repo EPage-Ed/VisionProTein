@@ -7,6 +7,7 @@
 
 import UIKit
 import RealityKit
+import PDBKit
 
 
 struct PDBFile {
@@ -151,129 +152,12 @@ struct Atom : Codable {
   let charge: String
   
   var color : UIColor {
-    switch element.uppercased() {
-    case "H":  UIColor(red: 1.000, green: 1.000, blue: 1.000, alpha: 1) // White
-    case "HE": UIColor(red: 0.851, green: 1.000, blue: 1.000, alpha: 1)
-    case "LI": UIColor(red: 0.800, green: 0.502, blue: 1.000, alpha: 1)
-    case "BE": UIColor(red: 0.761, green: 1.000, blue: 0.000, alpha: 1)
-    case "B":  UIColor(red: 1.000, green: 0.710, blue: 0.710, alpha: 1)
-    case "C":  UIColor(red: 0.565, green: 0.565, blue: 0.565, alpha: 1) // Gray
-    case "N":  UIColor(red: 0.188, green: 0.314, blue: 0.973, alpha: 1) // Blue
-    case "O":  UIColor(red: 1.000, green: 0.051, blue: 0.051, alpha: 1) // Red
-    case "F":  UIColor(red: 0.565, green: 0.878, blue: 0.314, alpha: 1)
-    case "NE": UIColor(red: 0.702, green: 0.890, blue: 0.961, alpha: 1)
-    case "NA": UIColor(red: 0.671, green: 0.361, blue: 0.949, alpha: 1)
-    case "MG": UIColor(red: 0.541, green: 1.000, blue: 0.000, alpha: 1)
-    case "AL": UIColor(red: 0.749, green: 0.651, blue: 0.651, alpha: 1)
-    case "SI": UIColor(red: 0.941, green: 0.784, blue: 0.627, alpha: 1)
-    case "P":  UIColor(red: 1.000, green: 0.502, blue: 0.000, alpha: 1) // Orange
-    case "S":  UIColor(red: 1.000, green: 1.000, blue: 0.188, alpha: 1) // Yellow
-    case "CL": UIColor(red: 0.122, green: 0.941, blue: 0.122, alpha: 1)
-    case "AR": UIColor(red: 0.502, green: 0.820, blue: 0.890, alpha: 1)
-    case "K":  UIColor(red: 0.561, green: 0.251, blue: 0.831, alpha: 1)
-    case "CA": UIColor(red: 0.239, green: 1.000, blue: 0.000, alpha: 1)
-    case "SC": UIColor(red: 0.902, green: 0.902, blue: 0.902, alpha: 1)
-    case "TI": UIColor(red: 0.749, green: 0.761, blue: 0.780, alpha: 1)
-    case "V":  UIColor(red: 0.651, green: 0.651, blue: 0.671, alpha: 1)
-    case "CR": UIColor(red: 0.541, green: 0.600, blue: 0.780, alpha: 1)
-    case "MN": UIColor(red: 0.612, green: 0.478, blue: 0.780, alpha: 1)
-    case "FE": UIColor(red: 0.878, green: 0.400, blue: 0.200, alpha: 1)
-    case "CO": UIColor(red: 0.941, green: 0.565, blue: 0.627, alpha: 1)
-    case "NI": UIColor(red: 0.314, green: 0.816, blue: 0.314, alpha: 1)
-    case "CU": UIColor(red: 0.784, green: 0.502, blue: 0.200, alpha: 1)
-    case "ZN": UIColor(red: 0.490, green: 0.502, blue: 0.690, alpha: 1)
-    case "GA": UIColor(red: 0.761, green: 0.561, blue: 0.561, alpha: 1)
-    case "GE": UIColor(red: 0.400, green: 0.561, blue: 0.561, alpha: 1)
-    case "AS": UIColor(red: 0.741, green: 0.502, blue: 0.890, alpha: 1)
-    case "SE": UIColor(red: 1.000, green: 0.631, blue: 0.000, alpha: 1)
-    case "BR": UIColor(red: 0.651, green: 0.161, blue: 0.161, alpha: 1)
-    case "KR": UIColor(red: 0.361, green: 0.722, blue: 0.820, alpha: 1)
-    case "RB": UIColor(red: 0.439, green: 0.180, blue: 0.690, alpha: 1)
-    case "SR": UIColor(red: 0.000, green: 1.000, blue: 0.000, alpha: 1)
-    case "Y":  UIColor(red: 0.580, green: 1.000, blue: 1.000, alpha: 1)
-    case "ZR": UIColor(red: 0.580, green: 0.878, blue: 0.878, alpha: 1)
-    case "NB": UIColor(red: 0.451, green: 0.761, blue: 0.788, alpha: 1)
-    case "MO": UIColor(red: 0.329, green: 0.710, blue: 0.710, alpha: 1)
-    case "TC": UIColor(red: 0.231, green: 0.620, blue: 0.620, alpha: 1)
-    case "RU": UIColor(red: 0.141, green: 0.561, blue: 0.561, alpha: 1)
-    case "RH": UIColor(red: 0.039, green: 0.490, blue: 0.549, alpha: 1)
-    case "PD": UIColor(red: 0.000, green: 0.412, blue: 0.522, alpha: 1)
-    case "AG": UIColor(red: 0.753, green: 0.753, blue: 0.753, alpha: 1)
-    case "CD": UIColor(red: 1.000, green: 0.851, blue: 0.561, alpha: 1)
-    case "IN": UIColor(red: 0.651, green: 0.459, blue: 0.451, alpha: 1)
-    case "SN": UIColor(red: 0.400, green: 0.502, blue: 0.502, alpha: 1)
-    case "SB": UIColor(red: 0.620, green: 0.388, blue: 0.710, alpha: 1)
-    case "TE": UIColor(red: 0.831, green: 0.478, blue: 0.000, alpha: 1)
-    case "I":  UIColor(red: 0.580, green: 0.000, blue: 0.580, alpha: 1)
-    case "XE": UIColor(red: 0.259, green: 0.620, blue: 0.690, alpha: 1)
-    case "CS": UIColor(red: 0.341, green: 0.090, blue: 0.561, alpha: 1)
-    case "BA": UIColor(red: 0.000, green: 0.788, blue: 0.000, alpha: 1)
-    case "LA": UIColor(red: 0.439, green: 0.831, blue: 1.000, alpha: 1)
-    case "CE": UIColor(red: 1.000, green: 1.000, blue: 0.780, alpha: 1)
-    case "PR": UIColor(red: 0.851, green: 1.000, blue: 0.780, alpha: 1)
-    case "ND": UIColor(red: 0.780, green: 1.000, blue: 0.780, alpha: 1)
-    case "PM": UIColor(red: 0.639, green: 1.000, blue: 0.780, alpha: 1)
-    case "SM": UIColor(red: 0.561, green: 1.000, blue: 0.780, alpha: 1)
-    case "EU": UIColor(red: 0.380, green: 1.000, blue: 0.780, alpha: 1)
-    case "GD": UIColor(red: 0.271, green: 1.000, blue: 0.780, alpha: 1)
-    case "TB": UIColor(red: 0.188, green: 1.000, blue: 0.780, alpha: 1)
-    case "DY": UIColor(red: 0.122, green: 1.000, blue: 0.780, alpha: 1)
-    case "HO": UIColor(red: 0.000, green: 1.000, blue: 0.612, alpha: 1)
-    case "ER": UIColor(red: 0.000, green: 0.902, blue: 0.459, alpha: 1)
-    case "TM": UIColor(red: 0.000, green: 0.831, blue: 0.322, alpha: 1)
-    case "YB": UIColor(red: 0.000, green: 0.749, blue: 0.220, alpha: 1)
-    case "LU": UIColor(red: 0.000, green: 0.671, blue: 0.141, alpha: 1)
-    case "HF": UIColor(red: 0.302, green: 0.761, blue: 1.000, alpha: 1)
-    case "TA": UIColor(red: 0.302, green: 0.651, blue: 1.000, alpha: 1)
-    case "W":  UIColor(red: 0.129, green: 0.580, blue: 0.839, alpha: 1)
-    case "RE": UIColor(red: 0.149, green: 0.490, blue: 0.671, alpha: 1)
-    case "OS": UIColor(red: 0.149, green: 0.400, blue: 0.588, alpha: 1)
-    case "IR": UIColor(red: 0.090, green: 0.329, blue: 0.529, alpha: 1)
-    case "PT": UIColor(red: 0.816, green: 0.816, blue: 0.878, alpha: 1)
-    case "AU": UIColor(red: 1.000, green: 0.820, blue: 0.137, alpha: 1)
-    case "HG": UIColor(red: 0.722, green: 0.722, blue: 0.816, alpha: 1)
-    case "TL": UIColor(red: 0.651, green: 0.329, blue: 0.302, alpha: 1)
-    case "PB": UIColor(red: 0.341, green: 0.349, blue: 0.380, alpha: 1)
-    case "BI": UIColor(red: 0.620, green: 0.310, blue: 0.710, alpha: 1)
-    case "PO": UIColor(red: 0.671, green: 0.361, blue: 0.000, alpha: 1)
-    case "AT": UIColor(red: 0.459, green: 0.310, blue: 0.271, alpha: 1)
-    case "RN": UIColor(red: 0.259, green: 0.510, blue: 0.588, alpha: 1)
-    case "FR": UIColor(red: 0.259, green: 0.000, blue: 0.400, alpha: 1)
-    case "RA": UIColor(red: 0.000, green: 0.490, blue: 0.000, alpha: 1)
-    case "AC": UIColor(red: 0.439, green: 0.671, blue: 0.980, alpha: 1)
-    case "TH": UIColor(red: 0.000, green: 0.729, blue: 1.000, alpha: 1)
-    case "PA": UIColor(red: 0.000, green: 0.631, blue: 1.000, alpha: 1)
-    case "U":  UIColor(red: 0.000, green: 0.561, blue: 1.000, alpha: 1)
-    case "NP": UIColor(red: 0.000, green: 0.502, blue: 1.000, alpha: 1)
-    case "PU": UIColor(red: 0.000, green: 0.420, blue: 1.000, alpha: 1)
-    case "AM": UIColor(red: 0.329, green: 0.361, blue: 0.949, alpha: 1)
-    case "CM": UIColor(red: 0.471, green: 0.361, blue: 0.890, alpha: 1)
-    case "BK": UIColor(red: 0.541, green: 0.310, blue: 0.890, alpha: 1)
-    case "CF": UIColor(red: 0.631, green: 0.212, blue: 0.831, alpha: 1)
-    case "ES": UIColor(red: 0.702, green: 0.122, blue: 0.831, alpha: 1)
-    case "FM": UIColor(red: 0.702, green: 0.122, blue: 0.729, alpha: 1)
-    case "MD": UIColor(red: 0.702, green: 0.051, blue: 0.651, alpha: 1)
-    case "NO": UIColor(red: 0.741, green: 0.051, blue: 0.529, alpha: 1)
-    case "LR": UIColor(red: 0.780, green: 0.000, blue: 0.400, alpha: 1)
-    case "RF": UIColor(red: 0.800, green: 0.000, blue: 0.349, alpha: 1)
-    case "DB": UIColor(red: 0.820, green: 0.000, blue: 0.310, alpha: 1)
-    case "SG": UIColor(red: 0.851, green: 0.000, blue: 0.271, alpha: 1)
-    case "BH": UIColor(red: 0.878, green: 0.000, blue: 0.220, alpha: 1)
-    case "HS": UIColor(red: 0.902, green: 0.000, blue: 0.180, alpha: 1)
-    case "MT": UIColor(red: 0.922, green: 0.000, blue: 0.149, alpha: 1)
-    default:   UIColor(red: 0.500, green: 0.500, blue: 0.500, alpha: 1) // Gray
-    }
+    let c = CPKColors.color(for: element)
+    return UIColor(red: CGFloat(c.x), green: CGFloat(c.y), blue: CGFloat(c.z), alpha: CGFloat(c.w))
   }
-  
+
   var radius : CGFloat {
-    switch element {
-    case "H": 0.32 / 100
-    case "C": 0.77 / 100
-    case "N": 0.75 / 100
-    case "O": 0.73 / 100
-    case "S": 1.02 / 100
-    default: 0.01
-    }
+    return CGFloat(VanDerWaalsRadii.radius(for: element)) / 100
   }
 }
 
@@ -536,9 +420,6 @@ class ProteinComponent: Component {
 }
 
 // MARK: - Consolidated PDB Parsing
-
-/// Import the PDBStructure types from PDBKit package
-import PDBKit
 
 extension PDB {
   /// Complete PDB parsing result with all data needed by renderers
