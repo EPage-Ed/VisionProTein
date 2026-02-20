@@ -505,7 +505,7 @@ final class ARModel : ObservableObject {
       tagged.sort()
     }
     
-    print("Highlighted residue: \(residue.resName) \(residue.chainID)\(residue.serNum)")
+//    print("Highlighted residue: \(residue.resName) \(residue.chainID)\(residue.serNum)")
     return residueEntity
   }
   
@@ -881,7 +881,7 @@ final class ARModel : ObservableObject {
       if let cached = cachedPDBs[pName] {
         // Use cached result - instant load!
         await MainActor.run {
-          progress = 0.75
+          progress = 0.5
           loadingStatus = "Using cached PDB data..."
         }
 //        NSLog("Found cached")

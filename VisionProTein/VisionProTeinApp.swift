@@ -47,7 +47,7 @@ struct MainView: View {
   var body: some View {
     ZStack {
       TabView(selection: $selectedTab) {
-        ContentView(model: model)
+        ContentView(model: model, showOrnaments: model.preloadingComplete && model.immersiveSpaceReady)
           .glassBackgroundEffect()
           .tabItem {
             Label("Explore", systemImage: "eye")

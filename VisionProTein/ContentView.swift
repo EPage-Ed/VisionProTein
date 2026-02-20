@@ -48,7 +48,9 @@ struct ContentHeaderView: View {
         VStack(spacing: 4) {
           HStack {
             ProgressView(value: model.progress)
+              .progressViewStyle(.linear)
               .frame(width: 400)
+              .animation(.linear(duration: 1.0), value: model.progress)
             Text(model.progress.formatted(.percent.precision(.fractionLength(0))))
               .font(.caption)
           }
@@ -310,6 +312,7 @@ struct ContentDetailsView: View {
 
 struct ContentView: View {
   @ObservedObject var model : ARModel
+  var showOrnaments: Bool
   
 //  @State private var showImmersiveSpace = false
 //  @State private var immersiveSpaceIsShown = true
@@ -319,16 +322,17 @@ struct ContentView: View {
   @State private var showSkybox : Bool = false
   @State private var showPDBList : Bool = false
   @State private var showProteinInfo : Bool = false
+  @State private var infoProtein: Bool = true
 //  let arb = AdvancedRibbonBuilder()
 
 //  @Environment(\.openImmersiveSpace) var openImmersiveSpace
 //  @Environment(\.dismissImmersiveSpace) var dismissImmersiveSpace
   
   let pdbFiles : [PDBFile] = [
-    .init(code: "1A3N", name: "Hemoglobin", details: "Hemoglobin is a protein containing iron that facilitates the transportation of oxygen in red blood cells. Almost all vertebrates contain hemoglobin, with the sole exception of the fish family Channichthyidae.", skipUNK: true),
-    .init(code: "1QQW", name: "Catalase", details: "Catalase is a common enzyme found in nearly all living organisms exposed to oxygen which catalyzes the decomposition of hydrogen peroxide to water and oxygen. It is a very important enzyme in protecting the cell from oxidative damage by reactive oxygen species.", skipUNK: true),
-    .init(code: "1BMF", name: "Mitochondrial F1-ATPase", details: "F1 is an ATPase that hydrolyzes ATP to rotate its rotor part counterclockwise, thereby driving the synthesis of adenosine triphosphate from inorganic phosphate and adenosine diphosphate. It is a key enzyme in cellular respiration.", skipUNK: true),
-    .init(code: "2GLS", name: "Glutamine Synthetase", details: "Glutamine synthetase monitors the levels of nitrogen-rich amino acids and decides when to make more. It is a key enzyme controlling the use of nitrogen inside cells by catalyzing the ATP-dependent synthesis of glutamine from glutamate and ammonia, acting as a primary mechanism for nitrogen metabolism, ammonium detoxification, and neurotransmitter regulation in both animals and plants. It plays a key role in the brain, liver, and nitrogen assimilation in plants.", skipUNK: true)
+    .init(code: "1A3N", name: "Hemoglobin", details: "Hemoglobin is a protein containing iron that facilitates the transportation of oxygen in red blood cells. Almost all vertebrates contain hemoglobin, with the sole exception of the fish family Channichthyidae.", skipUNK: true, ligand: "The primary ligand for hemoglobin is molecular oxygen, which binds reversibly to the ferrous iron atom within the heme prosthetic group. Each of the four heme groups in a hemoglobin molecule can bind one molecule, allowing cooperative binding where the affinity increases with each oxygen bound."),
+    .init(code: "1QQW", name: "Catalase", details: "Catalase is a common enzyme found in nearly all living organisms exposed to oxygen which catalyzes the decomposition of hydrogen peroxide to water and oxygen. It is a very important enzyme in protecting the cell from oxidative damage by reactive oxygen species.", skipUNK: true, ligand: "Catalase uses a heme group (iron-containing pigment) as its primary, tightly bound prosthetic group (ligand) to break down hydrogen peroxide. The heme iron is anchored to the protein by a tyrosine amino acid (proximal ligand) and interacts with the hydrogen peroxide substrate on the other side (distal side) to turn it into water and oxygen."),
+    .init(code: "1BMF", name: "Mitochondrial F1-ATPase", details: "F1 is an ATPase that hydrolyzes ATP to rotate its rotor part counterclockwise, thereby driving the synthesis of adenosine triphosphate from inorganic phosphate and adenosine diphosphate. It is a key enzyme in cellular respiration.", skipUNK: true, ligand: "The primary ligands for Mitochondrial F1-ATPase are ADP (adenosine diphosphate) and inorganic phosphate, which bind to the enzyme's beta-subunits to be synthesized into ATP. As a rotary molecular motor, it also binds MG-2 as a cofactor."),
+    .init(code: "2GLS", name: "Glutamine Synthetase", details: "Glutamine synthetase monitors the levels of nitrogen-rich amino acids and decides when to make more. It is a key enzyme controlling the use of nitrogen inside cells by catalyzing the ATP-dependent synthesis of glutamine from glutamate and ammonia, acting as a primary mechanism for nitrogen metabolism, ammonium detoxification, and neurotransmitter regulation in both animals and plants. It plays a key role in the brain, liver, and nitrogen assimilation in plants.", skipUNK: true, ligand: "The main ligands (substrates) for Glutamine Synthetase are: Glutamate (an amino acid that acts as the backbone for the new molecule), Ammonia (the nitrogen source that gets attached to glutamate), ATP (Adenosine Triphosphate), Metal Ions (typically Magnesium (MG-2) or Manganese (MN-2)).")
 //    .init(code: "1KLN", name: "DNA Polymerase", details: "DNA polymerase is a member of a family of enzymes that catalyze the synthesis of DNA molecules from nucleoside triphosphates, the molecular precursors of DNA. These enzymes are essential for DNA replication and usually work in groups to create two identical DNA duplexes from a single original DNA duplex.", skipUNK: false),
 
     /*
@@ -365,20 +369,29 @@ struct ContentView: View {
         .fixedSize(horizontal: true, vertical: true)
         .padding(.horizontal)
         .overlay {
-          ScrollView {
-            Text(model.pdbFile?.details ?? "No Information")
-              .padding()
+          VStack {
+            Picker("", selection: $infoProtein) {
+              Text("Protein").tag(true)
+              Text("Ligand").tag(false)
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 30)
+            .padding(.top, 2)
+            ScrollView {
+              Text(infoProtein ? (model.pdbFile?.details ?? "No Protein Information") : (model.pdbFile?.ligand ?? "No Ligand Information"))
+                .padding()
+            }
+            .hoverEffect()
+            .onTapGesture {
+              withAnimation {
+                showProteinInfo.toggle()
+              }
+            }
           }
           .background {
             RoundedRectangle(cornerRadius: 12)
               .fill(Color.gray)
               .stroke(Color.white, lineWidth: 2)
-          }
-          .hoverEffect()
-          .onTapGesture {
-            withAnimation {
-              showProteinInfo.toggle()
-            }
           }
           .frame(maxWidth: 500)
           .transform3DEffect(AffineTransform3D(translation: Vector3D(x: 0, y: 0, z: 15)))
@@ -404,7 +417,7 @@ struct ContentView: View {
     
 
     .ornament(
-      visibility: .visible,
+      visibility: (showOrnaments ? .visible : .hidden),
       attachmentAnchor: .scene(.topTrailing),
       contentAlignment: .top
     ) {
@@ -423,6 +436,8 @@ struct ContentView: View {
                 Button(p.code) {
                   Task { @MainActor in
                     withAnimation {
+                      showProteinInfo = false
+                      infoProtein = true
                       model.loading = true
                       model.pdbFile = p
                       model.pName = p.code
@@ -638,5 +653,5 @@ struct ContentView: View {
 }
 
 #Preview(windowStyle: .automatic) {
-  ContentView(model: ARModel())
+  ContentView(model: ARModel(), showOrnaments: true)
 }

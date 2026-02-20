@@ -143,14 +143,14 @@ struct SpheresBuilder {
         // Filter atoms if needed
         var atoms = structure.atoms
         
-        print("[ProteinSpheresMesh] Total atoms parsed: \(atoms.count)")
-        print("[Memory] Starting sphere build - Estimated memory: \(atoms.count * 12) bytes for positions")
+//        print("[ProteinSpheresMesh] Total atoms parsed: \(atoms.count)")
+//        print("[Memory] Starting sphere build - Estimated memory: \(atoms.count * 12) bytes for positions")
         
         if !options.showHydrogens {
             atoms = atoms.filter { $0.element.uppercased() != "H" }
         }
         
-        print("[ProteinSpheresMesh] Atoms after hydrogen filter: \(atoms.count)")
+//        print("[ProteinSpheresMesh] Atoms after hydrogen filter: \(atoms.count)")
         
         guard !atoms.isEmpty else {
             print("[ProteinSpheresMesh] WARNING: No atoms to render!")
@@ -160,12 +160,12 @@ struct SpheresBuilder {
         // Create parent entity
         let parent = ModelEntity()
         parent.name = "Spheres"
-        print("[Memory] Created parent entity")
+//        print("[Memory] Created parent entity")
         
         // Group atoms by element for efficient instancing
         let atomsByElement = Dictionary(grouping: atoms, by: { $0.element.uppercased() })
         
-        print("[ProteinSpheresMesh] Atoms grouped by element:")
+//        print("[ProteinSpheresMesh] Atoms grouped by element:")
         for (element, elementAtoms) in atomsByElement.sorted(by: { $0.key < $1.key }) {
             print("  \(element): \(elementAtoms.count) atoms")
         }
@@ -179,10 +179,10 @@ struct SpheresBuilder {
             let baseRadius = VanDerWaalsRadii.radius(for: element)
             let radius = baseRadius * options.atomScale * options.scale
             
-            print("[ProteinSpheresMesh] Creating spheres for element \(element):")
-            print("  Count: \(elementAtoms.count)")
-            print("  Color: RGB(\(color.x), \(color.y), \(color.z)) Alpha: \(color.w)")
-            print("  Base radius: \(baseRadius)Å, Scaled radius: \(radius)")
+//            print("[ProteinSpheresMesh] Creating spheres for element \(element):")
+//            print("  Count: \(elementAtoms.count)")
+//            print("  Color: RGB(\(color.x), \(color.y), \(color.z)) Alpha: \(color.w)")
+//            print("  Base radius: \(baseRadius)Å, Scaled radius: \(radius)")
             
             // Create low-poly mesh for this element type
             guard let mesh = try? generateLowPolySphere(radius: radius, segments: options.sphereSegments) else {
@@ -205,7 +205,7 @@ struct SpheresBuilder {
             let numChunks = (totalAtoms + maxAtomsPerEntity - 1) / maxAtomsPerEntity
             
             if numChunks > 1 {
-                print("[ProteinSpheresMesh] Splitting \(totalAtoms) \(element) atoms into \(numChunks) chunks of max \(maxAtomsPerEntity)")
+//                print("[ProteinSpheresMesh] Splitting \(totalAtoms) \(element) atoms into \(numChunks) chunks of max \(maxAtomsPerEntity)")
             }
             
             for chunkIndex in 0..<numChunks {
@@ -214,8 +214,8 @@ struct SpheresBuilder {
                 let chunkAtoms = Array(elementAtoms[startIndex..<endIndex])
                 let count = chunkAtoms.count
                 
-                print("[ProteinSpheresMesh] Processing chunk \(chunkIndex + 1)/\(numChunks) with \(count) atoms")
-                print("[Memory] Chunk \(chunkIndex): Allocating \(count * 64) bytes for instance transforms")
+//                print("[ProteinSpheresMesh] Processing chunk \(chunkIndex + 1)/\(numChunks) with \(count) atoms")
+//                print("[Memory] Chunk \(chunkIndex): Allocating \(count * 64) bytes for instance transforms")
                 
                 // Create instancing data for this chunk
                 guard let instanceData = try? LowLevelInstanceData(instanceCount: count) else {
@@ -257,22 +257,22 @@ struct SpheresBuilder {
                             instances: instanceData
                         )
                         entity.components[MeshInstancesComponent.self] = component
-                        print("[ProteinSpheresMesh] Successfully created instanced entity for \(element) chunk \(chunkIndex)")
-                        print("[Memory] Entity created - Total children in parent: \(parent.children.count + 1)")
+//                        print("[ProteinSpheresMesh] Successfully created instanced entity for \(element) chunk \(chunkIndex)")
+//                        print("[Memory] Entity created - Total children in parent: \(parent.children.count + 1)")
                     } catch {
-                        print("[ProteinSpheresMesh] ERROR: Failed to create MeshInstancesComponent for \(element) chunk \(chunkIndex): \(error)")
-                        print("[Memory] ERROR: MeshInstancesComponent creation failed - possible resource limit")
+//                        print("[ProteinSpheresMesh] ERROR: Failed to create MeshInstancesComponent for \(element) chunk \(chunkIndex): \(error)")
+//                        print("[Memory] ERROR: MeshInstancesComponent creation failed - possible resource limit")
                     }
                     
                     parent.addChild(entity)
-                    print("[ProteinSpheresMesh] Added \(element) chunk \(chunkIndex) entity to parent")
+//                    print("[ProteinSpheresMesh] Added \(element) chunk \(chunkIndex) entity to parent")
                 } else {
                     print("[ProteinSpheresMesh] ERROR: No modelID found for \(element) mesh")
                 }
             }
         }
         
-        print("[Memory] Sphere build complete - Total entities: \(parent.children.count)")
+//        print("[Memory] Sphere build complete - Total entities: \(parent.children.count)")
         return parent
     }
     
@@ -355,7 +355,7 @@ struct SpheresBuilder {
             }
         }
         
-        print("[ProteinSpheresMesh] Low-poly sphere: \(positions.count) vertices, \(indices.count / 3) triangles")
+//        print("[ProteinSpheresMesh] Low-poly sphere: \(positions.count) vertices, \(indices.count / 3) triangles")
         
         var descriptor = MeshDescriptor()
         descriptor.positions = MeshBuffer(positions)

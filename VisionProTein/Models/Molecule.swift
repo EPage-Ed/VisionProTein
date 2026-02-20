@@ -17,7 +17,7 @@ extension SCNVector3 {
 class Molecule {
   
   static func genMolecule(residue: Residue) -> ModelEntity? {
-    print("[Memory] genMolecule called for residue \(residue.resName) with \(residue.atoms.count) atoms")
+//    print("[Memory] genMolecule called for residue \(residue.resName) with \(residue.atoms.count) atoms")
     let basePos = residue.atoms.first.map { a in
       SIMD3(x: Float(a.x)/100, y: Float(a.y)/100, z: Float(a.z)/100)
     }

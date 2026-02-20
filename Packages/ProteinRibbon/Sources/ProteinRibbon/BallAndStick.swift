@@ -221,7 +221,7 @@ public struct BallAndStickBuilder {
             let baseRadius = atomRadius(for: element)
             let scaledRadius = baseRadius * options.atomScale * options.scale
 
-            print("[BallAndStick] Creating instanced sphere mesh for \(totalAtoms) \(element) atoms")
+//            print("[BallAndStick] Creating instanced sphere mesh for \(totalAtoms) \(element) atoms")
 
             // Create a single sphere mesh for this element type
 //            let mesh = MeshResource.generateSphere(radius: scaledRadius)
@@ -235,7 +235,7 @@ public struct BallAndStickBuilder {
             let maxAtomsPerEntity = 10000
             let numChunks = (totalAtoms + maxAtomsPerEntity - 1) / maxAtomsPerEntity
 
-            print("[BallAndStick] Splitting \(element) atoms into \(numChunks) chunk(s)")
+//            print("[BallAndStick] Splitting \(element) atoms into \(numChunks) chunk(s)")
 
             // Create material with element color - match ProteinSpheresMesh approach exactly
             let uiColor = UIColor(
@@ -286,7 +286,7 @@ public struct BallAndStickBuilder {
                         )
                         entity.components[MeshInstancesComponent.self] = component
                         entities.append(entity)
-                        print("[BallAndStick] Created chunk \(chunkIndex) with \(count) \(element) atoms")
+//                        print("[BallAndStick] Created chunk \(chunkIndex) with \(count) \(element) atoms")
                     } catch {
                         print("[BallAndStick] Failed to create MeshInstancesComponent for \(element) chunk \(chunkIndex): \(error)")
                     }
@@ -438,7 +438,7 @@ public struct BallAndStickBuilder {
     ) -> ModelEntity? {
         guard !bonds.isEmpty else { return nil }
 
-        print("[BallAndStick] Building simplified bonds: \(bonds.count) bonds")
+//        print("[BallAndStick] Building simplified bonds: \(bonds.count) bonds")
 
         var mesh = MeshData()
         let grayColor = SIMD4<Float>(0.5, 0.5, 0.5, 1.0) // Uniform gray color
@@ -474,7 +474,7 @@ public struct BallAndStickBuilder {
 
         guard !mesh.positions.isEmpty else { return nil }
 
-        print("[BallAndStick] Created bond mesh: \(mesh.positions.count) vertices")
+//        print("[BallAndStick] Created bond mesh: \(mesh.positions.count) vertices")
 
         return createColoredEntity(from: mesh, color: grayColor, options: options, name: "Bonds_Simplified")
     }

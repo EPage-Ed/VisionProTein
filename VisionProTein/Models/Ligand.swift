@@ -210,10 +210,10 @@ extension Ligand {
     func findBindingResidues(in residues: [Residue], maxDistance: Double = 6.5) -> [Residue] {
         var bindingResidues = Set<Residue>()
         
-        print("[Ligand] ===== Finding binding residues for \(resName) (chain \(chainID), res# \(resSeq)) =====")
-        print("[Ligand] Ligand has \(atoms.count) atoms")
-        print("[Ligand] Searching through \(residues.count) protein residues")
-        print("[Ligand] Max distance threshold: \(maxDistance)Å")
+//        print("[Ligand] ===== Finding binding residues for \(resName) (chain \(chainID), res# \(resSeq)) =====")
+//        print("[Ligand] Ligand has \(atoms.count) atoms")
+//        print("[Ligand] Searching through \(residues.count) protein residues")
+//        print("[Ligand] Max distance threshold: \(maxDistance)Å")
         
         // Track minimum distance found
         var minDistanceFound: Float = .infinity
@@ -252,13 +252,13 @@ extension Ligand {
         }
         
         let sorted = bindingResidues.sorted { $0.id < $1.id }
-        print("[Ligand] Found \(sorted.count) binding residues within \(maxDistance)Å")
-        print("[Ligand] Minimum distance to any residue: \(minDistanceFound)Å")
+//        print("[Ligand] Found \(sorted.count) binding residues within \(maxDistance)Å")
+//        print("[Ligand] Minimum distance to any residue: \(minDistanceFound)Å")
         if let closest = closestResidue {
-            print("[Ligand] Closest residue: \(closest.resName) \(closest.chainID)\(closest.serNum)")
+//            print("[Ligand] Closest residue: \(closest.resName) \(closest.chainID)\(closest.serNum)")
         }
-        print("[Ligand] Binding residues: \(sorted.map { "\($0.resName)\($0.chainID)\($0.serNum)" }.joined(separator: ", "))")
-        print("[Ligand] ==============================================")
+//        print("[Ligand] Binding residues: \(sorted.map { "\($0.resName)\($0.chainID)\($0.serNum)" }.joined(separator: ", "))")
+//        print("[Ligand] ==============================================")
         
         return sorted
     }
@@ -281,7 +281,7 @@ extension Ligand {
         let parent = ModelEntity()
         parent.name = "Ligand_\(resName)_\(chainID)\(resSeq)"
         
-        print("[Ligand] Generating sphere entity for \(resName) with \(atoms.count) atoms")
+//        print("[Ligand] Generating sphere entity for \(resName) with \(atoms.count) atoms")
         
         // Group atoms by element for efficient rendering
         let atomsByElement = Dictionary(grouping: atoms, by: { $0.element.uppercased() })
@@ -318,7 +318,7 @@ extension Ligand {
             }
         }
         
-        print("[Ligand] Created sphere entity with \(parent.children.count) atom entities")
+//        print("[Ligand] Created sphere entity with \(parent.children.count) atom entities")
         
         return parent
     }

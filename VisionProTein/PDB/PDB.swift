@@ -16,6 +16,7 @@ struct PDBFile {
   let name: String
   let details: String
   let skipUNK: Bool
+  let ligand: String
 }
 
 /* Atom Colors
@@ -580,12 +581,13 @@ extension PDB {
         return results
       }
 
-      let total = pdbURLs.count
+      let total = pdbURLs.count * 2
       // print("Found \(total) PDB files in bundle")
 
       for (index, pdbURL) in pdbURLs.enumerated() {
         let name = pdbURL.deletingPathExtension().lastPathComponent
-        progressHandler?(name, Double(index) / Double(total))
+        print("Load \(name)")
+        progressHandler?(name, Double(2 * index + 1) / Double(total))
 
         do {
           // Try loading from cache first
@@ -604,6 +606,7 @@ extension PDB {
 
           let parseResult = PDB.parseComplete(data: data, skipUNK: skipUNK)
           results[name] = parseResult
+          progressHandler?(name, Double(2 * index + 2) / Double(total))
 
           // Save to cache for next time
           try parseResult.saveToCache(name: name)

@@ -27,7 +27,7 @@ extension Molecule {
   static func genBallAndStickResidue(residue: Residue, basePosition: SIMD3<Float>? = nil, atomScale: Float = 1.0, unify: Bool = false, targetable: Bool = true) -> ModelEntity? {
         guard !residue.atoms.isEmpty else { return nil }
         
-        print("[Memory] Creating ball-and-stick for residue \(residue.resName)\(residue.serNum) with \(residue.atoms.count) atoms")
+//        print("[Memory] Creating ball-and-stick for residue \(residue.resName)\(residue.serNum) with \(residue.atoms.count) atoms")
         
         let parent = ModelEntity()
         parent.name = "\(residue.resName)_\(residue.chainID)\(residue.serNum)"
@@ -54,7 +54,7 @@ extension Molecule {
             let mesh = MeshResource.generateSphere(radius: scaledRadius)
             let material = SimpleMaterial(color: firstAtom.color, isMetallic: false)
             
-            print("[Memory] Created mesh for element \(element) with radius \(scaledRadius)")
+//            print("[Memory] Created mesh for element \(element) with radius \(scaledRadius)")
             
             // Split into chunks of 10,000 atoms if needed
             let maxAtomsPerEntity = 10000
@@ -62,7 +62,7 @@ extension Molecule {
             let numChunks = (totalAtoms + maxAtomsPerEntity - 1) / maxAtomsPerEntity
             
             if numChunks > 1 {
-                print("[Memory] Splitting \(totalAtoms) \(element) atoms into \(numChunks) chunks (reusing same mesh)")
+//                print("[Memory] Splitting \(totalAtoms) \(element) atoms into \(numChunks) chunks (reusing same mesh)")
             }
             
             for chunkIndex in 0..<numChunks {
@@ -71,7 +71,7 @@ extension Molecule {
                 let chunkAtoms = Array(atoms[startIndex..<endIndex])
                 let count = chunkAtoms.count
                 
-                print("[Memory] Ball-and-stick chunk \(chunkIndex): \(count) \(element) atoms")
+//                print("[Memory] Ball-and-stick chunk \(chunkIndex): \(count) \(element) atoms")
                 guard let instanceData = try? LowLevelInstanceData(instanceCount: count) else {
                     print("[Memory] ERROR: Failed to allocate instance data for \(count) atoms")
                     continue

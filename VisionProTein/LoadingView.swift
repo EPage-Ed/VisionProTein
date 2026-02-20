@@ -60,12 +60,18 @@ struct LoadingView: View {
               // Progress bar
               ProgressView(value: loadProgress, total: 1.0)
                 .progressViewStyle(.linear)
+                .animation(.linear(duration: 1.0), value: loadProgress)
                 .frame(width: 400)
                 .tint(.blue)
 
-              Text("\(Int(loadProgress * 100))%")
-                .font(.caption)
-                .foregroundColor(.secondary)
+              HStack {
+                ProgressView()
+                  .controlSize(.small)
+                  .opacity(loadProgress < 1 ? 1 : 0)
+                Text("\(Int(loadProgress * 100))%")
+                  .font(.caption)
+                  .foregroundColor(.secondary)
+              }
             }
             .padding(30)
             .background(.ultraThinMaterial)
@@ -123,7 +129,9 @@ struct LoadingView: View {
           if let name = name {
             self.currentFile = name
           }
-          self.loadProgress = progress
+          withAnimation(.easeInOut(duration: 1.0)) {
+            self.loadProgress = progress
+          }
         }
       }
 
