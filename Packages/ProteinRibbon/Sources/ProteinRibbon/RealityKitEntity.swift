@@ -574,7 +574,9 @@ public struct RealityKitEntityBuilder {
     /// Uses shared backbone for seamless connections between segments
     public static func buildSegmentedEntities(
         from structure: PDBStructure,
-        options: ProteinRibbon.Options
+        options: ProteinRibbon.Options,
+        cachedFrames: [String: [TNBFrame]]? = nil,
+        cachedSecondaryStructure: [String: [SecondaryStructureType]]? = nil
     ) -> [ModelEntity] {
         var entities: [ModelEntity] = []
 
@@ -588,7 +590,9 @@ public struct RealityKitEntityBuilder {
                 residues: chainResidues,
                 chainID: chainID,
                 structure: structure,
-                options: options
+                options: options,
+                cachedFrames: cachedFrames,
+                cachedSecondaryStructure: cachedSecondaryStructure
             ) else { continue }
 
             // Generate colors for residues based on the selected color scheme

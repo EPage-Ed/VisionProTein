@@ -867,7 +867,7 @@ final class ARModel : ObservableObject {
       rbs.name = "RibbonAndStick"
       protein = rbs
       
-      NSLog("Load from cache")
+      // NSLog("Load from cache")
       await MainActor.run {
         progress = 0.1
         loadingStatus = "Loading PDB..."
@@ -886,7 +886,7 @@ final class ARModel : ObservableObject {
         }
 //        NSLog("Found cached")
         parseResult = cached
-        NSLog("Assigned cached")
+        // NSLog("Assigned cached")
       } else {
         // Not in cache - need to parse from file
         guard let u = Bundle.main.url(forResource: pName, withExtension: "pdb") else {
@@ -915,7 +915,7 @@ final class ARModel : ObservableObject {
 
       let allResidues = parseResult.residues
       pdbStructure = parseResult.pdbStructure
-      NSLog("Get pdbStructure")
+      // NSLog("Get pdbStructure")
         
         //        let entity = ProteinRibbon.structureColoredEntity(from: pdbStructure)  // Red helix, blue sheet, green coil
         // Phase 2 optimization: pass cached frames and secondary structure for faster rendering
@@ -930,7 +930,7 @@ final class ARModel : ObservableObject {
         rbs.addChild(entity)
         ribbons = entity
         print(entity.position)
-      NSLog("Ribbon Built")
+      // NSLog("Ribbon Built")
         
         await MainActor.run {
           progress = 0.85
@@ -943,7 +943,7 @@ final class ARModel : ObservableObject {
         rbs.addChild(bse)
         ballAndStick = bse
         print(bse.position)
-      NSLog("Ball & Stick Built")
+      // NSLog("Ball & Stick Built")
 
         // Build spatial index for efficient atom lookup
         await MainActor.run {

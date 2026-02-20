@@ -129,7 +129,9 @@ public struct ProteinRibbon {
 
             let segments = RealityKitEntityBuilder.buildSegmentedEntities(
                 from: structure,
-                options: options
+                options: options,
+                cachedFrames: cachedFrames,
+                cachedSecondaryStructure: cachedSecondaryStructure
             )
 
             for segment in segments {

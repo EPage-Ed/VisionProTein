@@ -383,7 +383,7 @@ SHEET    3   A 9 ALA A  38  GLU A  44 -1  O  THR A  40   N  THR A  32
       let a = Atom(serial: ser, name: name, altLoc: "", resName: res, chainID: chain, resSeq: rs, iCode: "", x: x, y: y, z: z, occupancy: 0, tempFactor: 0, element: ele, charge: "")
       atoms.append(a)
     }
-    print("Found \(atoms.count) atoms\n    \(helix.count) helices\n    \(sheet.count) sheets")
+    // print("Found \(atoms.count) atoms\n    \(helix.count) helices\n    \(sheet.count) sheets")
     
     helix = helix.sorted { (h1,h2) -> Bool in
       if h1.chain == h2.chain {
@@ -399,10 +399,10 @@ SHEET    3   A 9 ALA A  38  GLU A  44 -1  O  THR A  40   N  THR A  32
     }
     
     helix.forEach { h in
-      print("HELIX \(h.chain) \(h.start)-\(h.end)")
+      // print("HELIX \(h.chain) \(h.start)-\(h.end)")
     }
     sheet.forEach { s in
-      print("SHEET \(s.chain) \(s.start)-\(s.end)")
+      // print("SHEET \(s.chain) \(s.start)-\(s.end)")
     }
     
     return (atoms,atoms.residues, helix, sheet, seqres)
@@ -576,12 +576,12 @@ extension PDB {
 
       // Find all .pdb files in the main bundle
       guard let pdbURLs = Bundle.main.urls(forResourcesWithExtension: "pdb", subdirectory: nil) else {
-        print("No PDB files found in bundle")
+        // print("No PDB files found in bundle")
         return results
       }
 
       let total = pdbURLs.count
-      print("Found \(total) PDB files in bundle")
+      // print("Found \(total) PDB files in bundle")
 
       for (index, pdbURL) in pdbURLs.enumerated() {
         let name = pdbURL.deletingPathExtension().lastPathComponent
@@ -590,15 +590,15 @@ extension PDB {
         do {
           // Try loading from cache first
           if let cached = try loadFromCache(name: name) {
-            print("✓ Loaded \(name) from cache")
+            // print("✓ Loaded \(name) from cache")
             results[name] = cached
             continue
           }
 
           // Cache miss - parse from PDB file
-          print("  Parsing \(name) from bundle...")
+          // print("  Parsing \(name) from bundle...")
           guard let data = try? Data(contentsOf: pdbURL) else {
-            print("  ✗ Failed to read \(name)")
+            // print("  ✗ Failed to read \(name)")
             continue
           }
 
@@ -607,7 +607,7 @@ extension PDB {
 
           // Save to cache for next time
           try parseResult.saveToCache(name: name)
-          print("  ✓ Parsed and cached \(name)")
+          // print("  ✓ Parsed and cached \(name)")
 
         } catch {
           print("  ✗ Error processing \(name): \(error.localizedDescription)")
@@ -615,7 +615,7 @@ extension PDB {
       }
 
       progressHandler?(nil, 1.0)
-      print("Loaded \(results.count)/\(total) PDB files")
+      // print("Loaded \(results.count)/\(total) PDB files")
       return results
     }
   }
@@ -724,7 +724,7 @@ extension PDB {
     )
     progress?(0.85)
 
-    print("Found \(atoms.count) atoms, \(residues.count) residues, \(ligands.count) ligands, \(helix.count) helices, \(sheet.count) sheets")
+    // print("Found \(atoms.count) atoms, \(residues.count) residues, \(ligands.count) ligands, \(helix.count) helices, \(sheet.count) sheets")
 
     // Compute cached data for Phase 2 optimization
     let (cachedFrames, cachedSecondaryStructure) = computeCachedData(
@@ -1091,12 +1091,12 @@ extension PDB {
         length: helix.end - helix.start + 1
       )
     }
-    print("Converting \(pdbHelices.count) helices to PDBStructure")
+    // print("Converting \(pdbHelices.count) helices to PDBStructure")
     if !pdbHelices.isEmpty {
-      print("First helix: chain '\(pdbHelices[0].startChain)' residues \(pdbHelices[0].startResidue)-\(pdbHelices[0].endResidue)")
+      // print("First helix: chain '\(pdbHelices[0].startChain)' residues \(pdbHelices[0].startResidue)-\(pdbHelices[0].endResidue)")
     }
     if !pdbResidues.isEmpty {
-      print("First residue: chain '\(pdbResidues[0].chainID)' seq \(pdbResidues[0].sequenceNumber)")
+      // print("First residue: chain '\(pdbResidues[0].chainID)' seq \(pdbResidues[0].sequenceNumber)")
     }
 
     // Convert sheets
