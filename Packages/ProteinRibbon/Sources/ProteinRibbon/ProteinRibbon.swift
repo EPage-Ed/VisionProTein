@@ -75,13 +75,13 @@ public struct ProteinRibbon {
             helixWidth: Float = 1.2,
             sheetWidth: Float = 1.6,
             coilRadius: Float = 0.3,
-            samplesPerResidue: Int = 24,
+            samplesPerResidue: Int = 12,
             scale: Float = 0.01,
             separateSegments: Bool = true,
             uniformColor: SIMD4<Float> = SIMD4<Float>(0.7, 0.7, 0.7, 1.0),
             sheetArrowLength: Float = 2.4,
             sheetArrowWingExtension: Float = 0.8,
-            smoothSegments: Int = 20,
+            smoothSegments: Int = 14,
             frameSmoothingIterations: Int = 5,
             skipUNK: Bool = true
         ) {
