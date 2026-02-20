@@ -429,7 +429,7 @@ class ProteinComponent: Component {
 
 extension PDB {
   /// Complete PDB parsing result with all data needed by renderers
-  struct CompleteParseResult {
+  struct CompleteParseResult: Codable {
     let atoms: [Atom]
     let residues: [Residue]
     let ligands: [Ligand]
@@ -437,6 +437,176 @@ extension PDB {
     let sheets: [SHEET]
     let sequences: [SEQRES]
     let pdbStructure: PDBStructure  // For ProteinRibbon/ProteinSpheresMesh packages
+
+    // Custom Codable implementation: skip pdbStructure since it's a derived type that can be reconstructed
+    enum CodingKeys: String, CodingKey {
+      case atoms, residues, ligands, helices, sheets, sequences
+    }
+
+    func encode(to encoder: Encoder) throws {
+      var container = encoder.container(keyedBy: CodingKeys.self)
+      try container.encode(atoms, forKey: .atoms)
+      try container.encode(residues, forKey: .residues)
+      try container.encode(ligands, forKey: .ligands)
+      try container.encode(helices, forKey: .helices)
+      try container.encode(sheets, forKey: .sheets)
+      try container.encode(sequences, forKey: .sequences)
+    }
+
+    init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      atoms = try container.decode([Atom].self, forKey: .atoms)
+      residues = try container.decode([Residue].self, forKey: .residues)
+      ligands = try container.decode([Ligand].self, forKey: .ligands)
+      helices = try container.decode([HELIX].self, forKey: .helices)
+      sheets = try container.decode([SHEET].self, forKey: .sheets)
+      sequences = try container.decode([SEQRES].self, forKey: .sequences)
+      // Reconstruct pdbStructure from decoded data
+      pdbStructure = PDB.convertToPDBStructure(
+        atoms: atoms, residues: residues, helices: helices, sheets: sheets, pdbString: ""
+      )
+    }
+
+    init(atoms: [Atom], residues: [Residue], ligands: [Ligand], helices: [HELIX], sheets: [SHEET], sequences: [SEQRES], pdbStructure: PDBStructure) {
+      self.atoms = atoms
+      self.residues = residues
+      self.ligands = ligands
+      self.helices = helices
+      self.sheets = sheets
+      self.sequences = sequences
+      self.pdbStructure = pdbStructure
+    }
+
+    /// Save the parse result to a file URL using JSON encoding
+    func save(to url: URL) throws {
+      let encoder = JSONEncoder()
+      encoder.outputFormatting = .prettyPrinted
+      let data = try encoder.encode(self)
+      try data.write(to: url, options: .atomic)
+    }
+
+    /// Load a parse result from a file URL using JSON decoding
+    static func load(from url: URL) throws -> CompleteParseResult {
+      let data = try Data(contentsOf: url)
+      let decoder = JSONDecoder()
+      return try decoder.decode(CompleteParseResult.self, from: data)
+    }
+
+    /// Convenience function to get the cache URL for a given name
+    static func cacheURL(for name: String) -> URL? {
+      guard let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+        return nil
+      }
+      return cacheDir.appendingPathComponent("\(name).cpr")
+    }
+
+    /// Save the parse result to the application cache directory
+    /// - Parameter name: The name to use for the cached file (e.g., PDB code like "1A3N")
+    func saveToCache(name: String) throws {
+      guard let url = Self.cacheURL(for: name) else {
+        throw NSError(domain: "PDB", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not access cache directory"])
+      }
+      try save(to: url)
+    }
+
+    /// Load a parse result from the application cache directory
+    /// - Parameter name: The name of the cached file (e.g., PDB code like "1A3N")
+    /// - Returns: The loaded parse result, or nil if the file doesn't exist
+    static func loadFromCache(name: String) throws -> CompleteParseResult? {
+      guard let url = cacheURL(for: name) else {
+        throw NSError(domain: "PDB", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not access cache directory"])
+      }
+      guard FileManager.default.fileExists(atPath: url.path) else {
+        return nil
+      }
+      return try load(from: url)
+    }
+
+    /// Delete a specific cached PDB file
+    /// - Parameter name: The name of the cached file to delete (e.g., PDB code like "1A3N")
+    static func clearCache(for name: String) throws {
+      guard let url = cacheURL(for: name) else {
+        throw NSError(domain: "PDB", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not access cache directory"])
+      }
+      if FileManager.default.fileExists(atPath: url.path) {
+        try FileManager.default.removeItem(at: url)
+      }
+    }
+
+    /// Clear all cached PDB files from the application cache directory
+    /// - Returns: Number of files deleted
+    @discardableResult
+    static func clearAllCache() throws -> Int {
+      guard let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+        throw NSError(domain: "PDB", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not access cache directory"])
+      }
+
+      let fileManager = FileManager.default
+      let cacheFiles = try fileManager.contentsOfDirectory(at: cacheDir, includingPropertiesForKeys: nil)
+      let cprFiles = cacheFiles.filter { $0.pathExtension == "cpr" }
+
+      var deletedCount = 0
+      for file in cprFiles {
+        try fileManager.removeItem(at: file)
+        deletedCount += 1
+      }
+
+      print("Cleared \(deletedCount) cached PDB files")
+      return deletedCount
+    }
+
+    /// Load or parse all PDB files found in the app bundle
+    /// - Parameters:
+    ///   - skipUNK: Whether to skip UNK residues during parsing
+    ///   - progressHandler: Optional callback for overall progress (name?, progress 0.0-1.0)
+    /// - Returns: Dictionary mapping PDB names (without extension) to their parse results
+    static func loadAllBundlePDBs(skipUNK: Bool = true, progressHandler: ((String?, Double) -> Void)? = nil) -> [String: CompleteParseResult] {
+      var results: [String: CompleteParseResult] = [:]
+
+      // Find all .pdb files in the main bundle
+      guard let pdbURLs = Bundle.main.urls(forResourcesWithExtension: "pdb", subdirectory: nil) else {
+        print("No PDB files found in bundle")
+        return results
+      }
+
+      let total = pdbURLs.count
+      print("Found \(total) PDB files in bundle")
+
+      for (index, pdbURL) in pdbURLs.enumerated() {
+        let name = pdbURL.deletingPathExtension().lastPathComponent
+        progressHandler?(name, Double(index) / Double(total))
+
+        do {
+          // Try loading from cache first
+          if let cached = try loadFromCache(name: name) {
+            print("✓ Loaded \(name) from cache")
+            results[name] = cached
+            continue
+          }
+
+          // Cache miss - parse from PDB file
+          print("  Parsing \(name) from bundle...")
+          guard let data = try? Data(contentsOf: pdbURL) else {
+            print("  ✗ Failed to read \(name)")
+            continue
+          }
+
+          let parseResult = PDB.parseComplete(data: data, skipUNK: skipUNK)
+          results[name] = parseResult
+
+          // Save to cache for next time
+          try parseResult.saveToCache(name: name)
+          print("  ✓ Parsed and cached \(name)")
+
+        } catch {
+          print("  ✗ Error processing \(name): \(error.localizedDescription)")
+        }
+      }
+
+      progressHandler?(nil, 1.0)
+      print("Loaded \(results.count)/\(total) PDB files")
+      return results
+    }
   }
 
   /// Parse PDB once and return all data needed by all renderers.
@@ -540,6 +710,192 @@ extension PDB {
 
     let pdbStructure = convertToPDBStructure(
       atoms: atoms, residues: residues, helices: helix, sheets: sheet, pdbString: pdbString
+    )
+    progress?(0.85)
+
+    print("Found \(atoms.count) atoms, \(residues.count) residues, \(ligands.count) ligands, \(helix.count) helices, \(sheet.count) sheets")
+
+    return CompleteParseResult(
+      atoms: atoms, residues: residues, ligands: ligands,
+      helices: helix, sheets: sheet, sequences: seqres, pdbStructure: pdbStructure
+    )
+  }
+
+  /// Parse PDB directly from raw Data bytes without converting to a Swift String.
+  /// Uses strtol/strtod for number parsing — zero heap allocations for numeric fields.
+  static func parseComplete(data: Data, skipUNK: Bool = true, progress: ((Double)->())? = nil) -> CompleteParseResult {
+    var atoms   = [Atom]()
+    var helix   = [HELIX]()
+    var sheet   = [SHEET]()
+    var seqres  = [SEQRES]()
+
+    struct LigandKey: Hashable { let resName: String; let chainID: String; let resSeq: Int }
+    var ligandAtomsByKey = [LigandKey: [LigandAtom]]()
+    var ligandKeyOrder   = [LigandKey]()
+
+    // Helpers that operate on a raw line buffer (no null terminator needed for strtol/strtod
+    // because we copy the field into a small stack buffer and null-terminate it).
+
+    // Extract a trimmed ASCII string from columns [start, end) of a line buffer.
+    func colString(_ buf: UnsafePointer<UInt8>, _ lineLen: Int, _ start: Int, _ end: Int) -> String {
+      var lo = start, hi = min(end, lineLen) - 1
+      while lo <= hi && buf[lo] == 32 { lo += 1 }
+      while hi >= lo && buf[hi] == 32 { hi -= 1 }
+      guard lo <= hi else { return "" }
+      return String(bytes: UnsafeBufferPointer(start: buf + lo, count: hi - lo + 1), encoding: .utf8) ?? ""
+    }
+
+    // Parse an integer from columns [start, end), trimming whitespace, using strtol.
+    func colInt(_ buf: UnsafePointer<UInt8>, _ lineLen: Int, _ start: Int, _ end: Int) -> Int? {
+      var lo = start, hi = min(end, lineLen) - 1
+      while lo <= hi && buf[lo] == 32 { lo += 1 }
+      while hi >= lo && buf[hi] == 32 { hi -= 1 }
+      guard lo <= hi else { return nil }
+      // Copy to null-terminated stack buffer (field width ≤ 12 chars in PDB)
+      var tmp = (Int8(0), Int8(0), Int8(0), Int8(0), Int8(0), Int8(0),
+                 Int8(0), Int8(0), Int8(0), Int8(0), Int8(0), Int8(0), Int8(0))
+      let count = min(hi - lo + 1, 12)
+      withUnsafeMutableBytes(of: &tmp) { ptr in
+        for i in 0..<count { ptr[i] = buf[lo + i] }
+        ptr[count] = 0
+      }
+      return withUnsafeBytes(of: &tmp) { ptr -> Int? in
+        let p = ptr.baseAddress!.assumingMemoryBound(to: CChar.self)
+        var endPtr: UnsafeMutablePointer<CChar>? = nil
+        let v = strtol(p, &endPtr, 10)
+        guard endPtr != UnsafeMutablePointer(mutating: p) else { return nil }
+        return Int(v)
+      }
+    }
+
+    // Parse a Double from columns [start, end) using strtod.
+    func colDouble(_ buf: UnsafePointer<UInt8>, _ lineLen: Int, _ start: Int, _ end: Int) -> Double? {
+      var lo = start, hi = min(end, lineLen) - 1
+      while lo <= hi && buf[lo] == 32 { lo += 1 }
+      while hi >= lo && buf[hi] == 32 { hi -= 1 }
+      guard lo <= hi else { return nil }
+      var tmp = (Int8(0), Int8(0), Int8(0), Int8(0), Int8(0), Int8(0), Int8(0), Int8(0),
+                 Int8(0), Int8(0), Int8(0), Int8(0), Int8(0), Int8(0), Int8(0), Int8(0), Int8(0))
+      let count = min(hi - lo + 1, 16)
+      withUnsafeMutableBytes(of: &tmp) { ptr in
+        for i in 0..<count { ptr[i] = buf[lo + i] }
+        ptr[count] = 0
+      }
+      return withUnsafeBytes(of: &tmp) { ptr -> Double? in
+        let p = ptr.baseAddress!.assumingMemoryBound(to: CChar.self)
+        var endPtr: UnsafeMutablePointer<CChar>? = nil
+        let v = strtod(p, &endPtr)
+        guard endPtr != UnsafeMutablePointer(mutating: p) else { return nil }
+        return v
+      }
+    }
+
+    data.withUnsafeBytes { (raw: UnsafeRawBufferPointer) in
+      guard let base = raw.baseAddress else { return }
+      let bytes = base.assumingMemoryBound(to: UInt8.self)
+      let total = raw.count
+      var pos = 0
+
+      while pos < total {
+        // Find end of line
+        var end = pos
+        while end < total && bytes[end] != 10 { end += 1 }  // 10 == '\n'
+        let lineLen = end - pos  // excludes the newline
+        let line = bytes + pos
+        pos = end + 1  // advance past '\n'
+
+        guard lineLen >= 6 else { continue }
+
+        // Match record type by comparing raw bytes (no String allocation)
+        let b0 = line[0], b1 = line[1], b2 = line[2], b3 = line[3]
+
+        // "ATOM  " = 65,84,79,77,32,32   "HETATM" = 72,69,84,65,84,77
+        // "HELIX " = 72,69,76,73,88,32   "SHEET " = 83,72,69,69,84,32
+        // "SEQRES" = 83,69,81,82,69,83   "ENDMDL" = 69,78,68,77,68,76
+        if b0 == 65 && b1 == 84 && b2 == 79 && b3 == 77 {
+          // ATOM
+          guard lineLen >= 54 else { continue }
+          let res = colString(line, lineLen, 17, 20)
+          if res == "HOH" || (skipUNK && res == "UNK") { continue }
+          guard let ser = colInt(line, lineLen, 6, 11),
+                let rs  = colInt(line, lineLen, 22, 26),
+                let x   = colDouble(line, lineLen, 30, 38),
+                let y   = colDouble(line, lineLen, 38, 46),
+                let z   = colDouble(line, lineLen, 46, 54) else { continue }
+          let name  = colString(line, lineLen, 12, 16)
+          let chain = lineLen > 21 ? String(bytes: UnsafeBufferPointer(start: line + 21, count: 1), encoding: .utf8) ?? " " : " "
+          let ele   = lineLen >= 78 ? colString(line, lineLen, 76, 78) : ""
+          atoms.append(Atom(serial: ser, name: name, altLoc: "", resName: res, chainID: chain,
+                            resSeq: rs, iCode: "", x: x, y: y, z: z,
+                            occupancy: 0, tempFactor: 0, element: ele, charge: ""))
+
+        } else if b0 == 72 && b1 == 69 && b2 == 84 && b3 == 65 && lineLen >= 6 && line[4] == 84 && line[5] == 77 {
+          // HETATM
+          guard lineLen >= 54 else { continue }
+          let resName = colString(line, lineLen, 17, 20)
+          if resName == "HOH" { continue }
+          let chain = lineLen > 21 ? String(bytes: UnsafeBufferPointer(start: line + 21, count: 1), encoding: .utf8) ?? " " : " "
+          guard let serial = colInt(line, lineLen, 6, 11),
+                let resSeq  = colInt(line, lineLen, 22, 26),
+                let x       = colDouble(line, lineLen, 30, 38),
+                let y       = colDouble(line, lineLen, 38, 46),
+                let z       = colDouble(line, lineLen, 46, 54) else { continue }
+          let name       = colString(line, lineLen, 12, 16)
+          let ele        = lineLen >= 78 ? colString(line, lineLen, 76, 78) : ""
+          let occupancy  = lineLen >= 60 ? Float(colDouble(line, lineLen, 54, 60) ?? 1.0) : 1.0
+          let tempFactor = lineLen >= 66 ? (colDouble(line, lineLen, 60, 66) ?? 0.0) : 0.0
+          let ligAtom = LigandAtom(serial: serial, name: name, altLoc: "", resName: resName,
+                                   chainID: chain, resSeq: resSeq, iCode: "", x: x, y: y, z: z,
+                                   occupancy: occupancy, tempFactor: tempFactor, element: ele, charge: "")
+          let key = LigandKey(resName: resName, chainID: chain, resSeq: resSeq)
+          if ligandAtomsByKey[key] == nil {
+            ligandKeyOrder.append(key)
+            ligandAtomsByKey[key] = [ligAtom]
+          } else {
+            ligandAtomsByKey[key]!.append(ligAtom)
+          }
+
+        } else if b0 == 72 && b1 == 69 && b2 == 76 && b3 == 73 {
+          // HELIX
+          let chain = lineLen > 19 ? String(bytes: UnsafeBufferPointer(start: line + 19, count: 1), encoding: .utf8) ?? " " : " "
+          let start = colInt(line, lineLen, 21, 25) ?? 0
+          let end   = colInt(line, lineLen, 33, 37) ?? 0
+          helix.append(HELIX(start: start, end: end, chain: chain))
+
+        } else if b0 == 83 && b1 == 72 && b2 == 69 && b3 == 69 {
+          // SHEET
+          let chain = lineLen > 21 ? String(bytes: UnsafeBufferPointer(start: line + 21, count: 1), encoding: .utf8) ?? " " : " "
+          let start = colInt(line, lineLen, 22, 26) ?? 0
+          let end   = colInt(line, lineLen, 33, 37) ?? 0
+          sheet.append(SHEET(start: start, end: end, chain: chain))
+
+        } else if b0 == 83 && b1 == 69 && b2 == 81 && b3 == 82 {
+          // SEQRES
+          let chain   = lineLen > 11 ? String(bytes: UnsafeBufferPointer(start: line + 11, count: 1), encoding: .utf8) ?? " " : " "
+          let resStr  = colString(line, lineLen, 19, lineLen)
+          let residues = resStr.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
+          seqres.append(SEQRES(chainID: chain, residues: residues))
+
+        } else if b0 == 69 && b1 == 78 && b2 == 68 && b3 == 77 {
+          // ENDMDL
+          break
+        }
+      }
+    }
+    progress?(0.75)
+
+    let residues = atoms.residues
+    let ligands: [Ligand] = ligandKeyOrder.compactMap { key in
+      guard let ligAtoms = ligandAtomsByKey[key], !ligAtoms.isEmpty else { return nil }
+      return Ligand(
+        id: Ligand.makeID(chainID: key.chainID, resSeq: key.resSeq, resName: key.resName),
+        resName: key.resName, chainID: key.chainID, resSeq: key.resSeq, atoms: ligAtoms
+      )
+    }
+    progress?(0.8)
+
+    let pdbStructure = convertToPDBStructure(
+      atoms: atoms, residues: residues, helices: helix, sheets: sheet, pdbString: ""
     )
     progress?(0.85)
 

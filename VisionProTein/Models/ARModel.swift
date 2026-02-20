@@ -228,6 +228,7 @@ final class ARModel : ObservableObject {
    */
   @Published var showImmersiveSpace = false
   @Published var immersiveSpaceIsShown = false
+  @Published var immersiveSpaceReady = false
 
   
   @Published var pdbFile : PDBFile?
@@ -237,6 +238,9 @@ final class ARModel : ObservableObject {
   @Published var loading = false
   @Published var progress : Double = 0
   @Published var loadingStatus: String = ""
+  @Published var loadingComplete: Bool = false
+  @Published var preloadingComplete: Bool = false
+  @Published var cachedPDBs: [String: PDB.CompleteParseResult] = [:]
   @Published var showResidues = true
 //  @Published var modelState : ModelState = .resizing
   @Published var tagMode = false
@@ -854,50 +858,52 @@ final class ARModel : ObservableObject {
       rbs.name = "RibbonAndStick"
       protein = rbs
       
+      NSLog("Load from cache")
       await MainActor.run {
         progress = 0.1
         loadingStatus = "Loading PDB..."
       }
-      if let u = Bundle.main.url(forResource: pName, withExtension: "pdb") { //, // 3aid 6uml (Thilidomide) 1a3n (Hemoglobin) 3nir 4HR9 6a5j 1ERT
-        let (bytes, response) = try await URLSession.shared.bytes(for: URLRequest(url: u))
-        let length = Int(response.expectedContentLength)
-        var data = Data(capacity: length > 0 ? length : 1024 * 1024)
 
-        var bytesAccumulator = 0
-        let bytesForUpdate = max(length / 100, 1)
-
-        for try await byte in bytes {
-          data.append(byte)
-          bytesAccumulator += 1
-
-          if bytesAccumulator >= bytesForUpdate {
-            let p = Double(data.count) / Double(length)
-            await MainActor.run {
-              self.progress = p * 0.55 + 0.1
-            }
-            bytesAccumulator = 0
-          }
-        }
-
-        await MainActor.run {
-          progress = 0.7
-          loadingStatus = "Converting PDB file..."
-        }
-        // Convert the already-loaded Data to String — no second file read needed
-        guard let s = String(data: data, encoding: .utf8) else { return }
-
-        // PARSE ONCE - Get all data needed for all renderers
+      // Try to get from cache first, or parse and cache if needed
+      let parseResult: PDB.CompleteParseResult
+      if let cached = cachedPDBs[pName] {
+        // Use cached result - instant load!
         await MainActor.run {
           progress = 0.75
+          loadingStatus = "Using cached PDB data..."
+        }
+//        NSLog("Found cached")
+        parseResult = cached
+        NSLog("Assigned cached")
+      } else {
+        // Not in cache - need to parse from file
+        guard let u = Bundle.main.url(forResource: pName, withExtension: "pdb") else {
+          print("PDB file not found: \(pName)")
+          loading = false
+          return
+        }
+
+        let data = try! Data(contentsOf: u, options: .mappedIfSafe)
+
+        await MainActor.run {
+          progress = 0.3
           loadingStatus = "Parsing PDB file..."
         }
-        let parseResult = PDB.parseComplete(pdbString: s) { progress in
-          self.progress = progress
+
+        parseResult = PDB.parseComplete(data: data) { progress in
+          self.progress = 0.3 + (progress * 0.45) // Map 0-1 to 0.3-0.75
         }
-        //            let atoms = parseResult.atoms
-        let allResidues = parseResult.residues
-        pdbStructure = parseResult.pdbStructure
-        
+
+        // Save to cache for next time
+        try? parseResult.saveToCache(name: pName)
+
+        // Also add to in-memory cache
+        cachedPDBs[pName] = parseResult
+      }
+
+      let allResidues = parseResult.residues
+      pdbStructure = parseResult.pdbStructure
+      NSLog("Get pdbStructure")
         
         //        let entity = ProteinRibbon.structureColoredEntity(from: pdbStructure)  // Red helix, blue sheet, green coil
         let entity = ProteinRibbon.ribbonEntity(from: pdbStructure!, options: ProteinRibbon.Options(colorScheme: .byStructure))
@@ -906,6 +912,7 @@ final class ARModel : ObservableObject {
         rbs.addChild(entity)
         ribbons = entity
         print(entity.position)
+      NSLog("Ribbon Built")
         
         await MainActor.run {
           progress = 0.85
@@ -918,7 +925,8 @@ final class ARModel : ObservableObject {
         rbs.addChild(bse)
         ballAndStick = bse
         print(bse.position)
-        
+      NSLog("Ball & Stick Built")
+
         // Build spatial index for efficient atom lookup
         await MainActor.run {
           progress = 0.9
@@ -1138,10 +1146,7 @@ final class ARModel : ObservableObject {
           progress = 0.99
           loadingStatus = "Finalizing..."
         }
-        
-      }
-      
-      
+
       rootEntity.addChild(rbs)
       rbs.position = [0, 1, -1.85]
       
@@ -1172,10 +1177,8 @@ final class ARModel : ObservableObject {
         loadingStatus = ""
       }
     }
-    
-  }
 
-  
+  }
 }
 
 extension SIMD4 {

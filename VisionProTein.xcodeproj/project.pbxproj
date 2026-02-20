@@ -14,6 +14,7 @@
 		D84C18F32F4536FB004CC098 /* 1QQW.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D84C18F22F4536FB004CC098 /* 1QQW.pdb */; };
 		D84C18F72F467F38004CC098 /* 1BMF.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D84C18F62F467F38004CC098 /* 1BMF.pdb */; };
 		D84C18F92F469532004CC098 /* 2GLS.pdb in Resources */ = {isa = PBXBuildFile; fileRef = D84C18F82F469532004CC098 /* 2GLS.pdb */; };
+		D87106E32F47BCC200120726 /* LoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D87106E22F47BCC200120726 /* LoadingView.swift */; };
 		D8AA59E82BB7AEF000340803 /* RealityKitContent in Frameworks */ = {isa = PBXBuildFile; productRef = D8AA59E72BB7AEF000340803 /* RealityKitContent */; };
 		D8AA59EA2BB7AEF000340803 /* VisionProTeinApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8AA59E92BB7AEF000340803 /* VisionProTeinApp.swift */; };
 		D8AA59EC2BB7AEF000340803 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8AA59EB2BB7AEF000340803 /* ContentView.swift */; };
@@ -50,6 +51,7 @@
 		D84C18F62F467F38004CC098 /* 1BMF.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 1BMF.pdb; sourceTree = "<group>"; };
 		D84C18F82F469532004CC098 /* 2GLS.pdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2GLS.pdb; sourceTree = "<group>"; };
 		D84C18FA2F46A620004CC098 /* ElementData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElementData.swift; sourceTree = "<group>"; };
+		D87106E22F47BCC200120726 /* LoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingView.swift; sourceTree = "<group>"; };
 		D8AA59E22BB7AEF000340803 /* VisionProTein.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VisionProTein.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8AA59E62BB7AEF000340803 /* RealityKitContent */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = RealityKitContent; sourceTree = "<group>"; };
 		D8AA59E92BB7AEF000340803 /* VisionProTeinApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisionProTeinApp.swift; sourceTree = "<group>"; };
@@ -145,6 +147,7 @@
 				D8AA59E92BB7AEF000340803 /* VisionProTeinApp.swift */,
 				D8AA59EB2BB7AEF000340803 /* ContentView.swift */,
 				D84C18F02F451B8D004CC098 /* InfoView.swift */,
+				D87106E22F47BCC200120726 /* LoadingView.swift */,
 				D8AA5A242BB9EE2100340803 /* ProteinListView.swift */,
 				D8AA59ED2BB7AEF000340803 /* ImmersiveView.swift */,
 				D8AA59FA2BB7AFB300340803 /* Models */,
@@ -427,6 +430,7 @@
 				D8AA5A1A2BB90D9F00340803 /* EntityExtensions.swift in Sources */,
 				D8F59B0E2F33FE72009EE16D /* Molecule+BallAndStick.swift in Sources */,
 				D84C18F12F451C1E004CC098 /* InfoView.swift in Sources */,
+				D87106E32F47BCC200120726 /* LoadingView.swift in Sources */,
 				D8AA5A1D2BB90D9F00340803 /* GestureComponent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

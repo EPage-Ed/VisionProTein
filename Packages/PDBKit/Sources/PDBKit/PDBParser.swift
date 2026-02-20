@@ -11,7 +11,7 @@ import simd
 // MARK: - PDB Data Structures
 
 /// Represents an atom from a PDB file
-public struct PDBAtom {
+public struct PDBAtom: Codable {
     public let serial: Int
     public let name: String
     public let altLoc: String
@@ -62,7 +62,7 @@ public struct PDBAtom {
 }
 
 /// Represents a residue (amino acid) from a PDB file
-public struct PDBResidue {
+public struct PDBResidue: Codable {
     public let sequenceNumber: Int
     public let name: String
     public let chainID: String
@@ -97,7 +97,7 @@ public struct PDBResidue {
 }
 
 /// Represents a helix secondary structure record
-public struct PDBHelix {
+public struct PDBHelix: Codable {
     public let serialNumber: Int
     public let helixID: String
     public let startResidue: Int
@@ -120,7 +120,7 @@ public struct PDBHelix {
 }
 
 /// Represents a sheet/strand secondary structure record
-public struct PDBSheet {
+public struct PDBSheet: Codable {
     public let strandNumber: Int
     public let sheetID: String
     public let startResidue: Int
@@ -141,7 +141,7 @@ public struct PDBSheet {
 }
 
 /// Represents the complete parsed PDB structure
-public struct PDBStructure {
+public struct PDBStructure: Codable {
     public let atoms: [PDBAtom]
     public let residues: [PDBResidue]
     public let helices: [PDBHelix]

@@ -45,19 +45,24 @@ struct MainView: View {
   @State private var selectedTab: TabItem = .listenNow
   
   var body: some View {
-    TabView(selection: $selectedTab) {
-      ContentView(model: model)
-        .glassBackgroundEffect()
-        .tabItem {
-          Label("Explore", systemImage: "eye")
-        }
-        .tag(TabItem.browse)
-      InfoView()
-        .glassBackgroundEffect()
-        .tabItem {
-          Label("Info", systemImage: "info.circle")
-        }
-        .tag(TabItem.search)
+    ZStack {
+      TabView(selection: $selectedTab) {
+        ContentView(model: model)
+          .glassBackgroundEffect()
+          .tabItem {
+            Label("Explore", systemImage: "eye")
+          }
+          .tag(TabItem.browse)
+        InfoView()
+          .glassBackgroundEffect()
+          .tabItem {
+            Label("Info", systemImage: "info.circle")
+          }
+          .tag(TabItem.search)
+      }
+      .opacity((model.preloadingComplete && model.immersiveSpaceReady) ? 1 : 0)
+      LoadingView(model: model)
+        .opacity((model.preloadingComplete && model.immersiveSpaceReady) ? 0 : 1)
     }
   }
 }
@@ -65,11 +70,10 @@ struct MainView: View {
 
 @main
 struct VisionProTeinApp: App {
-//  @StateObject var model = ARModel()
   @Environment(\.scenePhase) private var scenePhase
   @Environment(\.openImmersiveSpace) var openImmersiveSpace
   @Environment(\.dismissImmersiveSpace) var dismissImmersiveSpace
-  var model = ARModel()
+  @StateObject var model = ARModel()
   @State private var showImmersiveSpace = false
 
   init() {
@@ -79,6 +83,7 @@ struct VisionProTeinApp: App {
     InstanceAnimationComponent.registerComponent()
     InstanceAnimationSystem.registerSystem()
     
+    try? PDB.CompleteParseResult.clearAllCache()
 //    NotificationCenter.default.post(name: .init("EntityScale"), object: nil, userInfo: ["scale":entity.scale])
     /*
     NotificationCenter.default.addObserver(forName: .init("EntityScale"), object: nil, queue: .main) { [self] note in
@@ -96,12 +101,12 @@ struct VisionProTeinApp: App {
       MainView(model: model)
         .frame(minWidth: 1024, minHeight: 600)
       /*
-        .onDisappear {
-          Task {
-            await dismissImmersiveSpace()
-            model.immersiveSpaceIsShown = false
-          }
-        }
+       .onDisappear {
+       Task {
+       await dismissImmersiveSpace()
+       model.immersiveSpaceIsShown = false
+       }
+       }
        */
         .onAppear {
         }
@@ -118,11 +123,11 @@ struct VisionProTeinApp: App {
             break
           }
         }
-//        .task {
-//          showImmersiveSpace = true
-//          //      await openImmersiveSpace(id: "ImmersiveSpace")
-//          //      model.immersiveSpaceIsShown = true
-//        }
+      //        .task {
+      //          showImmersiveSpace = true
+      //          //      await openImmersiveSpace(id: "ImmersiveSpace")
+      //          //      model.immersiveSpaceIsShown = true
+      //        }
         .onChange(of: showImmersiveSpace) { _, newValue in
           Task {
             if newValue {
@@ -133,39 +138,6 @@ struct VisionProTeinApp: App {
             }
           }
         }
-      /*
-        .onChange(of: scenePhase) { oldPhase, newPhase in
-          switch newPhase {
-          case .active:
-            print("App is active")
-            // Resume tasks, etc.
-            /*
-             if !model.immersiveSpaceIsShown {
-             Task {
-             await openImmersiveSpace(id: "ImmersiveSpace")
-             model.immersiveSpaceIsShown = true
-             }
-             }
-             */
-          case .inactive:
-            print("App is inactive")
-            // Pause non-critical tasks
-          case .background:
-            print("App is in the background")
-            // Save state, stop ongoing tasks
-            /*
-             if model.immersiveSpaceIsShown {
-             Task {
-             await dismissImmersiveSpace()
-             model.immersiveSpaceIsShown = false
-             }
-             }
-             */
-          @unknown default:
-            break
-          }
-        }
-       */
     }
     .defaultSize(width: 1024, height: 600)
     .windowResizability(.contentSize)

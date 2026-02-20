@@ -69,7 +69,10 @@ struct ImmersiveView: View {
       model.loading = false
        */
       
-      model.pName = model.protein == nil ? "Select a Protein" : model.pName
+      withAnimation {
+        model.pName = model.protein == nil ? "Select a Protein" : model.pName
+        model.immersiveSpaceReady = true
+      }
 
     } update: { content, attachments in
     } attachments: {
