@@ -107,10 +107,14 @@ public struct ProteinRibbon {
     /// - Parameters:
     ///   - structure: Pre-parsed PDB structure
     ///   - options: Rendering options (uses defaults if not specified)
+    ///   - cachedFrames: Optional pre-computed RMF frames per chain (Phase 2 optimization)
+    ///   - cachedSecondaryStructure: Optional pre-computed secondary structure types per chain (Phase 2 optimization)
     /// - Returns: A ModelEntity containing the protein ribbon visualization
     @MainActor public static func ribbonEntity(
         from structure: PDBStructure,
-        options: Options = Options()
+        options: Options = Options(),
+        cachedFrames: [String: [TNBFrame]]? = nil,
+        cachedSecondaryStructure: [String: [SecondaryStructureType]]? = nil
     ) -> ModelEntity {
         guard !structure.residues.isEmpty else {
             print("ProteinRibbon: No residues found in structure")
@@ -135,7 +139,12 @@ public struct ProteinRibbon {
             return parent
         } else {
             // Build as single combined mesh
-            return RealityKitEntityBuilder.buildEntity(from: structure, options: options)
+            return RealityKitEntityBuilder.buildEntity(
+                from: structure,
+                options: options,
+                cachedFrames: cachedFrames,
+                cachedSecondaryStructure: cachedSecondaryStructure
+            )
         }
     }
 

@@ -11,7 +11,7 @@ import simd
 // MARK: - TNB Frame
 
 /// Represents a local coordinate frame along a curve
-public struct TNBFrame {
+public struct TNBFrame: Codable {
     /// Tangent vector (direction of curve)
     public var tangent: SIMD3<Float>
 

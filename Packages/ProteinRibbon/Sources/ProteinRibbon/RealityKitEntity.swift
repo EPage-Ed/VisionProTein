@@ -30,13 +30,22 @@ public struct RealityKitEntityBuilder {
     /// - Parameters:
     ///   - structure: Parsed PDB structure
     ///   - options: Rendering options
+    ///   - cachedFrames: Optional pre-computed RMF frames per chain (Phase 2 optimization)
+    ///   - cachedSecondaryStructure: Optional pre-computed secondary structure types per chain (Phase 2 optimization)
     /// - Returns: ModelEntity containing the complete ribbon visualization
     public static func buildEntity(
         from structure: PDBStructure,
-        options: ProteinRibbon.Options
+        options: ProteinRibbon.Options,
+        cachedFrames: [String: [TNBFrame]]? = nil,
+        cachedSecondaryStructure: [String: [SecondaryStructureType]]? = nil
     ) -> ModelEntity {
         // Build using continuous backbone approach for seamless connections
-        let mesh = buildContinuousBackboneMesh(from: structure, options: options)
+        let mesh = buildContinuousBackboneMesh(
+            from: structure,
+            options: options,
+            cachedFrames: cachedFrames,
+            cachedSecondaryStructure: cachedSecondaryStructure
+        )
         return createEntity(from: mesh, options: options)
     }
 
@@ -50,59 +59,140 @@ public struct RealityKitEntityBuilder {
         let residueStructureTypes: [SecondaryStructureType]
     }
 
+    /// Helper: Build segments from an array of secondary structure types
+    private static func buildSegmentsFromTypes(
+        residues: [PDBResidue],
+        types: [SecondaryStructureType]
+    ) -> [SecondaryStructureSegment] {
+        guard !residues.isEmpty, types.count == residues.count else { return [] }
+        
+        var segments: [SecondaryStructureSegment] = []
+        var currentType = types[0]
+        var segmentStart = 0
+        var segmentResidues = [residues[0]]
+        
+        for i in 1..<residues.count {
+            if types[i] != currentType {
+                // Finish current segment
+                segments.append(SecondaryStructureSegment(
+                    type: currentType,
+                    startIndex: segmentStart,
+                    endIndex: i - 1,
+                    chainID: residues[segmentStart].chainID,
+                    residues: segmentResidues
+                ))
+                
+                // Start new segment
+                currentType = types[i]
+                segmentStart = i
+                segmentResidues = [residues[i]]
+            } else {
+                segmentResidues.append(residues[i])
+            }
+        }
+        
+        // Don't forget the last segment
+        segments.append(SecondaryStructureSegment(
+            type: currentType,
+            startIndex: segmentStart,
+            endIndex: residues.count - 1,
+            chainID: residues[segmentStart].chainID,
+            residues: segmentResidues
+        ))
+        
+        return segments
+    }
+    
     /// Builds backbone data for a chain (spline + frames)
     /// This is shared across all segments to ensure alignment
     private static func buildBackboneData(
         residues: [PDBResidue],
+        chainID: String,
         structure: PDBStructure,
-        options: ProteinRibbon.Options
+        options: ProteinRibbon.Options,
+        cachedFrames: [String: [TNBFrame]]? = nil,
+        cachedSecondaryStructure: [String: [SecondaryStructureType]]? = nil
     ) -> BackboneData? {
         let caPositions: [SIMD3<Float>] = residues.compactMap { $0.caAtom?.position }
         guard caPositions.count >= 4 else { return nil }
 
-        // Build ONE continuous spline through all CA atoms
-        var splinePoints = SplineInterpolation.catmullRom(
-            points: caPositions,
-            samplesPerSegment: options.samplesPerResidue
-        )
+        // Phase 2 optimization: use cached frames if available
+        let frames: [TNBFrame]
+        let splinePoints: [SplinePoint]
+        
+        if let cachedChainFrames = cachedFrames?[chainID], !cachedChainFrames.isEmpty {
+            // Use pre-computed frames from cache - MUCH faster!
+            frames = cachedChainFrames
+            
+            // Build spline points from cached frame positions
+            splinePoints = frames.enumerated().map { index, frame in
+                let residueIndex = index / options.samplesPerResidue
+                return SplinePoint(
+                    position: frame.position,
+                    t: Float(index % options.samplesPerResidue) / Float(options.samplesPerResidue),
+                    segmentIndex: residueIndex,
+                    residueIndex: min(residueIndex, residues.count - 1)
+                )
+            }
+        } else {
+            // No cache - compute frames from scratch
+            var computedSplinePoints = SplineInterpolation.catmullRom(
+                points: caPositions,
+                samplesPerSegment: options.samplesPerResidue
+            )
 
-        // Apply position smoothing to remove kinks from the spline
-        splinePoints = SplineInterpolation.smoothSplinePoints(
-            splinePoints,
-            iterations: options.frameSmoothingIterations,
-            windowSize: 7
-        )
+            // Apply position smoothing to remove kinks from the spline
+            computedSplinePoints = SplineInterpolation.smoothSplinePoints(
+                computedSplinePoints,
+                iterations: options.frameSmoothingIterations,
+                windowSize: 7
+            )
 
-        let positions = splinePoints.map { $0.position }
+            splinePoints = computedSplinePoints
+            let positions = splinePoints.map { $0.position }
 
-        // Generate TNB frames along the entire backbone
-        var frames = TNBFrameGenerator.rotationMinimizingFrames(along: positions)
+            // Generate TNB frames along the entire backbone
+            var computedFrames = TNBFrameGenerator.rotationMinimizingFrames(along: positions)
 
-        // Apply additional frame smoothing to reduce twisting/spikey artifacts
-        if options.frameSmoothingIterations > 0 {
-            frames = frames.smoothed(iterations: options.frameSmoothingIterations * 2)
+            // Apply additional frame smoothing to reduce twisting/spikey artifacts
+            if options.frameSmoothingIterations > 0 {
+                computedFrames = computedFrames.smoothed(iterations: options.frameSmoothingIterations * 2)
+            }
+            
+            frames = computedFrames
         }
 
-        // Classify secondary structure
-        let chainID = residues[0].chainID
-        let chainHelices = structure.helices.filter { $0.startChain == chainID }
-        let chainSheets = structure.sheets.filter { $0.startChain == chainID }
-        print("Chain \(chainID): \(chainHelices.count) helices, \(chainSheets.count) sheets, \(residues.count) residues")
-        let segments = SecondaryStructureClassifier.classify(
-            residues: residues,
-            helices: chainHelices,
-            sheets: chainSheets
-        )
-        print("Chain \(chainID): classified into \(segments.count) segments: \(segments.map { "\($0.type)" }.joined(separator: ", "))")
+        // Phase 2 optimization: use cached secondary structure if available
+        let residueStructureTypes: [SecondaryStructureType]
+        let segments: [SecondaryStructureSegment]
+        
+        if let cachedTypes = cachedSecondaryStructure?[chainID], cachedTypes.count == residues.count {
+            // Use pre-computed secondary structure from cache
+            residueStructureTypes = cachedTypes
+            
+            // Build segments from cached types
+            segments = buildSegmentsFromTypes(residues: residues, types: cachedTypes)
+        } else {
+            // No cache - classify from scratch
+            let chainHelices = structure.helices.filter { $0.startChain == chainID }
+            let chainSheets = structure.sheets.filter { $0.startChain == chainID }
+            
+            segments = SecondaryStructureClassifier.classify(
+                residues: residues,
+                helices: chainHelices,
+                sheets: chainSheets
+            )
 
-        // Create lookup for residue index -> structure type
-        var residueStructureTypes: [SecondaryStructureType] = Array(repeating: .coil, count: residues.count)
-        for segment in segments {
-            for i in segment.startIndex...segment.endIndex {
-                if i < residueStructureTypes.count {
-                    residueStructureTypes[i] = segment.type
+            // Create lookup for residue index -> structure type
+            var types: [SecondaryStructureType] = Array(repeating: .coil, count: residues.count)
+            for segment in segments {
+                for i in segment.startIndex...segment.endIndex {
+                    if i < types.count {
+                        types[i] = segment.type
+                    }
                 }
             }
+            residueStructureTypes = types
         }
 
         return BackboneData(
@@ -140,7 +230,9 @@ public struct RealityKitEntityBuilder {
     /// Creates separate sub-meshes per segment type for proper coloring
     private static func buildContinuousBackboneMesh(
         from structure: PDBStructure,
-        options: ProteinRibbon.Options
+        options: ProteinRibbon.Options,
+        cachedFrames: [String: [TNBFrame]]? = nil,
+        cachedSecondaryStructure: [String: [SecondaryStructureType]]? = nil
     ) -> MeshData {
         var combinedMesh = MeshData()
 
@@ -152,8 +244,11 @@ public struct RealityKitEntityBuilder {
             // Build shared backbone data for the chain
             guard let backbone = buildBackboneData(
                 residues: chainResidues,
+                chainID: chainID,
                 structure: structure,
-                options: options
+                options: options,
+                cachedFrames: cachedFrames,
+                cachedSecondaryStructure: cachedSecondaryStructure
             ) else { continue }
 
             // Generate colors for residues based on the selected color scheme
@@ -491,6 +586,7 @@ public struct RealityKitEntityBuilder {
             // Build shared backbone data for the chain
             guard let backbone = buildBackboneData(
                 residues: chainResidues,
+                chainID: chainID,
                 structure: structure,
                 options: options
             ) else { continue }

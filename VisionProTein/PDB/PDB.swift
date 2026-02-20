@@ -8,6 +8,7 @@
 import UIKit
 import RealityKit
 import PDBKit
+import ProteinRibbon
 
 
 struct PDBFile {
@@ -437,10 +438,14 @@ extension PDB {
     let sheets: [SHEET]
     let sequences: [SEQRES]
     let pdbStructure: PDBStructure  // For ProteinRibbon/ProteinSpheresMesh packages
+    
+    // Phase 2 optimization: cached computed data for faster ribbon rendering
+    let cachedFrames: [String: [TNBFrame]]  // Chain ID -> precomputed RMF frames
+    let cachedSecondaryStructure: [String: [SecondaryStructureType]]  // Chain ID -> residue structure types
 
     // Custom Codable implementation: skip pdbStructure since it's a derived type that can be reconstructed
     enum CodingKeys: String, CodingKey {
-      case atoms, residues, ligands, helices, sheets, sequences
+      case atoms, residues, ligands, helices, sheets, sequences, cachedFrames, cachedSecondaryStructure
     }
 
     func encode(to encoder: Encoder) throws {
@@ -451,6 +456,8 @@ extension PDB {
       try container.encode(helices, forKey: .helices)
       try container.encode(sheets, forKey: .sheets)
       try container.encode(sequences, forKey: .sequences)
+      try container.encode(cachedFrames, forKey: .cachedFrames)
+      try container.encode(cachedSecondaryStructure, forKey: .cachedSecondaryStructure)
     }
 
     init(from decoder: Decoder) throws {
@@ -461,13 +468,15 @@ extension PDB {
       helices = try container.decode([HELIX].self, forKey: .helices)
       sheets = try container.decode([SHEET].self, forKey: .sheets)
       sequences = try container.decode([SEQRES].self, forKey: .sequences)
+      cachedFrames = try container.decode([String: [TNBFrame]].self, forKey: .cachedFrames)
+      cachedSecondaryStructure = try container.decode([String: [SecondaryStructureType]].self, forKey: .cachedSecondaryStructure)
       // Reconstruct pdbStructure from decoded data
       pdbStructure = PDB.convertToPDBStructure(
         atoms: atoms, residues: residues, helices: helices, sheets: sheets, pdbString: ""
       )
     }
 
-    init(atoms: [Atom], residues: [Residue], ligands: [Ligand], helices: [HELIX], sheets: [SHEET], sequences: [SEQRES], pdbStructure: PDBStructure) {
+    init(atoms: [Atom], residues: [Residue], ligands: [Ligand], helices: [HELIX], sheets: [SHEET], sequences: [SEQRES], pdbStructure: PDBStructure, cachedFrames: [String: [TNBFrame]], cachedSecondaryStructure: [String: [SecondaryStructureType]]) {
       self.atoms = atoms
       self.residues = residues
       self.ligands = ligands
@@ -475,6 +484,8 @@ extension PDB {
       self.sheets = sheets
       self.sequences = sequences
       self.pdbStructure = pdbStructure
+      self.cachedFrames = cachedFrames
+      self.cachedSecondaryStructure = cachedSecondaryStructure
     }
 
     /// Save the parse result to a file URL using JSON encoding
@@ -715,9 +726,18 @@ extension PDB {
 
     print("Found \(atoms.count) atoms, \(residues.count) residues, \(ligands.count) ligands, \(helix.count) helices, \(sheet.count) sheets")
 
+    // Compute cached data for Phase 2 optimization
+    let (cachedFrames, cachedSecondaryStructure) = computeCachedData(
+      residues: residues,
+      helices: helix,
+      sheets: sheet
+    )
+    progress?(0.95)
+
     return CompleteParseResult(
       atoms: atoms, residues: residues, ligands: ligands,
-      helices: helix, sheets: sheet, sequences: seqres, pdbStructure: pdbStructure
+      helices: helix, sheets: sheet, sequences: seqres, pdbStructure: pdbStructure,
+      cachedFrames: cachedFrames, cachedSecondaryStructure: cachedSecondaryStructure
     )
   }
 
@@ -901,12 +921,111 @@ extension PDB {
 
     print("Found \(atoms.count) atoms, \(residues.count) residues, \(ligands.count) ligands, \(helix.count) helices, \(sheet.count) sheets")
 
+    // Compute cached data for Phase 2 optimization
+    let (cachedFrames, cachedSecondaryStructure) = computeCachedData(
+      residues: residues,
+      helices: helix,
+      sheets: sheet
+    )
+    progress?(0.95)
+
     return CompleteParseResult(
       atoms: atoms, residues: residues, ligands: ligands,
-      helices: helix, sheets: sheet, sequences: seqres, pdbStructure: pdbStructure
+      helices: helix, sheets: sheet, sequences: seqres, pdbStructure: pdbStructure,
+      cachedFrames: cachedFrames, cachedSecondaryStructure: cachedSecondaryStructure
     )
   }
 
+  /// Compute cached frames and secondary structure for all chains
+  private static func computeCachedData(
+    residues: [Residue],
+    helices: [HELIX],
+    sheets: [SHEET],
+    samplesPerResidue: Int = 12
+  ) -> (frames: [String: [TNBFrame]], secondaryStructure: [String: [SecondaryStructureType]]) {
+    // Group residues by chain
+    let chainGroups = Dictionary(grouping: residues, by: { $0.chainID })
+    
+    var cachedFrames: [String: [TNBFrame]] = [:]
+    var cachedSecondaryStructure: [String: [SecondaryStructureType]] = [:]
+    
+    for (chainID, chainResidues) in chainGroups {
+      // Extract CA positions
+      let caPositions: [SIMD3<Float>] = chainResidues.compactMap { residue in
+        guard let ca = residue.atoms.first(where: { $0.name == "CA" }) else { return nil }
+        return SIMD3<Float>(Float(ca.x), Float(ca.y), Float(ca.z))
+      }
+      
+      guard caPositions.count >= 4 else { continue }
+      
+      // Build spline through CA atoms
+      var splinePoints = SplineInterpolation.catmullRom(
+        points: caPositions,
+        samplesPerSegment: samplesPerResidue
+      )
+      
+      // Apply position smoothing
+      splinePoints = SplineInterpolation.smoothSplinePoints(
+        splinePoints,
+        iterations: 5,
+        windowSize: 7
+      )
+      
+      let positions = splinePoints.map { $0.position }
+      
+      // Generate RMF frames
+      var frames = TNBFrameGenerator.rotationMinimizingFrames(along: positions)
+      
+      // Apply frame smoothing
+      frames = frames.smoothed(iterations: 10)
+      
+      cachedFrames[chainID] = frames
+      
+      // Classify secondary structure for each residue
+      var structureTypes: [SecondaryStructureType] = []
+      
+      let chainHelices = helices.filter { $0.chain == chainID }
+      let chainSheets = sheets.filter { $0.chain == chainID }
+      
+      for residue in chainResidues {
+        let resSeq = residue.serNum
+        
+        // Check if in helix
+        var isHelix = false
+        for helix in chainHelices {
+          if resSeq >= helix.start && resSeq <= helix.end {
+            isHelix = true
+            break
+          }
+        }
+        
+        if isHelix {
+          structureTypes.append(.helix)
+          continue
+        }
+        
+        // Check if in sheet
+        var isSheet = false
+        for sheet in chainSheets {
+          if resSeq >= sheet.start && resSeq <= sheet.end {
+            isSheet = true
+            break
+          }
+        }
+        
+        if isSheet {
+          structureTypes.append(.sheet)
+        } else {
+          structureTypes.append(.coil)
+        }
+      }
+      
+      cachedSecondaryStructure[chainID] = structureTypes
+    }
+    
+    return (cachedFrames, cachedSecondaryStructure)
+  }
+  
   /// Convert VisionProTein types to ProteinRibbon PDBStructure
   private static func convertToPDBStructure(
     atoms: [Atom],

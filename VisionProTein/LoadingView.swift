@@ -109,7 +109,7 @@ struct LoadingView: View {
       .padding()
     }
     .task {
-      try! await Task.sleep(for: .seconds(0.01))
+      try! await Task.sleep(for: .seconds(0.1))
       await loadPDBs()
     }
   }

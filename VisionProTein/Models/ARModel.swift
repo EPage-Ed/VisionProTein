@@ -241,6 +241,7 @@ final class ARModel : ObservableObject {
   @Published var loadingComplete: Bool = false
   @Published var preloadingComplete: Bool = false
   @Published var cachedPDBs: [String: PDB.CompleteParseResult] = [:]
+  @Published var currentProteinName: String? = nil  // Track current protein for accessing cached data
   @Published var showResidues = true
 //  @Published var modelState : ModelState = .resizing
   @Published var tagMode = false
@@ -371,7 +372,15 @@ final class ARModel : ObservableObject {
   func changeRibbonColorScheme(to newScheme: ColorScheme) {
     guard let pdbStructure else { return }
     print("New scheme: \(newScheme)")
-    let entity = ProteinRibbon.ribbonEntity(from: pdbStructure, options: ProteinRibbon.Options(colorScheme: newScheme))
+    
+    // Phase 2 optimization: use cached data if available
+    let cachedData = currentProteinName.flatMap { cachedPDBs[$0] }
+    let entity = ProteinRibbon.ribbonEntity(
+      from: pdbStructure,
+      options: ProteinRibbon.Options(colorScheme: newScheme),
+      cachedFrames: cachedData?.cachedFrames,
+      cachedSecondaryStructure: cachedData?.cachedSecondaryStructure
+    )
     Task { @MainActor in
       progress = 0.5
       loadingStatus = "Created ribbon..."
@@ -864,6 +873,9 @@ final class ARModel : ObservableObject {
         loadingStatus = "Loading PDB..."
       }
 
+      // Store current protein name for accessing cached data later
+      currentProteinName = pName
+      
       // Try to get from cache first, or parse and cache if needed
       let parseResult: PDB.CompleteParseResult
       if let cached = cachedPDBs[pName] {
@@ -906,7 +918,13 @@ final class ARModel : ObservableObject {
       NSLog("Get pdbStructure")
         
         //        let entity = ProteinRibbon.structureColoredEntity(from: pdbStructure)  // Red helix, blue sheet, green coil
-        let entity = ProteinRibbon.ribbonEntity(from: pdbStructure!, options: ProteinRibbon.Options(colorScheme: .byStructure))
+        // Phase 2 optimization: pass cached frames and secondary structure for faster rendering
+        let entity = ProteinRibbon.ribbonEntity(
+          from: pdbStructure!,
+          options: ProteinRibbon.Options(colorScheme: .byStructure),
+          cachedFrames: parseResult.cachedFrames,
+          cachedSecondaryStructure: parseResult.cachedSecondaryStructure
+        )
         entity.name = "Ribbon2"
         entity.isEnabled = false
         rbs.addChild(entity)

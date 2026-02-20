@@ -12,7 +12,7 @@ import simd
 // MARK: - Secondary Structure Types
 
 /// Types of protein secondary structure
-public enum SecondaryStructureType: String, CaseIterable {
+public enum SecondaryStructureType: String, CaseIterable, Codable {
     case helix = "helix"
     case sheet = "sheet"
     case coil = "coil"
