@@ -463,7 +463,7 @@ final class ARModel : ObservableObject {
     guard highlightedResidueEntities[residue.id] == nil else { return nil }
     
     // Create highlighted residue entity
-    guard let residueEntity = Molecule.genBallAndStickResidue(residue: residue, atomScale: 1.5, unify: true, targetable: false) else {
+    guard let residueEntity = Molecule.genBallAndStickResidue(residue: residue, atomScale: 1.0, unify: true, targetable: false) else {
       print("Failed to create entity for residue \(residue.resName)\(residue.serNum)")
       return nil
     }
